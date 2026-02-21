@@ -1,0 +1,200 @@
+/* ========= RESET =========
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ========= BODY ========= */
+body {
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(135deg, #eef2ff, #f8fafc);
+  color: #1e293b;
+}
+
+/* ========= LAYOUT ========= */
+.min-h-screen {
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.max-w-7xl {
+  max-width: 1100px;
+  margin: auto;
+}
+
+/* ========= CARD ========= */
+.bg-white {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.p-6 {
+  padding: 24px;
+}
+
+.mb-6 {
+  margin-bottom: 24px;
+}
+
+/* ========= FLEX ========= */
+.flex {
+  display: flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-4 {
+  gap: 16px;
+}
+
+/* ========= HEADER ========= */
+h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #4f46e5;
+}
+
+/* ========= INPUT ========= */
+input[type="date"] {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #c7d2fe;
+  outline: none;
+  transition: 0.2s;
+}
+
+input[type="date"]:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* ========= BUTTON ========= */
+button {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+/* Primary */
+.bg-indigo-600 {
+  background: #6366f1;
+  color: white;
+}
+
+.bg-indigo-600:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
+}
+
+/* Success */
+.bg-green-600 {
+  background: #22c55e;
+  color: white;
+}
+
+.bg-green-600:hover {
+  background: #16a34a;
+}
+
+/* Danger */
+.bg-red-600 {
+  background: #ef4444;
+  color: white;
+}
+
+.bg-red-600:hover {
+  background: #dc2626;
+}
+
+/* ========= ALERT ========= */
+.bg-green-500 {
+  background: #22c55e;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+/* ========= STATS ========= */
+.grid {
+  display: grid;
+  gap: 16px;
+}
+
+.grid-cols-3 {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.grid-cols-3 > div {
+  padding: 20px;
+  border-radius: 16px;
+  text-align: center;
+  font-weight: 600;
+  color: white;
+}
+
+/* Stat colors */
+.grid-cols-3 > div:nth-child(1) {
+  background: #6366f1;
+}
+
+.grid-cols-3 > div:nth-child(2) {
+  background: #22c55e;
+}
+
+.grid-cols-3 > div:nth-child(3) {
+  background: #ef4444;
+}
+
+.text-2xl {
+  font-size: 26px;
+  margin-top: 6px;
+}
+
+/* ========= TABLE ========= */
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.attendance-table th,
+.attendance-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.attendance-table th {
+  background: #6366f1;
+  color: white;
+  text-align: left;
+}
+
+/* ========= SMALL BUTTONS ========= */
+.present-btn,
+.absent-btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.present-btn {
+  background: #22c55e;
+  color: white;
+}
+
+.absent-btn {
+  background: #ef4444;
+  color: white;
+} 
