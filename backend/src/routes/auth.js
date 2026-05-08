@@ -5,7 +5,6 @@ import Student from "../models/studentModel.js";
 import Admin from "../models/adminModel.js";
 
 const router = express.Router();
-export default router;
 const SECRET = "super_secret_key";
 
 router.post("/student-login", async (req, res) => {
@@ -68,3 +67,5 @@ router.post("/admin-login", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
+export default router;

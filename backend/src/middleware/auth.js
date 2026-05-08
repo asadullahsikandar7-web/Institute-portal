@@ -1,15 +1,8 @@
-import express from "express";
 import jwt from "jsonwebtoken";
 
-const router = express.Router();
+const SECRET = process.env.JWT_SECRET || "super_secret_key";
 
-const SECRET = "super_secret_key";
-
-/* =========================
-   AUTH MIDDLEWARE
-========================= */
-
-const auth = (requiredRole = null) => {
+export const auth = (requiredRole = null) => {
   return (req, res, next) => {
     const header = req.headers.authorization;
 
@@ -33,29 +26,3 @@ const auth = (requiredRole = null) => {
     }
   };
 };
-
-/* =========================
-   ADMIN LOGIN
-========================= */
-
-router.post("/admin-login", async (req, res) => {
-  const { email, password } = req.body;
-
-  const ADMIN_EMAIL = "admin@uni.edu";
-  const ADMIN_PASSWORD = "admin123";
-
-  if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
-    return res.status(401).json({ error: "Invalid admin credentials" });
-  }
-
-  const token = jwt.sign(
-    { role: "admin" },
-    SECRET,
-    { expiresIn: "1d" }
-  );
-
-  res.json({ token, role: "admin" });
-});
-
-export { auth };        // ✅ NAMED EXPORT
-export default router;  // ✅ DEFAULT EXPORT
