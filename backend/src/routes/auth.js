@@ -5,7 +5,7 @@ import Student from "../models/studentModel.js";
 import Admin from "../models/adminModel.js";
 
 const router = express.Router();
-const SECRET = "super_secret_key";
+const SECRET = process.env.JWT_SECRET || "super_secret_key";
 
 router.post("/student-login", async (req, res) => {
   try {
@@ -45,6 +45,10 @@ router.post("/admin-login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password required" });
+    }
+
     const admin = await Admin.findOne({ email });
     if (!admin) {
       return res.status(401).json({ error: "Admin not found" });
@@ -56,12 +60,22 @@ router.post("/admin-login", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { role: "admin" },
+      { 
+        id: admin._id,
+        email: admin.email,
+        role: "admin",
+        isSuperAdmin: admin.isSuperAdmin 
+      },
       SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "12h" }
     );
 
-    res.json({ token, role: "admin" });
+    res.json({ 
+      token, 
+      role: "admin",
+      isSuperAdmin: admin.isSuperAdmin,
+      email: admin.email
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });

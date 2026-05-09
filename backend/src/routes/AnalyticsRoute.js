@@ -1,9 +1,10 @@
-// routes/analytics.js
-const router     = require("express").Router();
-const Attendance = require("../models/Attendance");
-const Grade      = require("../models/Grade");
-const Student    = require("../models/Student");
-const { authMiddleware, adminOnly } = require("../middleware/auth");
+import express from "express";
+import Attendance from "../models/Attendance.js";
+import Grade from "../models/Grade.js";
+import Student from "../models/Student.js";
+import { authMiddleware, adminOnly } from "../middleware/auth.js";
+
+const router = express.Router();
 
 router.get("/", authMiddleware, adminOnly, async (req, res) => {
   try {

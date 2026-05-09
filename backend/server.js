@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 
 import authRoutes from "./src/routes/auth.js";
+import adminRoutes from "./src/routes/adminRoute.js";
 import studentRoutes from "./src/routes/studentroute.js";
 import attendanceRoutes from "./src/routes/attendanceRoute.js";
 import leaveRoutes from "./src/routes/leaveroutes.js";
@@ -47,12 +48,17 @@ mongoose
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/leaves", leaveRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/classes", classRoutes);
 app.use("/api/parent-messages", parentMessageRoutes);
+app.use("/api/fees", feeRoutes);
+app.use("/api/grades", gradeRoutes);
+app.use("/api/exams", examRoutes);
+app.use("/api/analytics", analyticsRoutes);
 app.use("/api/fees", feeRoutes);
 app.use("/api/grades", gradeRoutes);
 app.use("/api/exams", examRoutes);
