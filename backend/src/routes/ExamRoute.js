@@ -1,9 +1,9 @@
-// routes/exams.js
-const router  = require("express").Router();
-const Exam    = require("../models/Exam");
-const Student = require("../models/Student");
-const { authMiddleware, adminOnly } = require("../middleware/auth");
-// const { sendEmail } = require("../utils/email"); // plug in your email util
+import express from "express";
+import Exam from "../models/Exam.js";
+import Student from "../models/Student.js";
+import { authMiddleware, adminOnly } from "../middleware/auth.js";
+
+const router = express.Router();
 
 router.get("/", authMiddleware, async (req, res) => {
   try {

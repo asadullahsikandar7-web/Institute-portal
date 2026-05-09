@@ -25,7 +25,7 @@ import {
 // ══════════════════════════════════════════════════════
 //  BASE URL
 // ══════════════════════════════════════════════════════
-const BASE = "http://localhost:5001";
+const BASE = "https://institute-backend-bice.vercel.app";
 
 // ══════════════════════════════════════════════════════
 //  API FACTORY — token passed as arg, never from storage

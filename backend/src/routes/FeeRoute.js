@@ -1,8 +1,9 @@
-// routes/fees.js
-const router  = require("express").Router();
-const Fee     = require("../models/Fee");
-const Student = require("../models/Student");
-const { authMiddleware, adminOnly } = require("../middleware/auth");
+import express from "express";
+import Fee from "../models/Fee.js";
+import Student from "../models/Student.js";
+import { authMiddleware, adminOnly } from "../middleware/auth.js";
+
+const router = express.Router();
 
 // GET all fees (admin) or fees for one student
 router.get("/", authMiddleware, async (req, res) => {
@@ -54,4 +55,4 @@ router.patch("/:id", authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-module.exports = router;
+export default router;
