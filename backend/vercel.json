@@ -1,24 +1,21 @@
 {
   "version": 2,
-  "buildCommand": "npm install",
-  "installCommand": "npm install",
-  "framework": "express",
   "builds": [
     {
       "src": "server.js",
       "use": "@vercel/node"
     }
   ],
+  "functions": {
+    "server.js": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
   "routes": [
     {
       "src": "/(.*)",
       "dest": "server.js"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production",
-    "JWT_SECRET": "@jwt_secret",
-    "MONGO_URI": "@mongo_uri",
-    "FRONTEND_URL": "https://institute-portal-psi.vercel.app"
-  }
+  ]
 }
