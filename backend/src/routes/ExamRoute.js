@@ -1,6 +1,6 @@
 import express from "express";
-import Exam from "../models/Exam.js";
-import Student from "../models/Student.js";
+import Exam from "../models/ExamModel.js";
+import Student from "../models/studentModel.js";
 import { authMiddleware, adminOnly } from "../middleware/auth.js";
 
 const router = express.Router();

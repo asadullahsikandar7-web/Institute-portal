@@ -21,12 +21,12 @@ import {
   Minus, BarChart, PieChart, TrendingDown, Menu, Filter, Camera, Upload, ZoomIn,
   Play, Copy
 } from "lucide-react";
-
+// https://asad-backend2.vercel.app
 // ══════════════════════════════════════════════════════
 //  BASE URL
 // ══════════════════════════════════════════════════════
 const BASE = "https://asad-backend2.vercel.app";
-
+// /api/auth/admin-login
 // ══════════════════════════════════════════════════════
 //  API FACTORY — token passed as arg, never from storage
 // ══════════════════════════════════════════════════════
@@ -2874,7 +2874,7 @@ const Login = ({onLogin}) => {
             style={{width:60,height:60,borderRadius:18,background:`linear-gradient(135deg,${C.indigo},${C.indigoLt})`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 18px",boxShadow:`0 8px 32px ${C.indigo}40`}}>
             <GraduationCap size={26} color="#fff"/>
           </motion.div>
-          <div style={{fontSize:28,fontWeight:900,color:C.txt,letterSpacing:-0.8,marginBottom:4}}>School Management System</div>
+          <div style={{fontSize:28,fontWeight:900,color:C.txt,letterSpacing:-0.8,marginBottom:4}}>University Management System</div>
           <div style={{fontSize:13,color:C.txt2}}>Manage students, attendance, grades & more</div>
         </div>
         <div style={{background:C.surface,border:`1px solid ${C.borderMd}`,borderRadius:22,padding:30,boxShadow:`0 0 60px ${C.indigo}08,0 24px 60px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.05)`}}>
@@ -2930,6 +2930,10 @@ const Login = ({onLogin}) => {
 // ══════════════════════════════════════════════════════
 export default function App() {
   const [session,setSession]=useState(null);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackForm, setFeedbackForm] = useState({ name: "", email: "", message: "" });
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackSuccess, setFeedbackSuccess] = useState(false);
 
   const handleLogin=useCallback((data)=>{
     setSession({
@@ -2943,12 +2947,47 @@ export default function App() {
     setSession(null);
   },[]);
 
+  const handleSubmitFeedback = async () => {
+    if (!feedbackForm.name.trim() || !feedbackForm.email.trim() || !feedbackForm.message.trim()) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    setFeedbackLoading(true);
+    try {
+      // Send feedback via email API or log it
+      const feedbackData = {
+        from: feedbackForm.email,
+        name: feedbackForm.name,
+        message: feedbackForm.message,
+        timestamp: new Date().toISOString(),
+        source: "EduTrack Pro"
+      };
+
+      // Log to console for now
+      console.log("📧 Feedback Received:", feedbackData);
+
+      // Show success message
+      setFeedbackSuccess(true);
+      setFeedbackForm({ name: "", email: "", message: "" });
+      
+      setTimeout(() => {
+        setFeedbackOpen(false);
+        setFeedbackSuccess(false);
+      }, 2000);
+    } catch (err) {
+      alert("Error sending feedback: " + err.message);
+    } finally {
+      setFeedbackLoading(false);
+    }
+  };
+
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Bebas+Neue&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-        body{background:${C.bg};font-family:${F};-webkit-font-smoothing:antialiased;}
+        body{background:${C.bg};font-family:${F};-webkit-font-smoothing:antialiased;padding-bottom:50px;}
         ::-webkit-scrollbar{width:4px;height:4px;}
         ::-webkit-scrollbar-track{background:transparent;}
         ::-webkit-scrollbar-thumb{background:rgba(108,99,255,0.3);border-radius:4px;}
@@ -2956,6 +2995,51 @@ export default function App() {
         select option{background:${C.surface2};color:${C.txt};}
         @keyframes spin{to{transform:rotate(360deg);}}
         @keyframes pulse{0%{transform:scale(1);opacity:0.6;}100%{transform:scale(2);opacity:0;}}
+        .signature-footer{
+          position:fixed;
+          bottom:0;
+          left:0;
+          right:0;
+          background:linear-gradient(135deg,rgba(108,99,255,0.05) 0%,rgba(139,92,246,0.08) 100%);
+          backdrop-filter:blur(12px);
+          -webkit-backdrop-filter:blur(12px);
+          border-top:1px solid rgba(108,99,255,0.15);
+          padding:14px 20px;
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          font-size:11px;
+          color:${C.txt2};
+          z-index:1000;
+          box-shadow:0 -4px 16px rgba(0,0,0,0.08);
+        }
+        .signature-name{
+          font-weight:700;
+          background:linear-gradient(135deg,${C.indigo},${C.purple});
+          -webkit-background-clip:text;
+          -webkit-text-fill-color:transparent;
+          background-clip:text;
+          letter-spacing:0.6px;
+          font-style:italic;
+        }
+        .signature-email{
+          cursor:pointer;
+          transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+          padding:6px 12px;
+          border-radius:6px;
+          text-decoration:none;
+          display:flex;
+          align-items:center;
+          gap:4px;
+          color:${C.txt2};
+          border:1px solid transparent;
+        }
+        .signature-email:hover{
+          background:rgba(108,99,255,0.2);
+          color:${C.indigo};
+          border:1px solid rgba(108,99,255,0.3);
+          transform:translateY(-1px);
+        }
       `}</style>
       <AnimatePresence mode="wait">
         {!session&&(
@@ -2971,6 +3055,228 @@ export default function App() {
         {session?.role==="student"&&session?.student&&(
           <motion.div key="student" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
             <StudentPortal student={session.student} token={session.token} onLogout={logout}/>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Modern Signature Footer */}
+      <div className="signature-footer">
+        <div style={{display:'flex',alignItems:'center',gap:2}}>
+          <span style={{fontSize:10,color:C.dim}}>© 2026 Property of</span>
+          <span className="signature-name">❋ Asad Ullah Sikandar</span>
+        </div>
+        <button 
+          onClick={() => setFeedbackOpen(true)}
+          className="signature-email"
+          title="Send feedback"
+          style={{textDecoration:'none',display:'flex',alignItems:'center',gap:4,background:'none',border:'none'}}
+        >
+          <MessageSquare size={12}/> Feedback
+        </button>
+      </div>
+
+      {/* Feedback Modal */}
+      <AnimatePresence>
+        {feedbackOpen && (
+          <motion.div
+            initial={{opacity:0}}
+            animate={{opacity:1}}
+            exit={{opacity:0}}
+            onClick={() => !feedbackLoading && setFeedbackOpen(false)}
+            style={{
+              position:'fixed',
+              inset:0,
+              background:'rgba(0,0,0,0.5)',
+              backdropFilter:'blur(4px)',
+              display:'flex',
+              alignItems:'center',
+              justifyContent:'center',
+              zIndex:2000
+            }}
+          >
+            <motion.div
+              initial={{scale:0.95,opacity:0}}
+              animate={{scale:1,opacity:1}}
+              exit={{scale:0.95,opacity:0}}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background:C.surface2,
+                borderRadius:16,
+                padding:30,
+                maxWidth:500,
+                width:'90%',
+                maxHeight:'90vh',
+                overflow:'auto',
+                border:`1px solid ${C.border}`
+              }}
+            >
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+                <h3 style={{fontSize:20,fontWeight:700,color:C.txt}}>Send Feedback</h3>
+                <button
+                  onClick={() => setFeedbackOpen(false)}
+                  disabled={feedbackLoading}
+                  style={{background:'none',border:'none',cursor:'pointer',color:C.txt2,fontSize:20}}
+                >
+                  ×
+                </button>
+              </div>
+
+              <AnimatePresence>
+                {feedbackSuccess ? (
+                  <motion.div
+                    initial={{opacity:0,y:10}}
+                    animate={{opacity:1,y:0}}
+                    exit={{opacity:0}}
+                    style={{
+                      background:`rgba(34,197,94,0.1)`,
+                      border:`1px solid rgba(34,197,94,0.3)`,
+                      borderRadius:10,
+                      padding:16,
+                      textAlign:'center'
+                    }}
+                  >
+                    <div style={{fontSize:40,marginBottom:8}}>✨</div>
+                    <p style={{color:C.txt,fontWeight:600,marginBottom:4}}>Thank you for your feedback!</p>
+                    <p style={{fontSize:12,color:C.txt2}}>We appreciate your input and will review it shortly.</p>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    initial={{opacity:0}}
+                    animate={{opacity:1}}
+                    exit={{opacity:0}}
+                    style={{display:'flex',flexDirection:'column',gap:16}}
+                  >
+                    <div>
+                      <label style={{fontSize:12,fontWeight:600,color:C.txt2,display:'block',marginBottom:6}}>Full Name</label>
+                      <input
+                        type="text"
+                        placeholder="Your name"
+                        value={feedbackForm.name}
+                        onChange={(e) => setFeedbackForm({...feedbackForm, name: e.target.value})}
+                        disabled={feedbackLoading}
+                        style={{
+                          width:'100%',
+                          padding:'10px 14px',
+                          background:C.surface,
+                          border:`1px solid ${C.border}`,
+                          borderRadius:8,
+                          color:C.txt,
+                          fontSize:13,
+                          fontFamily:F,
+                          outline:'none',
+                          transition:'all 0.3s',
+                          disabled: feedbackLoading ? 0.5 : 1
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = C.indigo}
+                        onBlur={(e) => e.target.style.borderColor = C.border}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{fontSize:12,fontWeight:600,color:C.txt2,display:'block',marginBottom:6}}>Email Address</label>
+                      <input
+                        type="email"
+                        placeholder="your@email.com"
+                        value={feedbackForm.email}
+                        onChange={(e) => setFeedbackForm({...feedbackForm, email: e.target.value})}
+                        disabled={feedbackLoading}
+                        style={{
+                          width:'100%',
+                          padding:'10px 14px',
+                          background:C.surface,
+                          border:`1px solid ${C.border}`,
+                          borderRadius:8,
+                          color:C.txt,
+                          fontSize:13,
+                          fontFamily:F,
+                          outline:'none',
+                          transition:'all 0.3s',
+                          opacity: feedbackLoading ? 0.5 : 1
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = C.indigo}
+                        onBlur={(e) => e.target.style.borderColor = C.border}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{fontSize:12,fontWeight:600,color:C.txt2,display:'block',marginBottom:6}}>Your Feedback</label>
+                      <textarea
+                        placeholder="Tell us what you think... (minimum 10 characters)"
+                        value={feedbackForm.message}
+                        onChange={(e) => setFeedbackForm({...feedbackForm, message: e.target.value})}
+                        disabled={feedbackLoading}
+                        style={{
+                          width:'100%',
+                          padding:'12px 14px',
+                          background:C.surface,
+                          border:`1px solid ${C.border}`,
+                          borderRadius:8,
+                          color:C.txt,
+                          fontSize:13,
+                          fontFamily:F,
+                          outline:'none',
+                          minHeight:120,
+                          resize:'vertical',
+                          transition:'all 0.3s',
+                          opacity: feedbackLoading ? 0.5 : 1
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = C.indigo}
+                        onBlur={(e) => e.target.style.borderColor = C.border}
+                      />
+                      <p style={{fontSize:10,color:C.txt2,marginTop:4}}>{feedbackForm.message.length} characters</p>
+                    </div>
+
+                    <div style={{display:'flex',gap:10,marginTop:10}}>
+                      <button
+                        onClick={() => setFeedbackOpen(false)}
+                        disabled={feedbackLoading}
+                        style={{
+                          flex:1,
+                          padding:'10px 16px',
+                          background:C.surface,
+                          border:`1px solid ${C.border}`,
+                          borderRadius:8,
+                          color:C.txt,
+                          fontWeight:600,
+                          cursor:'pointer',
+                          transition:'all 0.3s',
+                          opacity:feedbackLoading ? 0.5 : 1,
+                          pointerEvents:feedbackLoading ? 'none' : 'auto'
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSubmitFeedback}
+                        disabled={feedbackLoading}
+                        style={{
+                          flex:1,
+                          padding:'10px 16px',
+                          background: feedbackLoading ? C.purple : C.indigo,
+                          border:'none',
+                          borderRadius:8,
+                          color:'white',
+                          fontWeight:600,
+                          cursor:feedbackLoading ? 'not-allowed' : 'pointer',
+                          transition:'all 0.3s',
+                          display:'flex',
+                          alignItems:'center',
+                          justifyContent:'center',
+                          gap:8,
+                          opacity:feedbackLoading ? 0.7 : 1
+                        }}
+                      >
+                        {feedbackLoading ? (
+                          <><Loader size={14} style={{animation:'spin 1s linear infinite'}}/> Sending...</>
+                        ) : (
+                          <><Send size={14}/> Send Feedback</>
+                        )}
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

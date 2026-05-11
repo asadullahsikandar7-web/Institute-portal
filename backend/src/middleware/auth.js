@@ -26,3 +26,9 @@ export const auth = (requiredRole = null) => {
     }
   };
 };
+
+// Middleware for general authentication (any authenticated user)
+export const authMiddleware = auth();
+
+// Middleware for admin-only routes
+export const adminOnly = auth("admin");

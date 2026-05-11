@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 
 import authRoutes from "./src/routes/auth.js";
 import adminRoutes from "./src/routes/adminRoute.js";
-import studentRoutes from "./src/routes/studentroute.js";
+import studentRoutes from "./src/routes/studentRoute.js";
 import attendanceRoutes from "./src/routes/attendanceRoute.js";
 import leaveRoutes from "./src/routes/leaveroutes.js";
 import notificationRoutes from "./src/routes/notificationRoute.js";
@@ -24,14 +24,17 @@ const app = express();
 app.use(express.json());
 
 // CORS Configuration
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://institute-portal-psi.vercel.app",
+  "https://attendance-app-asad.vercel.app",
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:3000",
-      "https://institute-portal-psi.vercel.app",
-      process.env.FRONTEND_URL || "https://institute-portal-psi.vercel.app",
-    ],
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -59,10 +62,6 @@ app.use("/api/fees", feeRoutes);
 app.use("/api/grades", gradeRoutes);
 app.use("/api/exams", examRoutes);
 app.use("/api/analytics", analyticsRoutes);
-app.use("/api/fees", feeRoutes);
-app.use("/api/grades", gradeRoutes);
-app.use("/api/exams", examRoutes);
-app.use("/api/analytics", analyticsRoutes);
 
 // Health Check Route
 app.get("/", (req, res) => {
@@ -75,6 +74,12 @@ app.use((req, res) => {
     success: false,
     message: "Route not found",
   });
+});
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
 
 export default app;

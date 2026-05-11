@@ -5,15 +5,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    proxy: {
-      '/api': {
-        target: 'https://asad-backend2.vercel.app',
-        changeOrigin: true
-      }
-    }
   },
   build: {
     outDir: 'dist',
-    sourcemap: false
+    sourcemap: false,
+    minify: 'terser'
   }
 });

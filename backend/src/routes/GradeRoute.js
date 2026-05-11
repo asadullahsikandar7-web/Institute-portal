@@ -1,7 +1,9 @@
 // routes/grades.js
-const router = require("express").Router();
-const Grade  = require("../models/Grade");
-const { authMiddleware, adminOnly } = require("../middleware/auth");
+import express from "express";
+import Grade from "../models/GradeModel.js";
+import { authMiddleware, adminOnly } from "../middleware/auth.js";
+
+const router = express.Router();
 
 // GET grades for a student
 router.get("/:studentId", authMiddleware, async (req, res) => {
@@ -22,4 +24,4 @@ router.post("/", authMiddleware, adminOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-module.exports = router;
+export default router;

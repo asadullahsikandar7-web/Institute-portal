@@ -1,5 +1,5 @@
 // models/Exam.js
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const examSchema = new mongoose.Schema({
   name:        { type: String, required: true },
@@ -18,4 +18,4 @@ examSchema.pre(/^find/, function() {
       .updateMany({}, { $set: { status: "completed" } }).exec().catch(() => {});
 });
 
-module.exports = mongoose.model("Exam", examSchema);
+export default mongoose.model("Exam", examSchema);
