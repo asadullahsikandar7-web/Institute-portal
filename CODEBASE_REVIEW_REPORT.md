@@ -200,7 +200,7 @@ fileSize: 2MB limit
 - **Email Service:** Nodemailer (configured)
 
 ### Frontend (asad.jsx)
-- **Base URL:** `http://localhost:5000`
+- **Base URL:** `https://institute-backend-bice.vercel.app/`
 - **Default Program:** `BS Artificial Intelligence`
 - **Authentication:** JWT tokens (passed to API factory)
 
