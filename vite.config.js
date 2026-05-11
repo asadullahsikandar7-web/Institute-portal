@@ -7,7 +7,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:5001',
+        target: 'https://asad-backend2.vercel.app',
         changeOrigin: true
       }
     }

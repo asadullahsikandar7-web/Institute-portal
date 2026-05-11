@@ -25,7 +25,7 @@ import {
 // ══════════════════════════════════════════════════════
 //  BASE URL
 // ══════════════════════════════════════════════════════
-const BASE = "https://asad-backend2.vercel.app/";
+const BASE = "https://asad-backend2.vercel.app";
 
 // ══════════════════════════════════════════════════════
 //  API FACTORY — token passed as arg, never from storage
