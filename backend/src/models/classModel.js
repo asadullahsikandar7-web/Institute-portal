@@ -36,5 +36,5 @@ const ClassSchema = new mongoose.Schema({
 ClassSchema.index({ semester: 1 });
 // classCode already has unique: true, no need for explicit index
 ClassSchema.index({ scheduleDay: 1, scheduleTime: 1 });
-
-export default mongoose.model("Class", ClassSchema);
+const ClassModel = mongoose.models.Class || mongoose.model("Class", ClassSchema);
+export default ClassModel;

@@ -1,6 +1,6 @@
 import express from "express";
 import Attendance from "../models/attendanceModel.js";
-import { auth } from "../routes/middleware/auth.js";  // ✅ FIXED IMPORT
+import { auth } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -58,5 +58,4 @@ router.get("/history/:studentId", auth("student"), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch history" });
   }
 });
-
 export default router;

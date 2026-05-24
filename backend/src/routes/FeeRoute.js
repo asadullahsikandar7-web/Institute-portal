@@ -1,5 +1,5 @@
 import express from "express";
-import  Fee  from "../models/FeeModel.js";
+import Fee from "../models/FeeModel.js";
 import Student from "../models/studentModel.js";
 import { authMiddleware, adminOnly } from "../middleware/auth.js";
 
@@ -54,5 +54,4 @@ router.patch("/:id", authMiddleware, async (req, res) => {
     res.json({ fee });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
-
 export default router;

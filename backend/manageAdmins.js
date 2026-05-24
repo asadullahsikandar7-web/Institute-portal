@@ -11,10 +11,10 @@
  *   demote <email>                       - Remove super admin privileges
  */
 
-import mongoose from "mongoose";
-import bcrypt from "bcrypt";
-import dotenv from "dotenv";
-import Admin from "./src/models/adminModel.js";
+const mongoose = require ("mongoose");
+const bcrypt = require("bcryptjs");
+const dotenv = require ("dotenv");
+const Admin = require ( "./src/models/adminModel.js");
 
 dotenv.config();
 

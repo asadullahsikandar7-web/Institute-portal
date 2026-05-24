@@ -1,7 +1,6 @@
 import express from "express";
-import Attendance from "../models/attendanceModel.js";
-import Grade from "../models/GradeModel.js";
 import Student from "../models/studentModel.js";
+import Attendance from "../models/attendanceModel.js";
 import { authMiddleware, adminOnly } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -107,5 +106,4 @@ router.get("/", authMiddleware, adminOnly, async (req, res) => {
     });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
-
 export default router;

@@ -12,5 +12,5 @@ const ParentMessageSchema = new mongoose.Schema({
   author:      String,
   emailStatus: { type: String, enum: ["sent","failed","pending"], default: "pending" },
 }, { timestamps: true });
-
-export default mongoose.model("ParentMessage", ParentMessageSchema);
+const ParentMessage = mongoose.models.ParentMessage || mongoose.model("ParentMessage", ParentMessageSchema);
+export default ParentMessage;

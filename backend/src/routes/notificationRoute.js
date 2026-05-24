@@ -1,6 +1,6 @@
 import express from "express";
 import Notification from "../models/notificationModel.js";
-import { auth } from "../routes/middleware/auth.js";
+import { auth } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -107,5 +107,4 @@ router.delete("/:id", auth("admin"), async (req, res) => {
     res.status(500).json({ error: "Failed to delete notification: " + err.message });
   }
 });
-
 export default router;

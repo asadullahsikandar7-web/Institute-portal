@@ -23,5 +23,4 @@ router.post("/", authMiddleware, adminOnly, async (req, res) => {
     res.status(201).json({ grade });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
-
 export default router;

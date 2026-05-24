@@ -1,25 +1,26 @@
 // ═══════════════════════════════════════════════════════════════
 //  server.js  —  EduTrack Pro Complete Backend (FIXED)
 // ═══════════════════════════════════════════════════════════════
+import express from "express";
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import cors from "cors";
+import nodemailer from "nodemailer";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import dotenv from "dotenv";
 
-const express  = require("express");
-const mongoose = require("mongoose");
-const bcrypt   = require("bcryptjs");
-const jwt      = require("jsonwebtoken");
-const cors     = require("cors");
-const nodemailer = require("nodemailer");
-const multer   = require("multer");
-const path     = require("path");
-const fs       = require("fs");
-require("dotenv").config();
+dotenv.config();
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ══════════════════════════════════════════════════════════════
 //  SECURITY CONFIG (FIXED)
 // ══════════════════════════════════════════════════════════════
-
+app.use(cors());
 // ❌ NO fallback secret (production-safe)
 if (!process.env.JWT_SECRET) {
   throw new Error("❌ JWT_SECRET is required in environment variables");

@@ -1,27 +1,27 @@
 {
-  "name": "attendance-backend",
+  "name": "institute-backend",
   "version": "1.0.0",
-  "description": "Attendance Management System - Backend API",
-  "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node seed.cjs"
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "20.x"
   },
   "dependencies": {
-    "@vercel/node": "^5.7.15",
-    "bcrypt": "^6.0.0",
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.6",
-    "dotenv": "^16.6.1",
-    "express": "^4.22.1",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.23.1",
-    "multer": "^2.1.1",
-    "nodemailer": "^8.0.1"
+    "bcryptjs": "2.4.3",
+    "cors": "2.8.5",
+    "debug": "^4.4.3",
+    "dotenv": "16.3.1",
+    "express": "^4.18.2",
+    "finalhandler": "^2.1.1",
+    "jsonwebtoken": "9.0.2",
+    "mongoose": "^8.24.0",
+    "multer": "1.4.5-lts.1",
+    "nodemailer": "6.9.7"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "nodemon": "3.0.1"
   }
 }

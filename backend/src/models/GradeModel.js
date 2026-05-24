@@ -9,5 +9,5 @@ const gradeSchema = new mongoose.Schema({
   maxMarks:  { type: Number, default: 100 },
   date:      { type: Date,   default: Date.now },
 }, { timestamps: true });
-
-export default mongoose.model("Grade", gradeSchema);
+const Grade = mongoose.models.Grade || mongoose.model("Grade", gradeSchema);
+export default Grade;

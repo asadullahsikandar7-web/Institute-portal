@@ -1,5 +1,5 @@
 import express from "express";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Admin from "../models/adminModel.js";
 
@@ -231,5 +231,4 @@ router.delete("/admins/:id", superAdminAuth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 export default router;

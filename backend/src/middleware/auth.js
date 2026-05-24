@@ -1,34 +1,29 @@
 import jwt from "jsonwebtoken";
+import Admin from "../models/adminModel.js";
 
-const SECRET = process.env.JWT_SECRET || "super_secret_key";
-
-export const auth = (requiredRole = null) => {
+const auth = (role) => {
   return (req, res, next) => {
-    const header = req.headers.authorization;
-
-    if (!header) {
-      return res.status(401).json({ error: "No token provided" });
-    }
-
-    const token = header.split(" ")[1];
-
     try {
-      const decoded = jwt.verify(token, SECRET);
+      const token = req.headers.authorization?.split(" ")[1];
+
+      if (!token) {
+        return res.status(401).json({ error: "Missing token" });
+      }
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.user = decoded;
 
-      if (requiredRole && decoded.role !== requiredRole) {
-        return res.status(403).json({ error: "Access denied" });
+      if (role && decoded.role !== role) {
+        return res.status(403).json({ error: "Forbidden" });
       }
 
       next();
     } catch (err) {
-      return res.status(401).json({ error: "Invalid token" });
+      res.status(401).json({ error: "Invalid token" });
     }
   };
 };
 
-// Middleware for general authentication (any authenticated user)
-export const authMiddleware = auth();
-
-// Middleware for admin-only routes
-export const adminOnly = auth("admin");
+const authMiddleware = auth("admin");
+const adminOnly = auth("admin");
+export {auth, authMiddleware, adminOnly};

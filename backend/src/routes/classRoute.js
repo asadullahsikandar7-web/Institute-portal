@@ -1,6 +1,6 @@
 import express from "express";
 import Class from "../models/classModel.js";
-import { auth } from "../routes/middleware/auth.js";
+import { auth } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -104,5 +104,4 @@ router.patch("/:id/students", auth("admin"), async (req, res) => {
     res.status(500).json({ error: "Failed to add students to class" });
   }
 });
-
 export default router;

@@ -11,5 +11,5 @@ const leaveSchema = new mongoose.Schema({
   reviewedAt: { type: Date },
   reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" }
 });
-
-export default mongoose.model("Leave", leaveSchema);
+const Leave = mongoose.models.Leave || mongoose.model("Leave", leaveSchema);
+export default Leave;

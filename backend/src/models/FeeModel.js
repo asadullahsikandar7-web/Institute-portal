@@ -16,5 +16,5 @@ feeSchema.pre(/^find/, function() {
   this.where({ status: "unpaid", dueDate: { $lt: new Date() } })
       .updateMany({}, { $set: { status: "overdue" } }).exec().catch(() => {});
 });
-
-export default mongoose.model("Fee", feeSchema);
+const Fee = mongoose.models.Fee || mongoose.model("Fee", feeSchema);
+export default Fee;

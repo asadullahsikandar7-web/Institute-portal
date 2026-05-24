@@ -1,6 +1,6 @@
 import express from "express";
 import Leave from "../models/leavemodel.js";
-import { auth } from "../routes/middleware/auth.js";
+import { auth } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -74,5 +74,4 @@ router.delete("/:id", auth(), async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 export default router;
