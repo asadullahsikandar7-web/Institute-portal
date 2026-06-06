@@ -2,12 +2,47 @@
 //  PRODUCTION-READY SERVER.JS
 // ═══════════════════════════════════════════════════════════════
 import express from "express";
-import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import { createRequire } from 'module';
+const __require = createRequire(import.meta.url);
 
 // Load environment variables
 dotenv.config();
+
+// Runtime shim: ensure `bson` exposes on-demand helpers expected by the mongodb driver
+try {
+  const bsonModule = __require('bson');
+  if (bsonModule && typeof bsonModule.parseToElementsToArray !== 'function') {
+    const maybeBSON = bsonModule.BSON ?? bsonModule;
+    if (maybeBSON && maybeBSON.onDemand && typeof maybeBSON.onDemand.parseToElements === 'function') {
+      bsonModule.parseToElementsToArray = function (bytes, offset) {
+        const res = maybeBSON.onDemand.parseToElements(bytes, offset);
+        return Array.isArray(res) ? res : [...res];
+      };
+    }
+  }
+} catch (e) {
+  // If require fails (package not present or ESM-only), ignore — mongodb's internal wrapper will handle it.
+}
+
+// Load mongoose after the shim so mongodb/bson are resolved to the patched module
+let mongoose = null;
+try {
+  mongoose = __require('mongoose');
+  mongoose = mongoose && mongoose.default ? mongoose.default : mongoose;
+} catch (e) {
+  console.error('Unable to require mongoose at startup:', e && e.message);
+}
+
+// Minimal startup diagnostics — avoid requiring mongodb/bson directly because
+// some package export maps prevent reading package.json or internal helpers
+try {
+  console.log(`Startup diagnostics: node=${process.version}, env=${process.env.NODE_ENV || 'development'}`);
+  if (mongoose && mongoose.version) console.log(`Startup diagnostics: mongoose@${mongoose.version}`);
+} catch (e) {
+  console.log('Startup diagnostics: unable to read runtime versions');
+}
 
 // ═══════════════════════════════════════════════════════════════
 //  ENVIRONMENT VALIDATION (FAIL FAST)
@@ -69,17 +104,40 @@ app.use(cors({
 //  DATABASE CONNECTION (WITH PROPER ERROR HANDLING)
 // ═══════════════════════════════════════════════════════════════
 
+// Serverless-friendly mongoose connection with caching to reuse connections across warm invocations
+const mongoCache = global.__mongoCache || (global.__mongoCache = { conn: null, promise: null });
 const connectDB = async () => {
+  if (!mongoose) {
+    throw new Error('Mongoose not available');
+  }
+
+  if (mongoCache.conn) {
+    return mongoCache.conn;
+  }
+
+  if (!mongoCache.promise) {
+    mongoCache.promise = mongoose.connect(process.env.MONGO_URI).then((m) => {
+      mongoCache.conn = m;
+      return m;
+    });
+  }
+
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    const conn = await mongoCache.promise;
     console.log("✅ MongoDB Connected Successfully");
+    return conn;
   } catch (err) {
     console.error("❌ MongoDB Connection Failed:", err.message);
-    process.exit(1);
+    // In serverless environments we should not call process.exit; throw to allow function to return error
+    throw err;
   }
 };
 
-connectDB();
+// Establish connection on cold start (will be reused on warm invocations)
+connectDB().catch((err) => {
+  // Log — don't exit the process
+  console.error('Initial DB connection failed:', err && err.message);
+});
 
 // Handle MongoDB connection events
 mongoose.connection.on("disconnected", () => {
