@@ -85,20 +85,44 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 // CORS Configuration
-const allowedOrigins = [
+// Allow common local dev ports and configured frontend URL(s). Use a dynamic origin
+// callback to be explicit and to support Netlify dev (localhost:8888) and tools with no origin.
+const allowedOrigins = new Set([
   "http://localhost:5173",
   "http://localhost:3000",
+  "http://localhost:8888",
   "https://institute-portal-psi.vercel.app",
   "https://attendance-app-asad.vercel.app",
   process.env.FRONTEND_URL
-].filter(Boolean);
+].filter(Boolean));
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g., Postman, curl, server-to-server)
+    if (!origin) return callback(null, true);
+
+    // Allow exact matches from the allowedOrigins set
+    if (allowedOrigins.has(origin)) return callback(null, true);
+
+    // Allow localhosts with any port (covers some dev setups)
+    try {
+      const url = new URL(origin);
+      if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return callback(null, true);
+    } catch (e) {
+      // If origin is not a valid URL, deny it below
+    }
+
+    // Deny other origins
+    return callback(new Error('CORS policy: Origin not allowed'), false);
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["Authorization"]
 }));
+
+// Handle preflight for all routes
+app.options('*', cors());
 
 // ═══════════════════════════════════════════════════════════════
 //  DATABASE CONNECTION (WITH PROPER ERROR HANDLING)

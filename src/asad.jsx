@@ -22,10 +22,24 @@ import {
   Play, Copy
 } from "lucide-react";
 // https://asad-backend2.vercel.app
-// ══════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════=
 //  BASE URL
-// ══════════════════════════════════════════════════════
-const BASE = "https://asad-backend2.vercel.app";
+// ═════════════════════════════════════════════════════=
+// Pick a runtime-appropriate base URL:
+// - During local frontend development (Vite at 5173 or CRA at 3000) use the standalone backend: http://localhost:5000
+// - During Netlify dev or production (frontend served by Netlify), use a relative `/api` prefix which Netlify redirects to the function
+let BASE = "http://localhost:5000"; // default for Node/tooling
+if (typeof window !== "undefined") {
+  const host = window.location.hostname;
+  // If running frontend on localhost (any port) use local backend
+  if (host === "localhost" || host === "127.0.0.1") {
+    BASE = "http://localhost:5000";
+  } else {
+    // For Netlify (dev or prod) and other hosts, use relative paths so `/api/...` goes to same origin
+    // Set BASE to empty string so API paths like `/api/auth` resolve to the current host
+    BASE = "";
+  }
+}
 // /api/auth/admin-login
 // ══════════════════════════════════════════════════════
 //  API FACTORY — token passed as arg, never from storage
