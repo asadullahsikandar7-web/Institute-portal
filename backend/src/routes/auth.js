@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Student from "../models/studentModel.js";
 import Admin from "../models/adminModel.js";
+import { authMiddleware } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -17,6 +18,11 @@ router.post("/student-login", async (req, res) => {
 
     if (!student) {
       return res.status(401).json({ error: "Student not found" });
+    }
+
+    // Ensure password field exists on student record
+    if (!student.password) {
+      return res.status(401).json({ error: "Student password not set. Contact admin." });
     }
 
     // Compare password
@@ -66,6 +72,13 @@ router.post("/admin-login", async (req, res) => {
       });
     }
 
+    // Ensure password field exists on admin record
+    if (!admin.password) {
+      return res.status(401).json({
+        error: "Admin password not set. Contact superadmin.",
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, admin.password);
 
     if (!isMatch) {
@@ -99,4 +112,52 @@ router.post("/admin-login", async (req, res) => {
     });
   }
 });
+
+// ================= SET STUDENT PASSWORD (ADMIN ONLY) =================
+router.post("/set-student-password", authMiddleware, async (req, res) => {
+  try {
+    const { studentId, newPassword } = req.body;
+    const adminId = req.user.id;
+    const userRole = req.user.role;
+
+    // Check if user is admin
+    if (userRole !== "admin") {
+      return res.status(403).json({ error: "Only admins can set student passwords" });
+    }
+
+    // Validate inputs
+    if (!studentId || !newPassword) {
+      return res.status(400).json({
+        error: "Student ID and password required",
+      });
+    }
+
+    // Find student
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update student password
+    student.password = hashedPassword;
+    await student.save();
+
+    res.json({
+      success: true,
+      message: `Password set for student ${student.rollNo}`,
+      studentId: student._id,
+      rollNo: student.rollNo,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      error: "Server error while setting password",
+    });
+  }
+});
+
 export default router;
