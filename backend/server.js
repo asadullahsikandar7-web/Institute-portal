@@ -158,7 +158,16 @@ const connectDB = async () => {
 };
 
 // Establish connection on cold start (will be reused on warm invocations)
-connectDB().catch((err) => {
+connectDB().then(async () => {
+  console.log('Initial DB connection succeeded');
+  // Run auto-seed if collections are empty
+  try {
+    const seeder = await import('./src/utils/autoSeed.js');
+    await seeder.default();
+  } catch (e) {
+    console.error('Auto-seed error (non-fatal):', e && e.message);
+  }
+}).catch((err) => {
   // Log — don't exit the process
   console.error('Initial DB connection failed:', err && err.message);
 });

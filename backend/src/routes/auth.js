@@ -14,7 +14,8 @@ router.post("/student-login", async (req, res) => {
   try {
     const { rollNo, password } = req.body;
 
-    const student = await Student.findOne({ rollNo });
+    // include password explicitly (schema sets select: false)
+    const student = await Student.findOne({ rollNo }).select('+password');
 
     if (!student) {
       return res.status(401).json({ error: "Student not found" });
@@ -42,10 +43,14 @@ router.post("/student-login", async (req, res) => {
       { expiresIn: "1d" }
     );
 
+    // Don't return password in response
+    const safeStudent = student.toObject ? student.toObject() : { ...student };
+    delete safeStudent.password;
+
     res.json({
       token,
       role: "student",
-      student,
+      student: safeStudent,
     });
   } catch (err) {
     console.error(err);
