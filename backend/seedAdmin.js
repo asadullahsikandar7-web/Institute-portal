@@ -1,7 +1,7 @@
-const  mongoose =require ("mongoose");
-const Admin =require ("./src/models/adminModel.js");
-const bcrypt = require("bcryptjs");
-const  dotenv = require ("dotenv");
+import mongoose from "mongoose";
+import Admin from "./src/models/adminModel.js";
+import bcrypt from "bcryptjs";
+import dotenv from "dotenv";
 
 dotenv.config();
 
