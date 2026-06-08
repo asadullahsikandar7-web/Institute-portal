@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import Admin from "../models/adminModel.js";
 
+const SECRET = process.env.JWT_SECRET || "super_secret_key";
+
 const auth = (role) => {
   return (req, res, next) => {
     try {
@@ -10,7 +12,7 @@ const auth = (role) => {
         return res.status(401).json({ error: "Missing token" });
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, SECRET);
       req.user = decoded;
 
       if (role && decoded.role !== role) {
