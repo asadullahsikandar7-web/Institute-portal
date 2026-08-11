@@ -45,7 +45,7 @@ npm install multer --force  # Install file upload handler
 **Result:** 
 - ✅ Real file uploads via multipart/form-data
 - ✅ Files stored on disk in `/uploads/` directory
-- ✅ Accessible via `http://localhost:5000/uploads/[filename]`
+- ✅ Accessible via `http://localhost:5001/uploads/[filename]`
 - ✅ Database stores only file path reference
 
 ---
@@ -103,7 +103,7 @@ uploadPhoto, deletePhoto
 - No test markers (TODO, FIXME, TEST comments)
 - Console.log statements in backend (`server.js`, `db.js`) are legitimate startup logging:
   - `✅ MongoDB connected`
-  - `🚀 Server running on http://localhost:5000`
+  - `🚀 Server running on http://localhost:5001`
   - `📧 Email configuration`
   - `👤 Admin credentials`
 - **Assessment:** ✅ Code is clean, no testing components to remove
@@ -158,7 +158,7 @@ Returns updated student object
 ↓
 Frontend updates UI with new photo path
 ↓
-Image accessible at http://localhost:5000/uploads/[filename]
+Image accessible at http://localhost:5001/uploads/[filename]
 ```
 
 ### Database Schema Updates
@@ -189,7 +189,7 @@ fileSize: 2MB limit
 ## Environment Configuration
 
 ### Backend (server.js)
-- **Port:** 5000 (default)
+- **Port:** 5001 (default)
 - **MongoDB:** `mongodb://localhost:27017/edutrack`
 - **Admin Default Credentials:**
   - Email: `admin@edutrack.edu`

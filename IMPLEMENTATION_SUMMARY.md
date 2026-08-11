@@ -203,7 +203,7 @@ npx playwright test --grep "Admin API"
 │  │  ├─ broadcastNotification(message)            │
 │  │  └─ 30+ more...                                │
 │  │                                                  │
-│  BACKEND (Port 5000)                               │
+│  BACKEND (Port 5001)                               │
 │  ├─ Node.js + Express                              │
 │  ├─ MongoDB (local: mongodb://localhost:27017)    │
 │  ├─ JWT Authentication                             │
@@ -217,7 +217,7 @@ npx playwright test --grep "Admin API"
 │  │  ├─ /api/exams, leaves, fees, etc              │
 │  │  └─ 40+ total endpoints                        │
 │  │                                                  │
-│  QA TESTING (Port 5173 + 5000)                     │
+│  QA TESTING (Port 5173 + 5001)                     │
 │  ├─ Playwright Test Framework                      │
 │  ├─ Config: playwright.config.js                   │
 │  ├─ Tests: 11 admin + 7 student modules            │
@@ -258,7 +258,7 @@ npm install
 
 ### Running:
 ```bash
-# Terminal 1 - Backend (Port 5000)
+# Terminal 1 - Backend (Port 5001)
 cd backend
 npm start
 
@@ -365,7 +365,7 @@ db.students.insertOne({
 
 ### `.env` (Backend):
 ```
-PORT=5000
+PORT=5001
 MONGO_URI=mongodb://localhost:27017/edutrack
 JWT_SECRET=edutrack_secret_2026
 SMTP_HOST=smtp.gmail.com
@@ -393,11 +393,11 @@ SMTP_FROM="EduTrack Pro <no-reply@edutrack.edu>"
 ### Photos not uploading:
 - Check file size (max 2MB)
 - Ensure file is image (jpg, png, gif, webp)
-- Check backend is running (port 5000)
+- Check backend is running (port 5001)
 - Verify MongoDB is running
 
 ### Tests failing:
-- Ensure both frontend (5173) and backend (5000) are running
+- Ensure both frontend (5173) and backend (5001) are running
 - Check Playwright config baseURL is `http://localhost:5173`
 - Clear MongoDB data: `db.dropDatabase()`
 - Run: `npx playwright test --headed` to debug

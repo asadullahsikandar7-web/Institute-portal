@@ -109,7 +109,7 @@ module.exports = app;
 **Before:**
 ```env
 MONGO_URI=mongodb+srv://asadullahsikandar8_db_user:Asad@ahmed.dacjcbl.mongodb.net/?appName=Ahmed
-PORT=5000
+PORT=5001
 JWT_SECRET=AsadullahSikandar
 
 ```
@@ -126,7 +126,7 @@ SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 FRONTEND_URL=https://your-frontend.vercel.app
 NODE_ENV=production
-PORT=5000
+PORT=5001
 ```
 
 **Changes Added:**

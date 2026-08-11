@@ -173,7 +173,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 - [ ] Create `.env` file in `backend/`
 - [ ] Run `npm install` in `backend/`
 - [ ] Test locally: `npm start`
-- [ ] Verify health: `curl http://localhost:5000/health`
+- [ ] Verify health: `curl http://localhost:5001/health`
 - [ ] Push to GitHub
 - [ ] Add Vercel environment variables (all fields)
 - [ ] Redeploy: `vercel --prod`

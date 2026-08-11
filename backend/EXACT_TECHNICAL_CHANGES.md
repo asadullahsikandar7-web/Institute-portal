@@ -39,7 +39,7 @@
 //  SERVER STARTUP
 // ═══════════════════════════════════════════════════════════════
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
@@ -78,7 +78,7 @@ process.on("SIGTERM", () => {
 
 // Only start server in local environment, not in Vercel serverless
 if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
-  const PORT = process.env.PORT || 5000;
+  const PORT = process.env.PORT || 5001;
 
   const server = app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);

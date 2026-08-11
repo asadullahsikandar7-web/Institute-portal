@@ -26,14 +26,14 @@ import {
 //  BASE URL
 // ═════════════════════════════════════════════════════=
 // Pick a runtime-appropriate base URL:
-// - During local frontend development (Vite at 5173 or CRA at 3000) use the standalone backend: http://localhost:5000
+// - During local frontend development (Vite at 5173 or CRA at 3000) use the standalone backend: http://localhost:5001
 // - During Netlify dev or production (frontend served by Netlify), use a relative `/api` prefix which Netlify redirects to the function
-let BASE = "http://localhost:5000"; // default for Node/tooling
+let BASE = "http://localhost:5001"; // default for Node/tooling
 if (typeof window !== "undefined") {
   const host = window.location.hostname;
   // If running frontend on localhost (any port) use local backend
   if (host === "localhost" || host === "127.0.0.1") {
-    BASE = "http://localhost:5000";
+    BASE = "http://localhost:5001";
   } else {
     // For Netlify (dev or prod) and other hosts, use relative paths so `/api/...` goes to same origin
     // Set BASE to empty string so API paths like `/api/auth` resolve to the current host
@@ -3076,7 +3076,7 @@ export default function App() {
       {/* Modern Signature Footer */}
       <div className="signature-footer">
         <div style={{display:'flex',alignItems:'center',gap:2}}>
-          <span style={{fontSize:10,color:C.dim}}>© 2026 Property of</span>
+          <span style={{fontSize:10,color:C.dim}}>© 2026 Property of Asad ullah</span>
           <span className="signature-name">❋ Asad Ullah Sikandar</span>
         </div>
         <button 

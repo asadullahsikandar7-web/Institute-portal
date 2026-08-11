@@ -54,7 +54,7 @@ FRONTEND_URL=https://your-frontend.vercel.app
 
 # Environment
 NODE_ENV=production
-PORT=5000
+PORT=5001
 ```
 
 **⚠️ IMPORTANT: Never commit `.env` to Git!**
@@ -77,7 +77,7 @@ npm install
 npm start
 
 # Test health endpoint
-curl http://localhost:5000/health
+curl http://localhost:5001/health
 ```
 
 Should return:

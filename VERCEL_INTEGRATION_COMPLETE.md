@@ -184,7 +184,7 @@ Solution:
 cd backend
 npm install
 npm run dev
-# Runs on http://localhost:5000
+# Runs on http://localhost:5001
 ```
 
 **Terminal 2 - Frontend:**
@@ -192,13 +192,13 @@ npm run dev
 npm install
 npm run dev
 # Runs on http://localhost:5173
-# Proxy routes to http://localhost:5000 via vite.config.js
+# Proxy routes to http://localhost:5001 via vite.config.js
 ```
 
 **Update for Local Testing:**
 If you need to test against local backend, change in `src/asad.jsx`:
 ```javascript
-const BASE = "http://localhost:5000"; // For local development
+const BASE = "http://localhost:5001"; // For local development
 ```
 
 ---

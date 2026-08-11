@@ -65,7 +65,7 @@ SMTP_USER=your@gmail.com
 SMTP_PASS=gmail_app_password
 FRONTEND_URL=https://your-frontend.vercel.app
 NODE_ENV=production
-PORT=5000
+PORT=5001
 ```
 
 #### 2. Test Locally
@@ -78,7 +78,7 @@ npm start
 
 #### 3. Test Health Endpoint
 ```bash
-curl http://localhost:5000/health
+curl http://localhost:5001/health
 # Response: {"status":"healthy","database":"connected",...}
 ```
 

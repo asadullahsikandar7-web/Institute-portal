@@ -95,7 +95,7 @@ SMTP_USER = your-email@gmail.com
 SMTP_PASS = your-app-password
 FRONTEND_URL = https://your-frontend.vercel.app
 NODE_ENV = production
-PORT = 5000
+PORT = 5001
 ```
 
 ### Step 2: Redeploy on Vercel ⚡
