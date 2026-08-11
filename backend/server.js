@@ -93,7 +93,8 @@ const allowedOrigins = new Set([
   "http://localhost:8888",
   "https://institute-portal-psi.vercel.app",
   "https://attendance-app-asad.vercel.app",
-  process.env.FRONTEND_URL
+  process.env.FRONTEND_URL,
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined
 ].filter(Boolean));
 
 app.use(cors({
@@ -130,6 +131,11 @@ app.options('*', cors());
 
 // Serverless-friendly mongoose connection with caching to reuse connections across warm invocations
 const mongoCache = global.__mongoCache || (global.__mongoCache = { conn: null, promise: null });
+const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || process.env.DATABASE_URL;
+if (!MONGO_URI) {
+  throw new Error('❌ MONGO_URI, MONGODB_URI, or DATABASE_URL is required');
+}
+
 const connectDB = async () => {
   if (!mongoose) {
     throw new Error('Mongoose not available');
@@ -140,7 +146,7 @@ const connectDB = async () => {
   }
 
   if (!mongoCache.promise) {
-    mongoCache.promise = mongoose.connect(process.env.MONGO_URI).then((m) => {
+    mongoCache.promise = mongoose.connect(MONGO_URI).then((m) => {
       mongoCache.conn = m;
       return m;
     });
