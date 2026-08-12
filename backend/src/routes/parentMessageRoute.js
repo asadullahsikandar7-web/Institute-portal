@@ -1,7 +1,8 @@
 import express from "express";
 import ParentMessage from "../models/ParentMessagemodel.js";
 import { auth } from "../middleware/auth.js";
-import nodemailer from "nodemailer";
+import { sendMail } from "../utils/mailer.js";
+import { parentMessageTemplate } from "../utils/emailTemplates.js";
 
 const router = express.Router();
 
@@ -56,10 +57,17 @@ router.post("/", auth("admin"), async (req, res) => {
 
     await msg.save();
     await msg.populate("studentId", "name rollNo");
-    
-    // TODO: Integrate email sending service (nodemailer)
-    // await sendEmailToParent(msg);
-    
+    // send email to parent (non-blocking)
+    try {
+      const html = parentMessageTemplate(msg);
+      if (sendMail) {
+        sendMail({ to: msg.parentEmail, subject: `${msg.title}`, text: msg.message, html })
+          .then(() => { msg.emailStatus = 'sent'; msg.save().catch(()=>{}); })
+          .catch(e => { msg.emailStatus = 'failed'; msg.save().catch(()=>{}); console.error('Parent email send failed', e.message || e); });
+      }
+    } catch (e) {
+      console.error('Non-fatal parent email error', e.message || e);
+    }
     res.status(201).json(msg);
   } catch (err) {
     console.error(err);
@@ -104,10 +112,18 @@ router.post("/:id", auth("admin"), async (req, res) => {
     // Update status to pending for resend
     message.emailStatus = "pending";
     await message.save();
-    
-    // TODO: Integrate email sending service (nodemailer)
-    // await sendEmailToParent(message);
-    
+    try {
+      const html = parentMessageTemplate(message);
+      if (sendMail) {
+        await sendMail({ to: message.parentEmail, subject: message.title, text: message.message, html });
+        message.emailStatus = 'sent';
+        await message.save();
+      }
+    } catch (e) {
+      message.emailStatus = 'failed';
+      await message.save().catch(()=>{});
+      console.error('Resend failed', e.message || e);
+    }
     res.json({ message: "Message queued for resend", data: message });
   } catch (err) {
     console.error(err);

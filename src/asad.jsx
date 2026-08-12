@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-//  EduTrack Pro — Zero localStorage, All Real Backend Data
+//  ACADEXA by ASAD — Zero localStorage, All Real Backend Data
 //  Token lives ONLY in React state. Every module fetches from DB.
 // ═══════════════════════════════════════════════════════════════════
 
@@ -19,7 +19,7 @@ import {
   User, Settings, Home, LayoutDashboard, Package,
   AlertTriangle, Info, Check, ArrowUp, ArrowDown,
   Minus, BarChart, PieChart, TrendingDown, Menu, Filter, Camera, Upload, ZoomIn,
-  Play, Copy
+  Play, Copy, Mail, Fingerprint, Sparkles, ShieldCheck
 } from "lucide-react";
 // https://asad-backend2.vercel.app
 // ═════════════════════════════════════════════════════=
@@ -152,15 +152,27 @@ function makeApi(token) {
 // ══════════════════════════════════════════════════════
 //  DESIGN SYSTEM
 // ══════════════════════════════════════════════════════
-const C = {
-  bg:"#05060f", bg2:"#080a18", panel:"#0c0e1e", surface:"#101328", surface2:"#161932",
-  border:"rgba(255,255,255,0.07)", borderMd:"rgba(255,255,255,0.12)",
-  indigo:"#6c63ff", indigoLt:"#8b85ff", cyan:"#22d3ee", emerald:"#10b981",
-  rose:"#f43f5e", amber:"#f59e0b", violet:"#a78bfa", pink:"#ec4899",
-  sky:"#38bdf8", orange:"#f97316",
-  txt:"#e2e4f0", txt2:"#9698b0", dim:"rgba(228,230,240,0.2)",
-  success:"#10b981", error:"#f43f5e", warn:"#f59e0b", info:"#22d3ee",
+const themes = {
+  dark: {
+    bg:"#05060f", bg2:"#080a18", panel:"#0c0e1e", surface:"#101328", surface2:"#161932",
+    border:"rgba(255,255,255,0.07)", borderMd:"rgba(255,255,255,0.12)",
+    indigo:"#6c63ff", indigoLt:"#8b85ff", cyan:"#22d3ee", emerald:"#10b981",
+    rose:"#f43f5e", amber:"#f59e0b", violet:"#a78bfa", purple:"#8b5cf6", pink:"#ec4899",
+    sky:"#38bdf8", orange:"#f97316",
+    txt:"#e2e4f0", txt2:"#9698b0", dim:"rgba(228,230,240,0.2)",
+    success:"#10b981", error:"#f43f5e", warn:"#f59e0b", info:"#22d3ee",
+  },
+  light: {
+    bg:"#eff2ff", bg2:"#f8f9ff", panel:"#ffffff", surface:"#ffffff", surface2:"#f3f4ff",
+    border:"rgba(15,23,42,0.08)", borderMd:"rgba(15,23,42,0.14)",
+    indigo:"#5b4bff", indigoLt:"#8b5cf6", cyan:"#22d3ee", emerald:"#10b981",
+    rose:"#ef4444", amber:"#f59e0b", violet:"#8b5cf6", purple:"#8b5cf6", pink:"#ec4899",
+    sky:"#38bdf8", orange:"#fb923c",
+    txt:"#0f172a", txt2:"#475569", dim:"rgba(15,23,42,0.2)",
+    success:"#10b981", error:"#ef4444", warn:"#f59e0b", info:"#22d3ee",
+  }
 };
+let C = themes.dark;
 const F  = "'Outfit', 'DM Sans', system-ui, sans-serif";
 const FD = "'Bebas Neue', 'Outfit', sans-serif";
 
@@ -286,6 +298,18 @@ const Input = ({style={},label,...p}) => (
       onBlur={e=>e.target.style.borderColor=C.border}/>
   </div>
 );
+
+const ThemeSwitcher = ({theme,setTheme}) => {
+  const nextTheme = theme === "dark" ? "light" : "dark";
+  return (
+    <button onClick={() => setTheme(nextTheme)}
+      style={{display:"inline-flex",alignItems:"center",gap:8,padding:"10px 14px",
+        borderRadius:14,border:`1px solid ${C.border}`,background:"rgba(255,255,255,0.05)",color:C.txt2,
+        fontSize:12,fontWeight:700,cursor:"pointer",transition:"all 0.2s"}}>
+      {theme === "dark" ? <Sun size={14}/> : <Moon size={14}/>} {nextTheme === "dark" ? "Dark" : "Light"} Mode
+    </button>
+  );
+};
 
 const Select = ({children,label,style={},...p}) => (
   <div style={{display:"flex",flexDirection:"column",gap:6}}>
@@ -468,13 +492,14 @@ const Sidebar = ({nav,active,setActive,user,onLogout,collapsed}) => (
     display:"flex",flexDirection:"column",height:"100vh",position:"sticky",top:0,
     transition:"width 0.25s ease",overflow:"hidden"}}>
     <div style={{padding:"20px 18px",borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
         <div style={{width:36,height:36,borderRadius:10,flexShrink:0,
           background:`linear-gradient(135deg,${C.indigo},${C.indigoLt})`,
           display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 16px ${C.indigo}40`}}>
+          <img src="/dist/assets/acadexa-logo.png" alt="ACADEXA" style={{width:22,height:22,objectFit:"contain",filter:"brightness(1.2) drop-shadow(0 4px 8px rgba(0,0,0,0.25))"}} onError={(e)=>{e.currentTarget.style.display='none';}} />
           <GraduationCap size={18} color="#fff"/>
         </div>
-        {!collapsed && <div><div style={{fontSize:14,fontWeight:900,color:C.txt,letterSpacing:-0.3}}>EduTrack</div><div style={{fontSize:9,color:C.indigo,fontWeight:700,letterSpacing:1}}>PRO</div></div>}
+        {!collapsed && <div><div style={{fontSize:14,fontWeight:900,color:C.txt,letterSpacing:-0.3}}>ACADEXA</div><div style={{fontSize:9,color:C.indigo,fontWeight:700,letterSpacing:1}}>by ASAD</div></div>}
       </div>
     </div>
     <nav style={{flex:1,padding:"12px 10px",overflowY:"auto",display:"flex",flexDirection:"column",gap:2}}>
@@ -519,21 +544,25 @@ const Sidebar = ({nav,active,setActive,user,onLogout,collapsed}) => (
   </div>
 );
 
-const TopBar = ({title,subtitle,actions,onToggleSidebar}) => {
+const TopBar = ({title,subtitle,actions,onToggleSidebar,theme}) => {
   const [time,setTime]=useState(new Date());
   useEffect(()=>{const t=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(t);},[]);
   return (
-    <div style={{height:62,background:`rgba(5,6,15,0.95)`,borderBottom:`1px solid ${C.border}`,
+    <div style={{height:62,background:theme === "light" ? "rgba(255,255,255,0.95)" : "rgba(5,6,15,0.95)",borderBottom:`1px solid ${C.border}`,
+      color:C.txt,
       backdropFilter:"blur(20px)",position:"sticky",top:0,zIndex:40,
       display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 24px",flexShrink:0}}>
       <div style={{display:"flex",alignItems:"center",gap:14}}>
         <button onClick={onToggleSidebar}
-          style={{background:"rgba(255,255,255,0.05)",border:`1px solid ${C.border}`,borderRadius:8,padding:7,cursor:"pointer",color:C.txt2,display:"flex"}}>
+          style={{background:theme === "light" ? "rgba(15,23,42,0.05)" : "rgba(255,255,255,0.05)",border:`1px solid ${C.border}`,borderRadius:8,padding:7,cursor:"pointer",color:C.txt2,display:"flex"}}>
           <Menu size={15}/>
         </button>
-        <div>
-          <div style={{fontSize:16,fontWeight:800,color:C.txt,letterSpacing:-0.3}}>{title}</div>
-          {subtitle&&<div style={{fontSize:11,color:C.txt2}}>{subtitle}</div>}
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <img src="/assets/acadexa-logo.png" alt="ACADEXA" style={{width:28,height:28,objectFit:"contain",filter: theme === "light" ? "none" : "brightness(1.2) drop-shadow(0 4px 8px rgba(0,0,0,0.25))"}} onError={(e)=>{e.currentTarget.style.display='none';}} />
+          <div>
+            <div style={{fontSize:16,fontWeight:800,color:C.txt,letterSpacing:-0.3}}>{title}</div>
+            {subtitle&&<div style={{fontSize:11,color:C.txt2}}>{subtitle}</div>}
+          </div>
         </div>
       </div>
       <div style={{display:"flex",alignItems:"center",gap:12}}>
@@ -1249,7 +1278,16 @@ const StudentsPage = ({students,setStudents,api,toast}) => {
   const [photoModal,setPhotoModal]=useState(null);
   const [uploadingId,setUploadingId]=useState(null);
   const [newS,setNewS]=useState({name:"",email:"",rollNo:"",password:"1234"});
+  const [newPhotoFile,setNewPhotoFile]=useState(null);
+  const [newPhotoPreview,setNewPhotoPreview]=useState(null);
   const filtered=students.filter(s=>[s.name,s.email,s.rollNo].join(" ").toLowerCase().includes(query.toLowerCase()));
+
+  useEffect(() => {
+    if (!showAdd) {
+      setNewPhotoFile(null);
+      setNewPhotoPreview(null);
+    }
+  }, [showAdd]);
 
   const handlePhotoUpload=async(studentId,file)=>{
     if(!file) return;
@@ -1264,6 +1302,14 @@ const StudentsPage = ({students,setStudents,api,toast}) => {
     finally{setUploadingId(null);}
   };
 
+  const handleNewStudentPhoto = (file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return toast("Please select an image file");
+    if (file.size > 2 * 1024 * 1024) return toast("Photo must be under 2 MB");
+    setNewPhotoFile(file);
+    setNewPhotoPreview(URL.createObjectURL(file));
+  };
+
   const removePhoto=async(studentId,e)=>{
     e.stopPropagation();
     try{await api.deletePhoto(studentId);setStudents(p=>p.map(s=>s._id===studentId?{...s,photo:null}:s));toast("Photo removed","success");}
@@ -1272,8 +1318,21 @@ const StudentsPage = ({students,setStudents,api,toast}) => {
 
   const addStudent=async()=>{
     if(!newS.name||!newS.email||!newS.rollNo) return toast("All fields required");
-    try{const s=await api.addStudent(newS);setStudents(p=>[...p,s]);setNewS({name:"",email:"",rollNo:"",password:"1234"});setShowAdd(false);toast("Student added!","success");}
-    catch(e){toast(e.message);}
+    try{
+      const s=await api.addStudent(newS);
+      if(newPhotoFile){
+        try{
+          const result = await api.uploadPhoto(s._id,newPhotoFile);
+          s.photo=result.student.photo;
+        }catch(err){toast("Student added, but photo upload failed: "+err.message);}
+      }
+      setStudents(p=>[...p,s]);
+      setNewS({name:"",email:"",rollNo:"",password:"1234"});
+      setShowAdd(false);
+      setNewPhotoFile(null);
+      setNewPhotoPreview(null);
+      toast("Student added!","success");
+    }catch(e){toast(e.message);}
   };
 
   const deleteStudent=async(id,e)=>{
@@ -1306,6 +1365,19 @@ const StudentsPage = ({students,setStudents,api,toast}) => {
                   <Input key={f} placeholder={ph} value={newS[f]} onChange={e=>setNewS(p=>({...p,[f]:e.target.value}))}/>
                 ))}
                 <Btn onClick={addStudent}><CheckCircle size={14}/>Save</Btn>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 0 0 0"}}>
+                <label htmlFor="new-photo" style={{display:"inline-flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,fontWeight:700,color:C.indigo,background:`rgba(99,102,241,0.08)`,border:`1px solid ${C.indigo}22`,borderRadius:12,padding:"10px 14px"}}>
+                  <Upload size={14}/> Upload profile photo
+                </label>
+                <input id="new-photo" type="file" accept="image/*" style={{display:"none"}} onChange={e=>handleNewStudentPhoto(e.target.files[0])}/>
+                {newPhotoPreview ? (
+                  <div style={{width:56,height:56,borderRadius:16,overflow:"hidden",border:`1px solid ${C.border}`}}>
+                    <img src={newPhotoPreview} alt="Preview" style={{width:"100%",height:"100%",objectFit:"cover"}} />
+                  </div>
+                ) : (
+                  <div style={{fontSize:12,color:C.txt2}}>Optional profile image</div>
+                )}
               </div>
             </motion.div>
           )}
@@ -2282,7 +2354,7 @@ const ParentsPage = ({students,api,toast}) => {
 // ══════════════════════════════════════════════════════
 //  ADMIN DASHBOARD CONTAINER
 // ══════════════════════════════════════════════════════
-const AdminDashboard = ({token,onLogout}) => {
+const AdminDashboard = ({token,onLogout,theme,setTheme}) => {
   const api = useMemo(()=>makeApi(token),[token]);
   const [students,  setStudents]  = useState([]);
   const [attendance,setAttendance]= useState({});
@@ -2325,10 +2397,12 @@ const AdminDashboard = ({token,onLogout}) => {
     <div style={{display:"flex",minHeight:"100vh",background:C.bg,fontFamily:F,color:C.txt,position:"relative"}}>
       <Sidebar nav={adminNav} active={view} setActive={setView} user={{name:"Admin",role:"Administrator"}} onLogout={onLogout} collapsed={collapsed}/>
       <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0,position:"relative"}}>
-        <TopBar title={pageTitles[view]||"EduTrack"} subtitle={`${students.length} students enrolled`}
+        <TopBar title={pageTitles[view]||"ACADEXA by ASAD"} subtitle={`${students.length} students enrolled`}
+          theme={theme}
           onToggleSidebar={()=>setCollapsed(p=>!p)}
           actions={
             <div style={{display:"flex",gap:10,alignItems:"center"}}>
+              <ThemeSwitcher theme={theme} setTheme={setTheme}/>
               <motion.button
                 whileHover={{scale:1.08}} whileTap={{scale:0.95}}
                 onClick={()=>setView("notifications")}
@@ -2359,7 +2433,7 @@ const AdminDashboard = ({token,onLogout}) => {
 // ══════════════════════════════════════════════════════
 //  STUDENT PORTAL CONTAINER
 // ══════════════════════════════════════════════════════
-const StudentPortal = ({student,token,onLogout}) => {
+const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
   const api = useMemo(()=>makeApi(token),[token]);
   const [leaves,  setLeaves]   = useState([]);
   const [view,    setView]     = useState("dashboard");
@@ -2837,7 +2911,7 @@ const StudentPortal = ({student,token,onLogout}) => {
     <div style={{display:"flex",minHeight:"100vh",background:C.bg,fontFamily:F,color:C.txt}}>
       <Sidebar nav={studentNav} active={view} setActive={setView} user={{name:student.name,role:`Roll #${student.rollNo}`}} onLogout={onLogout} collapsed={collapsed}/>
       <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0}}>
-        <TopBar title={pageTitles[view]||"Student Portal"} onToggleSidebar={()=>setCollapsed(p=>!p)}/>
+        <TopBar title={pageTitles[view]||"Student Portal"} theme={theme} onToggleSidebar={()=>setCollapsed(p=>!p)} actions={<ThemeSwitcher theme={theme} setTheme={setTheme}/>}/>
         <div style={{flex:1,padding:"24px 28px",overflowY:"auto"}}>
           <AnimatePresence mode="wait">
             <motion.div key={view} initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}} transition={{duration:0.2}}>
@@ -2852,9 +2926,46 @@ const StudentPortal = ({student,token,onLogout}) => {
 };
 
 // ══════════════════════════════════════════════════════
+//  LOGIN — AUTH FIELD (icon input with animated focus ring)
+// ══════════════════════════════════════════════════════
+const AuthField = ({icon:Icon, label, error, endAdornment, wrapStyle={}, theme, accent, ...p}) => {
+  const [focused,setFocused]=useState(false);
+  const C = themes[theme] || themes.dark;
+  const A = accent || C.indigo;
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:7}}>
+      {label && <div style={{fontSize:10,fontWeight:800,color:focused?A:C.txt2,letterSpacing:1.2,textTransform:'uppercase',transition:'color 0.2s'}}>{label}</div>}
+      <div style={{position:'relative',display:'flex',alignItems:'center',borderRadius:13,
+        border:`1.5px solid ${error?C.rose:focused?A:C.border}`,
+        background:focused?`${A}0c`:'rgba(127,127,127,0.045)',
+        boxShadow:focused?`0 0 0 4px ${A}1c`:'none',
+        transition:'border-color 0.2s, box-shadow 0.25s, background 0.2s',...wrapStyle}}>
+        {Icon && <Icon size={16} style={{position:'absolute',left:14,color:focused?A:C.txt2,transition:'color 0.2s'}}/>}
+        <input {...p}
+          onFocus={e=>{setFocused(true);p.onFocus&&p.onFocus(e);}}
+          onBlur={e=>{setFocused(false);p.onBlur&&p.onBlur(e);}}
+          style={{background:'transparent',border:'none',outline:'none',color:C.txt,fontFamily:F,
+            fontSize:14,fontWeight:600,padding:`13px 14px 13px ${Icon?42:14}px`,width:'100%',boxSizing:'border-box'}}/>
+        {endAdornment}
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════
 //  LOGIN
 // ══════════════════════════════════════════════════════
-const Login = ({onLogin}) => {
+// Brand palette pulled from the ACADEXA crest (deep violet + gold) — used only
+// for this page's accents so the login screen reads as custom-branded rather
+// than a generic indigo/cyan SaaS template.
+const B = {
+  violet:'#7c3aed', violetLt:'#a78bfa', violetDp:'#4c1d95',
+  gold:'#d4af37', goldLt:'#f3d78a',
+  ink:'#0b0716',
+};
+
+const Login = ({onLogin, theme, setTheme}) => {
+  const C = themes[theme] || themes.dark;
   const api = useMemo(()=>makeApi(null),[]);
   const [role,setRole]=useState("student");
   const [roll,setRoll]=useState("");
@@ -2863,78 +2974,242 @@ const Login = ({onLogin}) => {
   const [error,setError]=useState("");
   const [loading,setLoading]=useState(false);
   const [showPass,setShowPass]=useState(false);
+  const [capsLock,setCapsLock]=useState(false);
+  const [shake,setShake]=useState(false);
+
+  const triggerShake=()=>{setShake(true);setTimeout(()=>setShake(false),420);};
 
   const submit=async()=>{
-    setError("");setLoading(true);
+    setError("");
+    if(role==='student' && !roll.trim()){setError("Please enter your roll number.");triggerShake();return;}
+    if(role==='admin' && !email.trim()){setError("Please enter your email address.");triggerShake();return;}
+    if(!pass){setError("Please enter your password.");triggerShake();return;}
+    setLoading(true);
     try{
       let data;
       if(role==="admin") data=await api.adminLogin(email,pass);
       else               data=await api.studentLogin(roll,pass);
       onLogin(data);
-    }catch(e){setError(e.message);}
+    }catch(e){setError(e.message);triggerShake();}
     finally{setLoading(false);}
   };
 
-  return (
-    <div style={{minHeight:"100vh",background:C.bg,fontFamily:F,color:C.txt,display:"flex",alignItems:"center",justifyContent:"center",padding:20,position:"relative",overflow:"hidden"}}>
-      <div style={{position:"fixed",inset:0,backgroundImage:`radial-gradient(${C.dim} 1px,transparent 1px)`,backgroundSize:"28px 28px",opacity:0.5,pointerEvents:"none"}}/>
-      <motion.div style={{position:"fixed",top:"10%",right:"15%",width:400,height:400,borderRadius:"50%",background:`radial-gradient(${C.violet}06,transparent 65%)`,pointerEvents:"none"}} animate={{y:[0,30,0]}} transition={{duration:8,repeat:Infinity}}/>
-      <motion.div style={{position:"fixed",bottom:"5%",left:"10%",width:350,height:350,borderRadius:"50%",background:`radial-gradient(${C.cyan}05,transparent 65%)`,pointerEvents:"none"}} animate={{y:[0,-25,0]}} transition={{duration:10,repeat:Infinity}}/>
+  const handleKeyDown=e=>{ if(e.key==='Enter') submit(); };
+  const watchCapsLock=e=>{ if(e.getModifierState) setCapsLock(e.getModifierState('CapsLock')); };
 
-      <motion.div initial={{opacity:0,y:32,scale:0.96}} animate={{opacity:1,y:0,scale:1}} transition={{type:"spring",stiffness:180,damping:22}}
-        style={{width:"100%",maxWidth:440,position:"relative",zIndex:1}}>
-        <div style={{textAlign:"center",marginBottom:36}}>
-          <motion.div animate={{boxShadow:[`0 0 0px ${C.indigo}50`,`0 0 40px ${C.indigo}40`,`0 0 0px ${C.indigo}50`]}} transition={{duration:3,repeat:Infinity}}
-            style={{width:60,height:60,borderRadius:18,background:`linear-gradient(135deg,${C.indigo},${C.indigoLt})`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 18px",boxShadow:`0 8px 32px ${C.indigo}40`}}>
-            <GraduationCap size={26} color="#fff"/>
-          </motion.div>
-          <div style={{fontSize:28,fontWeight:900,color:C.txt,letterSpacing:-0.8,marginBottom:4}}>University Management System</div>
-          <div style={{fontSize:13,color:C.txt2}}>Manage students, attendance, grades & more</div>
-        </div>
-        <div style={{background:C.surface,border:`1px solid ${C.borderMd}`,borderRadius:22,padding:30,boxShadow:`0 0 60px ${C.indigo}08,0 24px 60px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.05)`}}>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,background:"rgba(255,255,255,0.03)",border:`1px solid ${C.border}`,borderRadius:14,padding:4,marginBottom:24}}>
-            {[{k:"student",icon:<Users size={15}/>,label:"Student"},{k:"admin",icon:<Shield size={15}/>,label:"Admin"}].map(r=>(
-              <motion.button key={r.k} whileTap={{scale:0.97}} onClick={()=>{setRole(r.k);setError("");}}
-                style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"10px 0",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer",border:"none",fontFamily:F,transition:"all 0.2s",background:role===r.k?`linear-gradient(135deg,${C.indigo},${C.indigoLt})`:"transparent",color:role===r.k?"#fff":C.txt2,boxShadow:role===r.k?`0 4px 16px ${C.indigo}35`:"none"}}>
-                {r.icon}{r.label}
-              </motion.button>
-            ))}
-          </div>
-          <div style={{display:"flex",flexDirection:"column",gap:16}}>
-            {role==="student"?(
-              <Input label="Roll Number" placeholder="e.g. CS-101" value={roll} onChange={e=>setRoll(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}/>
-            ):(
-              <Input label="Email Address" type="email" placeholder="admin@university.edu" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}/>
-            )}
-            <div>
-              <div style={{fontSize:10,fontWeight:700,color:C.txt2,letterSpacing:1,marginBottom:6}}>PASSWORD</div>
-              <div style={{position:"relative",display:"flex",alignItems:"center"}}>
-                <input type={showPass?"text":"password"} placeholder="Enter password" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}
-                  style={{background:"rgba(255,255,255,0.04)",border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 44px 10px 14px",color:C.txt,fontFamily:F,fontSize:14,outline:"none",width:"100%",transition:"border-color 0.2s"}}
-                  onFocus={e=>e.target.style.borderColor=C.indigo}
-                  onBlur={e=>e.target.style.borderColor=C.border}/>
-                <button onClick={()=>setShowPass(!showPass)} style={{position:"absolute",right:13,background:"none",border:"none",cursor:"pointer",color:showPass?C.indigo:C.txt2,display:"flex",padding:4}}>
-                  {showPass?<Eye size={15}/>:<EyeOff size={15}/>}
-                </button>
+  const features=[
+    {icon:Activity,label:'Live Attendance'},
+    {icon:Award,label:'Grade Tracking'},
+    {icon:Bell,label:'Instant Notices'},
+    {icon:CreditCard,label:'Fee Management'},
+  ];
+
+  const isDark = theme!=='light';
+
+  return (
+    <div style={{fontFamily:F,background:C.bg,color:C.txt}}>
+      <style>{`
+        .authWrap{display:flex;min-height:100vh}
+        @media (max-width:980px){.authWrap{flex-direction:column}}
+
+        /* ── Brand panel (left) ───────────────────────── */
+        .brandPanel{flex:0 0 42%;position:relative;min-height:100vh;overflow:hidden;display:flex;flex-direction:column;background:${C.bg2}}
+        @media (max-width:980px){.brandPanel{flex:0 0 auto;min-height:240px}}
+        .campusImage{position:absolute;inset:0;background-image:url('/assets/campus-photo.png');background-position:center 65%;background-size:cover;transform-origin:center;animation:kbZoom 26s ease-in-out infinite alternate}
+        .campusOverlay{position:absolute;inset:0;background:linear-gradient(195deg,rgba(24,10,48,0.4) 0%,rgba(18,7,38,0.6) 38%,rgba(11,6,22,0.94) 82%,rgba(8,4,16,0.98) 100%)}
+        .campusOverlay2{position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,6,22,0.55) 0%,transparent 45%)}
+        .heroOrb{position:absolute;border-radius:50%;filter:blur(90px);z-index:1;pointer-events:none}
+        .heroOrb1{width:280px;height:280px;background:${B.violet};opacity:0.35;bottom:-60px;left:-60px;animation:floatSlow 12s ease-in-out infinite}
+        .heroOrb2{width:220px;height:220px;background:${B.gold};opacity:0.18;top:-60px;right:-50px;animation:floatSlow 15s ease-in-out infinite reverse}
+        .brandInner{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;color:#fff;padding:44px 44px 32px}
+        @media (max-width:980px){.brandInner{padding:26px 26px 20px}}
+        .brandTop{display:flex;align-items:center;gap:10px}
+        .brandLogoBadge{width:40px;height:40px;border-radius:10px;background:${B.ink};border:1px solid ${B.gold}55;box-shadow:0 4px 14px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+        .brandWordmark{font-size:13px;font-weight:800;letter-spacing:1.2px;color:rgba(255,255,255,0.96)}
+        .brandWordmark small{display:block;font-size:10px;font-weight:600;letter-spacing:1.4px;color:${B.goldLt};text-transform:uppercase;margin-top:1px}
+        .brandBody{flex:1;display:flex;flex-direction:column;justify-content:flex-end;max-width:460px}
+        @media (max-width:980px){.brandBody{display:none}}
+        .eyebrow{display:inline-flex;align-items:center;gap:6px;padding:5px 12px 5px 10px;border-radius:100px;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:${B.goldLt};margin-bottom:18px;width:fit-content}
+        .heading{font-size:34px;font-weight:800;line-height:1.16;margin-bottom:14px;letter-spacing:-0.6px}
+        .headingAccent{background:linear-gradient(120deg,${B.violetLt},${B.goldLt});-webkit-background-clip:text;background-clip:text;color:transparent}
+        .sub{color:rgba(255,255,255,0.72);font-size:14.5px;line-height:1.65;max-width:400px}
+        .featureList{display:flex;flex-direction:column;gap:13px;margin-top:30px}
+        .featureItem{display:flex;align-items:center;gap:12px}
+        .featureIconBox{width:32px;height:32px;border-radius:10px;background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.22);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .featureText{font-size:13px;font-weight:600;color:rgba(255,255,255,0.85)}
+        .brandFooter{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;margin-top:32px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.12);font-size:11.5px;color:rgba(255,255,255,0.5)}
+        @media (max-width:980px){.brandFooter{display:none}}
+        .brandFooter span{display:inline-flex;align-items:center;gap:6px}
+
+        /* ── Form panel (right) ───────────────────────── */
+        .formPanel{flex:1;position:relative;display:flex;align-items:center;justify-content:center;padding:64px 32px;background:${C.bg}}
+        @media (max-width:980px){.formPanel{flex-direction:column;padding:28px 20px 76px}}
+        .formAmbient{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+        .cardOrb{position:absolute;border-radius:50%;filter:blur(80px)}
+        .cardOrb1{width:320px;height:320px;background:${B.violet};opacity:${isDark?0.16:0.09};top:-10%;right:-8%}
+        .cardOrb2{width:260px;height:260px;background:${B.gold};opacity:${isDark?0.09:0.05};bottom:-8%;left:-6%}
+        .formThemeToggle{position:absolute;top:24px;right:28px;z-index:3}
+        @media (max-width:980px){.formThemeToggle{position:static;align-self:flex-end;margin-bottom:14px}}
+        .formCenter{position:relative;z-index:2;width:100%;display:flex;justify-content:center}
+        @media (max-width:980px){.formCenter{width:100%}}
+
+        .loginCard{position:relative;width:100%;max-width:412px;background:${C.surface};border-radius:22px;padding:38px 34px 32px;box-shadow:0 1px 0 rgba(255,255,255,0.04) inset, 0 20px 60px rgba(2,3,12,0.2);border:1px solid ${C.border};overflow:hidden}
+        .cardAccentBar{position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,${B.violetDp},${B.gold},${B.violet})}
+        .loginCardHeader{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+        .loginCardTitle{font-size:19px;font-weight:900;color:${C.txt};margin-bottom:3px;display:flex;align-items:center;gap:7px}
+        .loginCardSubtitle{font-size:12.5px;color:${C.txt2};line-height:1.5}
+        .segmented{position:relative;display:flex;background:rgba(127,127,127,0.07);border-radius:13px;padding:4px;border:1px solid ${C.border};width:100%}
+        .segThumb{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:9px;background:linear-gradient(135deg,${B.violetDp},${B.violet});box-shadow:0 4px 14px ${B.violet}55;z-index:0}
+        .segBtn{position:relative;z-index:1;flex:1;padding:10px 14px;border-radius:9px;border:none;background:transparent;cursor:pointer;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;gap:7px;transition:color 0.2s;font-family:${F}}
+        .fieldStack{display:flex;flex-direction:column;gap:15px;margin-top:20px}
+        .shakeWrap{animation:none}
+        .shakeWrap.shaking{animation:shakeX 0.42s ease}
+        .capsWarn{display:flex;align-items:center;gap:6px;font-size:11px;color:${C.amber};font-weight:700;margin-top:6px}
+        .submitBtnWrap{position:relative;border-radius:13px;overflow:hidden;margin-top:4px}
+        .submitBtnWrap::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,0.25),transparent);transform:translateX(-120%);transition:transform 0.6s}
+        .submitBtnWrap:hover::after{transform:translateX(120%)}
+        .trustRow{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:22px;padding-top:16px;border-top:1px solid ${C.border}}
+        .trustItem{display:flex;align-items:center;gap:6px;font-size:10.5px;color:${C.txt2};font-weight:600}
+        .cardFooter{text-align:center;margin-top:14px;font-size:11px;color:${C.txt2}}
+
+        @keyframes kbZoom{0%{transform:scale(1.03)}100%{transform:scale(1.13)}}
+        @keyframes floatSlow{0%,100%{transform:translate(0,0)}50%{transform:translate(18px,-16px)}}
+        @keyframes shakeX{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
+      `}</style>
+
+      <div className="authWrap">
+        {/* ── Left: brand / hero ───────────────────────── */}
+        <div className="brandPanel" aria-hidden="true">
+          <div className="campusImage"/>
+          <div className="campusOverlay"/>
+          <div className="campusOverlay2"/>
+          <div className="heroOrb heroOrb1"/>
+          <div className="heroOrb heroOrb2"/>
+
+          <div className="brandInner">
+            <div className="brandTop">
+              <div className="brandLogoBadge">
+                <img src="/assets/acadexa-crest.png" alt="ACADEXA" style={{height:'100%',width:'100%',objectFit:'cover'}} />
+              </div>
+              <div className="brandWordmark">ACADEXA<small>by ASAD</small></div>
+            </div>
+
+            <div className="brandBody">
+              <div className="eyebrow"><Sparkles size={11}/> Academic Management Platform</div>
+              <div className="heading">A Smarter <span className="headingAccent">Academic Experience</span> Begins Here</div>
+              <div className="sub">Secure, modern, and intuitive workflows for students and administrators — all in one place.</div>
+
+              <div className="featureList">
+                {features.map((f,i)=>{
+                  const Icon=f.icon;
+                  return (
+                    <motion.div key={f.label} className="featureItem" initial={{opacity:0,x:-12}} animate={{opacity:1,x:0}} transition={{delay:0.15+i*0.08,duration:0.4}}>
+                      <div className="featureIconBox"><Icon size={15} color={B.goldLt}/></div>
+                      <div className="featureText">{f.label}</div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              <div className="brandFooter">
+                <span><ShieldCheck size={12}/> Empowering students. Connecting education.</span>
+                <span>© 2026 ACADEXA</span>
               </div>
             </div>
-            <AnimatePresence>
-              {error&&(
-                <motion.div initial={{opacity:0,y:-6}} animate={{opacity:1,y:0}} exit={{opacity:0}}
-                  style={{background:"rgba(244,63,94,0.08)",border:"1px solid rgba(244,63,94,0.22)",borderRadius:10,padding:"10px 14px",display:"flex",gap:9,alignItems:"center"}}>
-                  <WifiOff size={13} color={C.rose}/><span style={{fontSize:12,color:C.rose}}>{error}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <Btn full size="lg" onClick={submit} disabled={loading}>
-              {loading?<><Loader size={15} style={{animation:"spin 1s linear infinite"}}/>Signing in…</>:<><Zap size={15}/>Sign In to EduTrack</>}
-            </Btn>
           </div>
         </div>
-        <div style={{textAlign:"center",marginTop:20,fontSize:11,color:C.dim}}>
-          Secured with JWT · EduTrack Pro v4.0 · Session ends on page refresh
+
+        {/* ── Right: sign-in form ──────────────────────── */}
+        <div className="formPanel">
+          <div className="formAmbient">
+            <div className="cardOrb cardOrb1"/>
+            <div className="cardOrb cardOrb2"/>
+          </div>
+
+          <div className="formThemeToggle"><ThemeSwitcher theme={theme} setTheme={setTheme}/></div>
+
+          <div className="formCenter">
+            <motion.div initial={{opacity:0,y:14,scale:0.98}} animate={{opacity:1,y:0,scale:1}} transition={{duration:0.5,ease:'easeOut'}} style={{width:'100%',maxWidth:412}}>
+              <div className={`loginCard shakeWrap ${shake?'shaking':''}`}>
+                <div className="cardAccentBar"/>
+                <div className="loginCardHeader">
+                  <div style={{width:46,height:46,borderRadius:13,background:B.ink,border:`1px solid ${B.gold}55`,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 8px 22px rgba(0,0,0,0.3)`,flexShrink:0,overflow:'hidden'}}>
+                    <img src="/assets/acadexa-crest.png" alt="ACADEXA" style={{height:'100%',width:'100%',objectFit:'cover'}} onError={(e)=>{e.currentTarget.style.display='none';}} />
+                  </div>
+                  <div>
+                    <div className="loginCardTitle">Welcome Back <Fingerprint size={15} color={B.violet}/></div>
+                    <div className="loginCardSubtitle">Sign in to access your ACADEXA dashboard</div>
+                  </div>
+                </div>
+
+                <div className="segmented">
+                  <motion.div className="segThumb" animate={{x: role==='admin' ? '100%' : '0%'}} transition={{type:'spring',stiffness:500,damping:34}}/>
+                  {[{k:'student',label:'Student',icon:User},{k:'admin',label:'Admin',icon:Shield}].map(s=>{
+                    const Icon=s.icon;
+                    const active=role===s.k;
+                    return (
+                      <button key={s.k} onClick={()=>{setRole(s.k);setError('');}} className="segBtn" style={{color:active?"#fff":C.txt2}}>
+                        <Icon size={14}/>{s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+              <AnimatePresence mode="wait">
+                <motion.div key={role} initial={{opacity:0,x:role==='admin'?12:-12}} animate={{opacity:1,x:0}} transition={{duration:0.25}} className="fieldStack">
+                  {role==='student' ? (
+                    <AuthField theme={theme} accent={B.violet} icon={Hash} label="Roll Number" placeholder="e.g. CS-101" value={roll} onChange={e=>setRoll(e.target.value)} onKeyDown={handleKeyDown} autoFocus />
+                  ) : (
+                    <AuthField theme={theme} accent={B.violet} icon={Mail} label="Email address" type="email" placeholder="admin@university.edu" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={handleKeyDown} autoFocus />
+                  )}
+
+                  <div>
+                    <AuthField theme={theme} accent={B.violet} icon={Lock} label="Password" type={showPass?"text":"password"} placeholder="Enter password"
+                      value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={handleKeyDown} onKeyUp={watchCapsLock}
+                      wrapStyle={{paddingRight:0}}
+                      endAdornment={
+                        <button type="button" onClick={()=>setShowPass(!showPass)} style={{position:'absolute',right:12,background:'none',border:'none',cursor:'pointer',color:showPass?B.violet:C.txt2,display:'flex',padding:6}}>
+                          {showPass?<Eye size={17}/>:<EyeOff size={17}/>}
+                        </button>
+                      }/>
+                    <AnimatePresence>
+                      {capsLock && (
+                        <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:'auto'}} exit={{opacity:0,height:0}} className="capsWarn">
+                          <AlertTriangle size={12}/> Caps Lock is on
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  <AnimatePresence>
+                    {error && (
+                      <motion.div initial={{opacity:0,y:-6}} animate={{opacity:1,y:0}} exit={{opacity:0}} style={{display:'flex',gap:10,alignItems:'center',background:`rgba(244,63,94,0.08)`,border:`1px solid rgba(244,63,94,0.22)`,padding:'10px 12px',borderRadius:10}}>
+                        <AlertTriangle size={16} color={C.rose}/>
+                        <div style={{fontSize:13,color:C.rose,fontWeight:600}}>{error}</div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="submitBtnWrap">
+                    <Btn full size="lg" onClick={submit} disabled={loading}
+                      style={{background:`linear-gradient(135deg,${B.violetDp},${B.violet})`,boxShadow:`0 6px 24px ${B.violet}45`}}>
+                      {loading ? <><Loader size={15} style={{animation:'spin 1s linear infinite'}}/>Signing in…</> : <><Zap size={15}/>Sign In</>}
+                    </Btn>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+
+              <div className="trustRow">
+                <div className="trustItem"><ShieldCheck size={13} color={C.emerald}/> Encrypted session</div>
+                <div className="trustItem"><Lock size={13}/> No data stored locally</div>
+              </div>
+
+                <div className="cardFooter">© 2026 ACADEXA by ASAD</div>
+              </div>
+            </motion.div>
+          </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };
@@ -2943,6 +3218,7 @@ const Login = ({onLogin}) => {
 //  ROOT — session lives ONLY in React state, zero storage
 // ══════════════════════════════════════════════════════
 export default function App() {
+  const [theme,setTheme] = useState("dark");
   const [session,setSession]=useState(null);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackForm, setFeedbackForm] = useState({ name: "", email: "", message: "" });
@@ -2961,6 +3237,23 @@ export default function App() {
     setSession(null);
   },[]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedTheme = window.localStorage.getItem("edu_theme");
+      if (savedTheme && themes[savedTheme]) {
+        setTheme(savedTheme);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    C = themes[theme] || themes.dark;
+    if (typeof window !== "undefined") {
+      document.documentElement.dataset.theme = theme;
+      window.localStorage.setItem("edu_theme", theme);
+    }
+  }, [theme]);
+
   const handleSubmitFeedback = async () => {
     if (!feedbackForm.name.trim() || !feedbackForm.email.trim() || !feedbackForm.message.trim()) {
       alert("Please fill all fields");
@@ -2969,22 +3262,21 @@ export default function App() {
 
     setFeedbackLoading(true);
     try {
-      // Send feedback via email API or log it
-      const feedbackData = {
-        from: feedbackForm.email,
-        name: feedbackForm.name,
-        message: feedbackForm.message,
-        timestamp: new Date().toISOString(),
-        source: "EduTrack Pro"
-      };
+      const response = await fetch(`${BASE}/api/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: feedbackForm.name,
+          email: feedbackForm.email,
+          message: feedbackForm.message,
+        }),
+      });
 
-      // Log to console for now
-      console.log("📧 Feedback Received:", feedbackData);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to send feedback");
 
-      // Show success message
       setFeedbackSuccess(true);
       setFeedbackForm({ name: "", email: "", message: "" });
-      
       setTimeout(() => {
         setFeedbackOpen(false);
         setFeedbackSuccess(false);
@@ -3058,17 +3350,17 @@ export default function App() {
       <AnimatePresence mode="wait">
         {!session&&(
           <motion.div key="login" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0,scale:0.98}}>
-            <Login onLogin={handleLogin}/>
+            <Login onLogin={handleLogin} theme={theme} setTheme={setTheme}/>
           </motion.div>
         )}
         {session?.role==="admin"&&(
           <motion.div key="admin" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
-            <AdminDashboard token={session.token} onLogout={logout}/>
+            <AdminDashboard token={session.token} onLogout={logout} theme={theme} setTheme={setTheme}/>
           </motion.div>
         )}
         {session?.role==="student"&&session?.student&&(
           <motion.div key="student" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
-            <StudentPortal student={session.student} token={session.token} onLogout={logout}/>
+            <StudentPortal student={session.student} token={session.token} onLogout={logout} theme={theme} setTheme={setTheme}/>
           </motion.div>
         )}
       </AnimatePresence>

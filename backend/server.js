@@ -73,7 +73,8 @@ import timetableRoutes from "./src/routes/timetableRoute.js";
 import classRoutes from "./src/routes/classRoute.js";
 import analyticsRoutes from "./src/routes/AnalyticsRoute.js";
 import parentMessageRoutes from "./src/routes/parentMessageRoute.js";
-
+import feedbackRoutes from "./src/routes/feedbackRoute.js";
+import { smtpReady, smtpLastError } from "./src/utils/mailer.js";
 // ═══════════════════════════════════════════════════════════════
 //  EXPRESS APP SETUP
 // ═══════════════════════════════════════════════════════════════
@@ -202,9 +203,14 @@ app.get("/", (req, res) => {
 
 app.get("/health", (req, res) => {
   const dbConnected = mongoose.connection.readyState === 1;
-  res.status(dbConnected ? 200 : 503).json({
-    status: dbConnected ? "healthy" : "unhealthy",
+  const smtpConnected = smtpReady;
+  const isHealthy = dbConnected && smtpConnected;
+
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? "healthy" : "unhealthy",
     database: dbConnected ? "connected" : "disconnected",
+    smtp: smtpConnected ? "connected" : "disconnected",
+    smtpError: smtpLastError || null,
     uptime: process.uptime()
   });
 });
@@ -224,6 +230,7 @@ app.use("/api/leaves", leaveRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/classes", classRoutes);
 app.use("/api/parent-messages", parentMessageRoutes);
+app.use("/api/feedback", feedbackRoutes);
 app.use("/api/fees", feeRoutes);
 app.use("/api/grades", gradeRoutes);
 app.use("/api/exams", examRoutes);
