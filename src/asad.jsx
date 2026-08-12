@@ -4,6 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, CheckCircle, XCircle, Calendar, Search, X, LogOut,
@@ -487,10 +488,25 @@ const studentNav = [
   {key:"announcements",icon:<AlertCircle size={16}/>,     label:"Notices"},
 ];
 
-const Sidebar = ({nav,active,setActive,user,onLogout,collapsed}) => (
-  <div style={{width:collapsed?72:230,flexShrink:0,background:C.panel,borderRight:`1px solid ${C.border}`,
-    display:"flex",flexDirection:"column",height:"100vh",position:"sticky",top:0,
-    transition:"width 0.25s ease",overflow:"hidden"}}>
+const Sidebar = ({nav,active,setActive,user,onLogout,collapsed,setCollapsed}) => {
+  const isMobile = () => typeof window !== "undefined" && window.innerWidth < 900;
+  const closeOnMobile = () => { if (isMobile() && setCollapsed) setCollapsed(true); };
+  return (
+  <>
+    <style>{`
+      @media (max-width:900px){
+        .appSidebar{position:fixed !important;top:0;left:0;z-index:300;width:230px !important;
+          height:100vh;transform:translateX(-100%);transition:transform 0.28s ease;
+          box-shadow:12px 0 40px rgba(0,0,0,0.4);}
+        .appSidebar.is-open{transform:translateX(0);}
+      }
+    `}</style>
+    {isMobile() && !collapsed && (
+      <div onClick={closeOnMobile} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:299}}/>
+    )}
+    <div className={`appSidebar${!collapsed?" is-open":""}`} style={{width:collapsed?72:230,flexShrink:0,background:C.panel,borderRight:`1px solid ${C.border}`,
+      display:"flex",flexDirection:"column",height:"100vh",position:"sticky",top:0,
+      transition:"width 0.25s ease",overflow:"hidden"}}>
     <div style={{padding:"20px 18px",borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
         <div style={{width:36,height:36,borderRadius:10,flexShrink:0,
@@ -506,7 +522,7 @@ const Sidebar = ({nav,active,setActive,user,onLogout,collapsed}) => (
       {nav.map(item=>{
         const isActive=active===item.key;
         return (
-          <motion.button key={item.key} onClick={()=>setActive(item.key)}
+          <motion.button key={item.key} onClick={()=>{setActive(item.key);closeOnMobile();}}
             whileHover={{x:2}} whileTap={{scale:0.97}}
             style={{display:"flex",alignItems:"center",gap:10,padding:"10px 10px",borderRadius:11,
               border:"none",cursor:"pointer",fontFamily:F,fontSize:13,fontWeight:isActive?700:500,
@@ -541,33 +557,41 @@ const Sidebar = ({nav,active,setActive,user,onLogout,collapsed}) => (
         <LogOut size={13}/>{!collapsed&&"Sign Out"}
       </button>
     </div>
-  </div>
-);
+    </div>
+  </>
+  );
+};
 
 const TopBar = ({title,subtitle,actions,onToggleSidebar,theme}) => {
   const [time,setTime]=useState(new Date());
   useEffect(()=>{const t=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(t);},[]);
   return (
-    <div style={{height:62,background:theme === "light" ? "rgba(255,255,255,0.95)" : "rgba(5,6,15,0.95)",borderBottom:`1px solid ${C.border}`,
+    <div style={{minHeight:62,background:theme === "light" ? "rgba(255,255,255,0.95)" : "rgba(5,6,15,0.95)",borderBottom:`1px solid ${C.border}`,
       color:C.txt,
       backdropFilter:"blur(20px)",position:"sticky",top:0,zIndex:40,
-      display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 24px",flexShrink:0}}>
-      <div style={{display:"flex",alignItems:"center",gap:14}}>
+      display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 24px",flexShrink:0,gap:10}}>
+      <style>{`
+        @media (max-width:640px){
+          .topbarDateChip{display:none !important;}
+          .topbarLogo{display:none !important;}
+        }
+      `}</style>
+      <div style={{display:"flex",alignItems:"center",gap:14,minWidth:0}}>
         <button onClick={onToggleSidebar}
-          style={{background:theme === "light" ? "rgba(15,23,42,0.05)" : "rgba(255,255,255,0.05)",border:`1px solid ${C.border}`,borderRadius:8,padding:7,cursor:"pointer",color:C.txt2,display:"flex"}}>
+          style={{background:theme === "light" ? "rgba(15,23,42,0.05)" : "rgba(255,255,255,0.05)",border:`1px solid ${C.border}`,borderRadius:8,padding:7,cursor:"pointer",color:C.txt2,display:"flex",flexShrink:0}}>
           <Menu size={15}/>
         </button>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <img src="/assets/acadexa-logo.png" alt="ACADEXA" style={{width:28,height:28,objectFit:"contain",filter: theme === "light" ? "none" : "brightness(1.2) drop-shadow(0 4px 8px rgba(0,0,0,0.25))"}} onError={(e)=>{e.currentTarget.style.display='none';}} />
-          <div>
-            <div style={{fontSize:16,fontWeight:800,color:C.txt,letterSpacing:-0.3}}>{title}</div>
-            {subtitle&&<div style={{fontSize:11,color:C.txt2}}>{subtitle}</div>}
+        <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0}}>
+          <img className="topbarLogo" src="/assets/acadexa-logo.png" alt="ACADEXA" style={{width:28,height:28,objectFit:"contain",flexShrink:0,filter: theme === "light" ? "none" : "brightness(1.2) drop-shadow(0 4px 8px rgba(0,0,0,0.25))"}} onError={(e)=>{e.currentTarget.style.display='none';}} />
+          <div style={{minWidth:0}}>
+            <div style={{fontSize:16,fontWeight:800,color:C.txt,letterSpacing:-0.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{title}</div>
+            {subtitle&&<div style={{fontSize:11,color:C.txt2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{subtitle}</div>}
           </div>
         </div>
       </div>
-      <div style={{display:"flex",alignItems:"center",gap:12}}>
-        <div style={{fontSize:12,color:C.txt2,background:"rgba(255,255,255,0.04)",border:`1px solid ${C.border}`,
-          borderRadius:8,padding:"5px 12px",letterSpacing:0.5,fontWeight:500}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,flexShrink:0,padding:"10px 0"}}>
+        <div className="topbarDateChip" style={{fontSize:12,color:C.txt2,background:"rgba(255,255,255,0.04)",border:`1px solid ${C.border}`,
+          borderRadius:8,padding:"5px 12px",letterSpacing:0.5,fontWeight:500,whiteSpace:"nowrap"}}>
           {time.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})} · {time.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"})}
         </div>
         {actions}
@@ -577,9 +601,17 @@ const TopBar = ({title,subtitle,actions,onToggleSidebar,theme}) => {
 };
 
 // ══════════════════════════════════════════════════════
+//  PORTAL — escapes full-screen overlays (drawers/modals) out of any
+//  ancestor's z-indexed stacking context (e.g. page content wrappers),
+//  so they always paint above sticky headers instead of underneath them.
+// ══════════════════════════════════════════════════════
+const Portal = ({children}) => typeof document !== "undefined" ? createPortal(children, document.body) : null;
+
+// ══════════════════════════════════════════════════════
 //  PHOTO MODAL
 // ══════════════════════════════════════════════════════
 const PhotoModal = ({student,onClose}) => (
+  <Portal>
   <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
     onClick={onClose}
     onKeyDown={(e) => e.key === 'Escape' && onClose()}
@@ -605,6 +637,7 @@ const PhotoModal = ({student,onClose}) => (
       <button onClick={onClose} style={{background:"rgba(255,255,255,0.07)",border:`1px solid ${C.border}`,borderRadius:10,padding:"8px 22px",cursor:"pointer",color:C.txt2,fontFamily:F,fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:7}}><X size={13}/>Close</button>
     </motion.div>
   </motion.div>
+  </Portal>
 );
 
 // ══════════════════════════════════════════════════════
@@ -632,6 +665,7 @@ const StudentDrawer = ({student,api,onClose}) => {
   const avgPct =grades.length?Math.round(grades.reduce((s,g)=>s+(g.marks/g.maxMarks*100),0)/grades.length):0;
 
   return (
+    <Portal>
     <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
       onKeyDown={(e) => e.key === 'Escape' && onClose()}
       tabIndex={0}
@@ -640,7 +674,7 @@ const StudentDrawer = ({student,api,onClose}) => {
       <motion.div initial={{x:"100%"}} animate={{x:0}} exit={{x:"100%"}}
         transition={{type:"spring",stiffness:300,damping:32}}
         onClick={e=>e.stopPropagation()}
-        style={{width:500,height:"100%",background:C.bg2,borderLeft:`1px solid ${C.border}`,overflowY:"auto",display:"flex",flexDirection:"column",fontFamily:F}}>
+        style={{width:"100%",maxWidth:500,height:"100%",background:C.bg2,borderLeft:`1px solid ${C.border}`,overflowY:"auto",display:"flex",flexDirection:"column",fontFamily:F}}>
         <div style={{padding:"0 24px 20px 24px",background:`linear-gradient(180deg,${C.indigo}0a 0%,transparent 100%)`,position:"sticky",top:0,zIndex:10,borderBottom:`1px solid ${C.border}`}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
             <div style={{display:"flex",gap:14,alignItems:"center"}}>
@@ -751,6 +785,7 @@ const StudentDrawer = ({student,api,onClose}) => {
         </div>
       </motion.div>
     </motion.div>
+    </Portal>
   );
 };
 
@@ -855,6 +890,7 @@ const ClassesPage = ({api,toast}) => {
 
       <AnimatePresence>
         {tomorrowForm&&(
+          <Portal>
           <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
             onClick={()=>setTomorrowForm(null)}
             style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
@@ -873,6 +909,7 @@ const ClassesPage = ({api,toast}) => {
               </div>
             </motion.div>
           </motion.div>
+          </Portal>
         )}
       </AnimatePresence>
 
@@ -2361,7 +2398,7 @@ const AdminDashboard = ({token,onLogout,theme,setTheme}) => {
   const [leaves,    setLeaves]    = useState([]);
   const [view,      setView]      = useState("dashboard");
   const [loading,   setLoading]   = useState(true);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(()=> typeof window !== "undefined" && window.innerWidth < 900);
   const [toastEl,   toast]        = useToast();
 
   useEffect(()=>{
@@ -2395,7 +2432,7 @@ const AdminDashboard = ({token,onLogout,theme,setTheme}) => {
 
   return (
     <div style={{display:"flex",minHeight:"100vh",background:C.bg,fontFamily:F,color:C.txt,position:"relative"}}>
-      <Sidebar nav={adminNav} active={view} setActive={setView} user={{name:"Admin",role:"Administrator"}} onLogout={onLogout} collapsed={collapsed}/>
+      <Sidebar nav={adminNav} active={view} setActive={setView} user={{name:"Admin",role:"Administrator"}} onLogout={onLogout} collapsed={collapsed} setCollapsed={setCollapsed}/>
       <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0,position:"relative"}}>
         <TopBar title={pageTitles[view]||"ACADEXA by ASAD"} subtitle={`${students.length} students enrolled`}
           theme={theme}
@@ -2438,7 +2475,7 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
   const [leaves,  setLeaves]   = useState([]);
   const [view,    setView]     = useState("dashboard");
   const [loading, setLoading]  = useState(true);
-  const [collapsed,setCollapsed]=useState(false);
+  const [collapsed,setCollapsed]=useState(()=> typeof window !== "undefined" && window.innerWidth < 900);
   const [toastEl, toast]       = useToast();
   const sid=student._id||student.id||"";
 
@@ -2663,6 +2700,7 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
         )}
         
         {selectedClass && (
+          <Portal>
           <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
             onClick={() => setSelectedClass(null)}
             style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
@@ -2686,6 +2724,7 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
               <Btn full onClick={() => setSelectedClass(null)} style={{marginTop:8}}>Close</Btn>
             </motion.div>
           </motion.div>
+          </Portal>
         )}
       </div>
     );
@@ -2909,7 +2948,7 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
 
   return (
     <div style={{display:"flex",minHeight:"100vh",background:C.bg,fontFamily:F,color:C.txt}}>
-      <Sidebar nav={studentNav} active={view} setActive={setView} user={{name:student.name,role:`Roll #${student.rollNo}`}} onLogout={onLogout} collapsed={collapsed}/>
+      <Sidebar nav={studentNav} active={view} setActive={setView} user={{name:student.name,role:`Roll #${student.rollNo}`}} onLogout={onLogout} collapsed={collapsed} setCollapsed={setCollapsed}/>
       <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0}}>
         <TopBar title={pageTitles[view]||"Student Portal"} theme={theme} onToggleSidebar={()=>setCollapsed(p=>!p)} actions={<ThemeSwitcher theme={theme} setTheme={setTheme}/>}/>
         <div style={{flex:1,padding:"24px 28px",overflowY:"auto"}}>
