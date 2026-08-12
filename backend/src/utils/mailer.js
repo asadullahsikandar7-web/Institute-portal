@@ -35,17 +35,28 @@ const verifySMTP = async () => {
   }
 };
 
-// Verify on import/startup
+// Kick off a background verification purely to populate smtpReady/smtpLastError
+// for the /health endpoint. sendMail() below does NOT wait for or gate on this —
+// on a serverless cold start (Vercel), the Gmail SMTP handshake here can take
+// several seconds, and a request can easily arrive before it resolves. Gating
+// sendMail on it caused real, valid credentials to fail with "SMTP not ready"
+// on essentially every cold start. Nodemailer authenticates its own connection
+// per send anyway, so this check was redundant with — and slower than — just
+// trying to send.
 verifySMTP();
 
 async function sendMail(options) {
-  if (!smtpReady) {
-    const err = new Error("SMTP not ready");
-    err.code = "SMTP_NOT_READY";
+  const mail = { from: `"${MAIL_FROM_NAME}" <${MAIL_FROM_EMAIL}>`, ...options };
+  try {
+    const info = await transporter.sendMail(mail);
+    smtpReady = true;
+    smtpLastError = null;
+    return info;
+  } catch (err) {
+    smtpReady = false;
+    smtpLastError = err?.message || "Send failed";
     throw err;
   }
-  const mail = { from: `"${MAIL_FROM_NAME}" <${MAIL_FROM_EMAIL}>`, ...options };
-  return transporter.sendMail(mail);
 }
 
 export { transporter, sendMail, smtpReady, smtpLastError, verifySMTP, MAIL_FROM_NAME, MAIL_FROM_EMAIL };

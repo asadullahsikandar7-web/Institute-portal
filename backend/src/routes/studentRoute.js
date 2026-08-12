@@ -92,7 +92,9 @@ router.post("/", auth("admin"), async (req, res) => {
       if (sendMail) {
         const html = welcomeStudentTemplate(student, password);
         const text = `Hey ${student.name}! Your ACADEXA account is ready.\n\nRoll Number: ${student.rollNo}\nPassword: ${password}\n\nLog in here: ${process.env.FRONTEND_URL || "https://institute-portal-psi.vercel.app"}`;
-        sendMail({ to: student.email, subject: `You're in, ${student.name}! 🎉 Your ACADEXA login is ready`, text, html }).catch(e => console.error("Welcome email failed:", e.message || e));
+        sendMail({ to: student.email, subject: `You're in, ${student.name}! 🎉 Your ACADEXA login is ready`, text, html })
+          .then(() => console.log(`✅ Welcome email sent to ${student.email}`))
+          .catch(e => console.error("❌ Welcome email failed:", e.message || e));
         if (student.parentEmail) {
           sendMail({ to: student.parentEmail, subject: `New Student Registered: ${student.name}`, text: `Your child ${student.name} has been registered.`, html }).catch(e => console.error("Parent welcome email failed:", e.message || e));
         }
