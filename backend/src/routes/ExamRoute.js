@@ -1,17 +1,18 @@
 import express from "express";
 import Exam from "../models/ExamModel.js";
-import { authMiddleware, adminOnly } from "../middleware/auth.js";
+import Student from "../models/studentModel.js";
+import { auth, adminOnly } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.get("/", authMiddleware, async (req, res) => {
+router.get("/", auth(), async (req, res) => {
   try {
     const exams = await Exam.find().sort({ date: 1 });
     res.json(exams);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.post("/", authMiddleware, adminOnly, async (req, res) => {
+router.post("/", adminOnly, async (req, res) => {
   try {
     const { name, subject, date, maxMarks, venue } = req.body;
     if (!name || !subject || !date) return res.status(400).json({ error: "name, subject, date required" });

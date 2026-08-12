@@ -37,6 +37,7 @@ router.post("/student-login", async (req, res) => {
     const token = jwt.sign(
       {
         id: student._id,
+        studentId: student._id.toString(),
         role: "student",
       },
       SECRET,

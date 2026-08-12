@@ -18,6 +18,54 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Get classes scheduled for tomorrow
+router.get("/tomorrow", auth(), async (req, res) => {
+  try {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayName = tomorrow.toLocaleDateString("en-US", { weekday: "long" });
+
+    const classes = await Class.find({ scheduleDay: dayName })
+      .sort({ scheduleTime: 1 })
+      .lean();
+
+    res.json({
+      date: tomorrow.toISOString().split("T")[0],
+      day: dayName,
+      classes: classes.map(cls => ({ ...cls, day: cls.scheduleDay }))
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch tomorrow's classes" });
+  }
+});
+
+// Update tomorrow details for a class
+router.put("/:id/tomorrow", auth("admin"), async (req, res) => {
+  try {
+    const { topic, materials, assignment, deadline } = req.body;
+    const classData = await Class.findByIdAndUpdate(
+      req.params.id,
+      {
+        tomorrowTopic: topic || "",
+        tomorrowMaterials: Array.isArray(materials) ? materials : [],
+        tomorrowAssignment: assignment || "",
+        tomorrowDeadline: deadline ? new Date(deadline) : null
+      },
+      { new: true }
+    ).populate("students", "name rollNo email");
+
+    if (!classData) {
+      return res.status(404).json({ error: "Class not found" });
+    }
+
+    res.json(classData);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update tomorrow details" });
+  }
+});
+
 // Get single class by ID
 router.get("/:id", async (req, res) => {
   try {

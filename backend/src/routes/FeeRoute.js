@@ -1,29 +1,36 @@
 import express from "express";
 import Fee from "../models/FeeModel.js";
 import Student from "../models/studentModel.js";
-import { authMiddleware, adminOnly } from "../middleware/auth.js";
+import { auth, adminOnly } from "../middleware/auth.js";
 
 const router = express.Router();
 
 // GET all fees (admin) or fees for one student
-router.get("/", authMiddleware, async (req, res) => {
+router.get("/", auth(), async (req, res) => {
   try {
-    const query = req.user.role === "admin" ? {} : { studentId: req.user.studentId };
+    const studentId = req.user.studentId || req.user.id;
+    const query = req.user.role === "admin" ? {} : { studentId };
     const fees  = await Fee.find(query).populate("studentId", "name rollNo email").sort({ dueDate: 1 });
     res.json(fees);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // GET fees for specific student
-router.get("/:studentId", authMiddleware, async (req, res) => {
+router.get("/:studentId", auth(), async (req, res) => {
   try {
-    const fees = await Fee.find({ studentId: req.params.studentId }).sort({ dueDate: 1 });
+    const requestedId = req.params.studentId;
+
+    if (req.user.role !== "admin" && req.user.studentId !== requestedId && req.user.id !== requestedId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const fees = await Fee.find({ studentId: requestedId }).sort({ dueDate: 1 });
     res.json(fees);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // POST create fee
-router.post("/", authMiddleware, adminOnly, async (req, res) => {
+router.post("/", adminOnly, async (req, res) => {
   try {
     const { title, amount, category, due, studentId } = req.body;
     if (!title || !amount || !due) return res.status(400).json({ error: "title, amount, due required" });
@@ -43,15 +50,22 @@ router.post("/", authMiddleware, adminOnly, async (req, res) => {
 });
 
 // PATCH mark paid
-router.patch("/:id", authMiddleware, async (req, res) => {
+router.patch("/:id", auth(), async (req, res) => {
   try {
-    const fee = await Fee.findByIdAndUpdate(
+    const fee = await Fee.findById(req.params.id);
+    if (!fee) return res.status(404).json({ error: "Fee not found" });
+
+    // Only admin or the owning student may mark as paid
+    if (req.user.role !== "admin" && req.user.studentId !== fee.studentId.toString() && req.user.id !== fee.studentId.toString()) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const updated = await Fee.findByIdAndUpdate(
       req.params.id,
       { status: "paid", paidOn: new Date() },
       { new: true }
     );
-    if (!fee) return res.status(404).json({ error: "Fee not found" });
-    res.json({ fee });
+    res.json({ fee: updated });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 export default router;

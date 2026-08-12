@@ -1,6 +1,7 @@
 import express from "express";
 import Student from "../models/studentModel.js";
 import Attendance from "../models/attendanceModel.js";
+import Grade from "../models/GradeModel.js";
 import { authMiddleware, adminOnly } from "../middleware/auth.js";
 
 const router = express.Router();
