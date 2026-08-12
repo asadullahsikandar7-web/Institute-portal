@@ -1,5 +1,5 @@
 import express from "express";
-import { sendMail, smtpReady } from "../utils/mailer.js";
+import { sendMail } from "../utils/mailer.js";
 import { feedbackTemplate } from "../utils/emailTemplates.js";
 
 const router = express.Router();
@@ -11,10 +11,6 @@ router.post("/", async (req, res) => {
 
     if (!name?.trim() || !email?.trim() || !message?.trim()) {
       return res.status(400).json({ error: "Name, email, and message are required." });
-    }
-
-    if (!smtpReady) {
-      return res.status(503).json({ error: "SMTP server is not available. Please try again later." });
     }
 
     await sendMail({

@@ -75,14 +75,16 @@ router.post("/", auth("admin"), async (req, res) => {
 
     // If broadcast (recipientId is null), return count info
     if (recipientId === null || recipientId === undefined) {
-      // attempt to email all students (non-blocking)
+      // Email all students, awaited before responding — on Vercel's
+      // serverless runtime the function can freeze the instant the response
+      // is sent, so fire-and-forget sends here would routinely never complete.
       try {
         const students = await Student.find().select("email name");
         const recipients = students.map(s => s.email).filter(Boolean);
         const html = noticeTemplate({ title, message });
-        for (const r of recipients) {
-          sendMail({ to: r, subject: title, text: message, html }).catch(e => console.error('Broadcast email failed for', r, e.message || e));
-        }
+        await Promise.allSettled(recipients.map(r =>
+          sendMail({ to: r, subject: title, text: message, html }).catch(e => console.error('Broadcast email failed for', r, e.message || e))
+        ));
       } catch (e) { console.error('Broadcast email error', e.message || e); }
 
       const count = await Notification.countDocuments({

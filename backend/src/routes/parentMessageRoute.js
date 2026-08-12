@@ -57,16 +57,18 @@ router.post("/", auth("admin"), async (req, res) => {
 
     await msg.save();
     await msg.populate("studentId", "name rollNo");
-    // send email to parent (non-blocking)
+    // Send to the parent, awaited before responding — on Vercel's serverless
+    // runtime the function can freeze the instant the response is sent, so a
+    // fire-and-forget send here would routinely never complete.
     try {
       const html = parentMessageTemplate(msg);
-      if (sendMail) {
-        sendMail({ to: msg.parentEmail, subject: `${msg.title}`, text: msg.message, html })
-          .then(() => { msg.emailStatus = 'sent'; msg.save().catch(()=>{}); })
-          .catch(e => { msg.emailStatus = 'failed'; msg.save().catch(()=>{}); console.error('Parent email send failed', e.message || e); });
-      }
+      await sendMail({ to: msg.parentEmail, subject: `${msg.title}`, text: msg.message, html });
+      msg.emailStatus = 'sent';
+      await msg.save();
     } catch (e) {
-      console.error('Non-fatal parent email error', e.message || e);
+      msg.emailStatus = 'failed';
+      await msg.save().catch(()=>{});
+      console.error('Parent email send failed', e.message || e);
     }
     res.status(201).json(msg);
   } catch (err) {

@@ -90,16 +90,18 @@ router.post("/", auth("admin"), async (req, res) => {
   try {
     const classData = new Class(req.body);
     await classData.save();
-    // notify enrolled students if emails available
+    // Notify enrolled students, awaited before responding — on Vercel's
+    // serverless runtime the function can freeze the instant the response
+    // is sent, so fire-and-forget sends here would routinely never complete.
     try {
       await classData.populate("students", "name email");
       const html = classNoticeTemplate(classData);
       if (Array.isArray(classData.students) && classData.students.length) {
         const recipients = classData.students.map(s => s.email).filter(Boolean);
-        for (const r of recipients) {
+        await Promise.allSettled(recipients.map(r =>
           sendMail({ to: r, subject: `New class added: ${classData.className}`, text: `New class ${classData.className}`, html })
-            .catch(e => console.error('Class notification failed for', r, e.message || e));
-        }
+            .catch(e => console.error('Class notification failed for', r, e.message || e))
+        ));
       }
     } catch (e) {
       console.error('Non-fatal: class notification error', e.message || e);

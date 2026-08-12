@@ -84,24 +84,31 @@ router.post("/", auth("admin"), async (req, res) => {
     await student.save();
     const out = student.toObject();
     delete out.password;
-    res.status(201).json(out);
-    // send welcome email (non-blocking)
+
+    // Send the welcome (and optional parent) email BEFORE responding. On
+    // Vercel's serverless runtime, the function can be frozen the instant
+    // the HTTP response is sent — a fire-and-forget send kicked off after
+    // res.json() routinely never completes there, even though it looks
+    // fine in a long-running local `node server.js` process. Awaiting here
+    // costs a couple of seconds of response time, but that's the price of
+    // the email actually going out.
     try {
       const { sendMail } = await import("../utils/mailer.js");
       const { welcomeStudentTemplate } = await import("../utils/emailTemplates.js");
-      if (sendMail) {
-        const html = welcomeStudentTemplate(student, password);
-        const text = `Hey ${student.name}! Your ACADEXA account is ready.\n\nRoll Number: ${student.rollNo}\nPassword: ${password}\n\nLog in here: ${process.env.FRONTEND_URL || "https://institute-portal-psi.vercel.app"}`;
-        sendMail({ to: student.email, subject: `You're in, ${student.name}! 🎉 Your ACADEXA login is ready`, text, html })
-          .then(() => console.log(`✅ Welcome email sent to ${student.email}`))
-          .catch(e => console.error("❌ Welcome email failed:", e.message || e));
-        if (student.parentEmail) {
-          sendMail({ to: student.parentEmail, subject: `New Student Registered: ${student.name}`, text: `Your child ${student.name} has been registered.`, html }).catch(e => console.error("Parent welcome email failed:", e.message || e));
-        }
+      const html = welcomeStudentTemplate(student, password);
+      const text = `Hey ${student.name}! Your ACADEXA account is ready.\n\nRoll Number: ${student.rollNo}\nPassword: ${password}\n\nLog in here: ${process.env.FRONTEND_URL || "https://institute-portal-psi.vercel.app"}`;
+      await sendMail({ to: student.email, subject: `You're in, ${student.name}! 🎉 Your ACADEXA login is ready`, text, html });
+      console.log(`✅ Welcome email sent to ${student.email}`);
+      if (student.parentEmail) {
+        await sendMail({ to: student.parentEmail, subject: `New Student Registered: ${student.name}`, text: `Your child ${student.name} has been registered.`, html })
+          .catch(e => console.error("Parent welcome email failed:", e.message || e));
       }
     } catch (e) {
-      console.error("Non-fatal: welcome email error", e.message || e);
+      // Don't fail student creation just because the email didn't send.
+      console.error("❌ Welcome email failed:", e.message || e);
     }
+
+    res.status(201).json(out);
   } catch (err) {
     if (err.code === 11000)
       return res.status(400).json({ error: "Roll number already exists" });
