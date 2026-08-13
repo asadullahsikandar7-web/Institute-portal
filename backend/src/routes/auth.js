@@ -1,9 +1,17 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 import Student from "../models/studentModel.js";
 import Admin from "../models/adminModel.js";
 import { authMiddleware } from "../middleware/auth.js";
+
+// Belt-and-suspenders: server.js also calls dotenv.config(), but ES module
+// imports are hoisted above it, so any module whose top-level code reads
+// process.env (like the SECRET line below) can't rely on that. dotenv's
+// config() is idempotent, so calling it again here just guarantees this
+// specific module sees real .env values regardless of import order.
+dotenv.config();
 
 const router = express.Router();
 

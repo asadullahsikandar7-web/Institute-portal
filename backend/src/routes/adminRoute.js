@@ -1,7 +1,12 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 import Admin from "../models/adminModel.js";
+
+// See the matching comment in ./auth.js — guarantees this module sees the
+// real .env JWT_SECRET regardless of import order.
+dotenv.config();
 
 const router = express.Router();
 const SECRET = process.env.JWT_SECRET || "super_secret_key";

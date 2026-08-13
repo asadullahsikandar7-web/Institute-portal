@@ -74,7 +74,10 @@ import classRoutes from "./src/routes/classRoute.js";
 import analyticsRoutes from "./src/routes/AnalyticsRoute.js";
 import parentMessageRoutes from "./src/routes/parentMessageRoute.js";
 import feedbackRoutes from "./src/routes/feedbackRoute.js";
+import chatRoutes from "./src/routes/chatRoute.js";
 import { smtpReady, smtpLastError } from "./src/utils/mailer.js";
+import http from "http";
+import { attachChatSocket } from "./src/socket/chatSocket.js";
 // ═══════════════════════════════════════════════════════════════
 //  EXPRESS APP SETUP
 // ═══════════════════════════════════════════════════════════════
@@ -236,6 +239,7 @@ app.use("/api/grades", gradeRoutes);
 app.use("/api/exams", examRoutes);
 app.use("/api/timetable", timetableRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/chat", chatRoutes);
 
 // ═══════════════════════════════════════════════════════════════
 //  ERROR HANDLING MIDDLEWARE
@@ -269,10 +273,21 @@ app.use((err, req, res, next) => {
 if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
   const PORT = process.env.PORT || 5001;
 
-  const server = app.listen(PORT, () => {
+  // Socket.IO needs a real, persistent http.Server to hold WebSocket
+  // connections open — that only exists in this branch (a long-running
+  // process), never in the Vercel serverless branch below. This is what
+  // makes chat's real-time layer work locally, and in production if this
+  // same server.js is deployed to an always-on host (Render/Railway/Fly/
+  // a VPS) instead of — or alongside — the Vercel-hosted REST API.
+  const httpServer = http.createServer(app);
+  const io = attachChatSocket(httpServer, { allowedOrigins });
+  app.set("io", io);
+
+  const server = httpServer.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📍 Environment: ${process.env.NODE_ENV || "development"}`);
     console.log(`🗄️ Database: ${mongoose.connection.readyState === 1 ? "✅ Connected" : "❌ Connecting"}`);
+    console.log(`💬 Socket.IO chat attached`);
   });
 
   // Local error handlers

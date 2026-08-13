@@ -1,5 +1,11 @@
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 import Admin from "../models/adminModel.js";
+
+// See the matching comment in ../routes/auth.js — dotenv.config() here
+// guarantees this module sees the real .env JWT_SECRET regardless of
+// where it lands in server.js's import order.
+dotenv.config();
 
 const SECRET = process.env.JWT_SECRET || "super_secret_key";
 

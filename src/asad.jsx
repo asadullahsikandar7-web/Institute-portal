@@ -3,7 +3,7 @@
 //  Token lives ONLY in React state. Every module fetches from DB.
 // ═══════════════════════════════════════════════════════════════════
 
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -22,6 +22,18 @@ import {
   Minus, BarChart, PieChart, TrendingDown, Menu, Filter, Camera, Upload, ZoomIn,
   Play, Copy, Mail, Fingerprint, Sparkles, ShieldCheck
 } from "lucide-react";
+
+// Chat.jsx imports shared UI primitives (C, Card, Btn, ...) back from this
+// file, so it's loaded via a lazy dynamic import rather than a static one —
+// a static circular import here could try to read those bindings before
+// this module finishes evaluating them. Dynamic import() only runs once
+// this module (and its exports) are fully initialized, and as a bonus
+// keeps socket.io-client out of the initial bundle until Chat is opened.
+const StudentChatPage = lazy(() => import("./Chat.jsx").then(m => ({ default: m.StudentChatPage })));
+const AdminChatPage   = lazy(() => import("./Chat.jsx").then(m => ({ default: m.AdminChatPage })));
+const ChatPageFallback = () => (
+  <div style={{padding:60,textAlign:"center",color:C.txt2}}><Loader size={24} color={C.indigo} style={{animation:"spin 1s linear infinite",display:"block",margin:"0 auto 12px"}}/>Loading chat…</div>
+);
 // https://asad-backend2.vercel.app
 // ═════════════════════════════════════════════════════=
 //  BASE URL
@@ -147,6 +159,13 @@ function makeApi(token) {
     sendParentMessage:  (body)=> req("POST",   "/api/parent-messages", body),
     resendParentMsg:    (id)  => req("POST",   `/api/parent-messages/${id}`),
     deleteParentMsg:    (id)  => req("DELETE", `/api/parent-messages/${id}`),
+    // Chat
+    openConversation:    (studentId)          => req("POST",  "/api/chat/conversations", studentId ? { studentId } : undefined),
+    getConversations:    ()                   => req("GET",   "/api/chat/conversations"),
+    getChatMessages:     (conversationId,opts)=> req("GET",   `/api/chat/conversations/${conversationId}/messages${opts?.before?`?before=${encodeURIComponent(opts.before)}`:""}`),
+    sendChatMessage:      (conversationId,message)=> req("POST", "/api/chat/messages", { conversationId, message }),
+    markMessageRead:      (id)                => req("PATCH", `/api/chat/messages/${id}/read`),
+    markConversationRead: (conversationId)    => req("PATCH", `/api/chat/conversations/${conversationId}/read`),
   };
 }
 
@@ -462,6 +481,7 @@ const EmailStatusBadge = ({status,count}) => {
 // ══════════════════════════════════════════════════════
 const adminNav = [
   {key:"dashboard",   icon:<LayoutDashboard size={16}/>, label:"Dashboard"},
+  {key:"chat",        icon:<MessageSquare size={16}/>,   label:"Chat"},
   {key:"attendance",  icon:<CheckSquare size={16}/>,     label:"Attendance"},
   {key:"students",    icon:<Users size={16}/>,           label:"Students"},
   {key:"classes",     icon:<BookOpen size={16}/>,        label:"Classes"},
@@ -478,6 +498,7 @@ const adminNav = [
 
 const studentNav = [
   {key:"dashboard",    icon:<LayoutDashboard size={16}/>, label:"Dashboard"},
+  {key:"chat",         icon:<MessageSquare size={16}/>,   label:"Chat"},
   {key:"attendance",   icon:<CheckSquare size={16}/>,     label:"Attendance"},
   {key:"classes",      icon:<BookOpen size={16}/>,        label:"My Classes"},
   {key:"grades",       icon:<GraduationCap size={16}/>,   label:"My Grades"},
@@ -531,8 +552,16 @@ const Sidebar = ({nav,active,setActive,user,onLogout,collapsed,setCollapsed}) =>
               borderLeft:isActive?`2px solid ${C.indigo}`:"2px solid transparent",
               transition:"all 0.15s",width:"100%",justifyContent:collapsed?"center":"flex-start",
               paddingLeft:collapsed?10:isActive?10:12}}>
-            <span style={{flexShrink:0,color:isActive?C.indigo:C.txt2}}>{item.icon}</span>
-            {!collapsed && <span>{item.label}</span>}
+            <span style={{flexShrink:0,color:isActive?C.indigo:C.txt2,position:"relative"}}>
+              {item.icon}
+              {collapsed && !!item.badge && <span style={{position:"absolute",top:-4,right:-6,width:8,height:8,borderRadius:"50%",background:C.rose,border:`1.5px solid ${C.panel}`}}/>}
+            </span>
+            {!collapsed && <span style={{flex:1}}>{item.label}</span>}
+            {!collapsed && !!item.badge && (
+              <span style={{minWidth:18,height:18,padding:"0 5px",borderRadius:9,background:isActive?C.indigo:C.rose,color:"#fff",fontSize:10,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                {item.badge>99?"99+":item.badge}
+              </span>
+            )}
           </motion.button>
         );
       })}
@@ -2402,6 +2431,7 @@ const AdminDashboard = ({token,onLogout,theme,setTheme}) => {
   const [loading,   setLoading]   = useState(true);
   const [collapsed, setCollapsed] = useState(()=> typeof window !== "undefined" && window.innerWidth < 900);
   const [toastEl,   toast]        = useToast();
+  const [unreadChat,setUnreadChat]= useState(0);
 
   useEffect(()=>{
     Promise.all([api.getStudents(),api.getLeaves(),api.getAttendance(today())])
@@ -2410,12 +2440,23 @@ const AdminDashboard = ({token,onLogout,theme,setTheme}) => {
       .finally(()=>setLoading(false));
   },[]);
 
-  const pageTitles={dashboard:"Overview",attendance:"Attendance",students:"Students",classes:"Classes",exams:"Exams",grades:"Grades",leaves:"Leave Requests",fees:"Fee Management",timetable:"Timetable",announcements:"Announcements",parents:"Parent Communication",notifications:"Notifications",analytics:"Analytics"};
+  // Refetched whenever the active page changes — cheap, and guarantees the
+  // sidebar badge is correct after leaving Chat (where messages just got
+  // marked read) without needing a second always-on socket connection just
+  // to keep a badge in sync.
+  useEffect(()=>{
+    api.getConversations().then(list=>setUnreadChat(list.reduce((s,c)=>s+(c.unreadCount||0),0))).catch(()=>{});
+  },[view]);
+
+  const navWithBadges = useMemo(()=>adminNav.map(n=>n.key==="chat"?{...n,badge:unreadChat}:n),[unreadChat]);
+
+  const pageTitles={dashboard:"Overview",chat:"Chat",attendance:"Attendance",students:"Students",classes:"Classes",exams:"Exams",grades:"Grades",leaves:"Leave Requests",fees:"Fee Management",timetable:"Timetable",announcements:"Announcements",parents:"Parent Communication",notifications:"Notifications",analytics:"Analytics"};
 
   const renderPage=()=>{
     if(loading) return <div style={{padding:60,textAlign:"center",color:C.txt2}}><Loader size={28} color={C.indigo} style={{animation:"spin 1s linear infinite",display:"block",margin:"0 auto 14px"}}/>Loading system data…</div>;
     switch(view){
       case "dashboard":    return <AdminOverview students={students} attendance={attendance} leaves={leaves} api={api} toast={toast}/>;
+      case "chat":          return <Suspense fallback={<ChatPageFallback/>}><AdminChatPage api={api} token={token}/></Suspense>;
       case "attendance":   return <AttendancePage students={students} attendance={attendance} setAttendance={setAttendance} api={api} toast={toast}/>;
       case "students":     return <StudentsPage students={students} setStudents={setStudents} api={api} toast={toast}/>;
       case "classes":      return <ClassesPage api={api} toast={toast}/>;
@@ -2434,7 +2475,7 @@ const AdminDashboard = ({token,onLogout,theme,setTheme}) => {
 
   return (
     <div style={{display:"flex",minHeight:"100vh",background:C.bg,fontFamily:F,color:C.txt,position:"relative"}}>
-      <Sidebar nav={adminNav} active={view} setActive={setView} user={{name:"Admin",role:"Administrator"}} onLogout={onLogout} collapsed={collapsed} setCollapsed={setCollapsed}/>
+      <Sidebar nav={navWithBadges} active={view} setActive={setView} user={{name:"Admin",role:"Administrator"}} onLogout={onLogout} collapsed={collapsed} setCollapsed={setCollapsed}/>
       <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0,position:"relative"}}>
         <TopBar title={pageTitles[view]||"ACADEXA by ASAD"} subtitle={`${students.length} students enrolled`}
           theme={theme}
@@ -2479,11 +2520,21 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
   const [loading, setLoading]  = useState(true);
   const [collapsed,setCollapsed]=useState(()=> typeof window !== "undefined" && window.innerWidth < 900);
   const [toastEl, toast]       = useToast();
+  const [unreadChat,setUnreadChat]=useState(0);
   const sid=student._id||student.id||"";
 
   useEffect(()=>{
     api.getLeaves().then(setLeaves).catch(e=>toast(e.message)).finally(()=>setLoading(false));
   },[]);
+
+  // Refetched on every page change — see the matching comment in
+  // AdminDashboard for why this (rather than a persistent background
+  // socket) is enough to keep the sidebar badge correct.
+  useEffect(()=>{
+    api.getConversations().then(list=>setUnreadChat(list.reduce((s,c)=>s+(c.unreadCount||0),0))).catch(()=>{});
+  },[view]);
+
+  const navWithBadges = useMemo(()=>studentNav.map(n=>n.key==="chat"?{...n,badge:unreadChat}:n),[unreadChat]);
 
   // Student attendance page
   const StudentAttendancePage = () => {
@@ -2930,12 +2981,13 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
     );
   };
 
-  const pageTitles={dashboard:"My Dashboard",attendance:"My Attendance",grades:"My Grades",leaves:"Leave Requests",fees:"My Fees",timetable:"Timetable",announcements:"Notices",classes:"My Classes",notifications:"Notifications"};
+  const pageTitles={dashboard:"My Dashboard",chat:"Chat",attendance:"My Attendance",grades:"My Grades",leaves:"Leave Requests",fees:"My Fees",timetable:"Timetable",announcements:"Notices",classes:"My Classes",notifications:"Notifications"};
 
   const renderPage=()=>{
     if(loading) return <div style={{padding:60,textAlign:"center",color:C.txt2}}><Loader size={24} color={C.violet} style={{animation:"spin 1s linear infinite",display:"block",margin:"0 auto 12px"}}/>Loading…</div>;
     switch(view){
       case "dashboard":     return <StudentOverview/>;
+      case "chat":          return <Suspense fallback={<ChatPageFallback/>}><StudentChatPage api={api} token={token}/></Suspense>;
       case "attendance":    return <StudentAttendancePage/>;
       case "classes":       return <StudentClasses/>;
       case "grades":        return <GradesPage students={[student]} api={api} toast={toast} isAdmin={false}/>;
@@ -2950,7 +3002,7 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
 
   return (
     <div style={{display:"flex",minHeight:"100vh",background:C.bg,fontFamily:F,color:C.txt}}>
-      <Sidebar nav={studentNav} active={view} setActive={setView} user={{name:student.name,role:`Roll #${student.rollNo}`}} onLogout={onLogout} collapsed={collapsed} setCollapsed={setCollapsed}/>
+      <Sidebar nav={navWithBadges} active={view} setActive={setView} user={{name:student.name,role:`Roll #${student.rollNo}`}} onLogout={onLogout} collapsed={collapsed} setCollapsed={setCollapsed}/>
       <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0}}>
         <TopBar title={pageTitles[view]||"Student Portal"} theme={theme} onToggleSidebar={()=>setCollapsed(p=>!p)} actions={<ThemeSwitcher theme={theme} setTheme={setTheme}/>}/>
         <div style={{flex:1,padding:"24px 28px",overflowY:"auto"}}>
@@ -3254,6 +3306,11 @@ const Login = ({onLogin, theme, setTheme}) => {
     </div>
   );
 };
+
+// Shared UI primitives, re-exported so Chat.jsx (and any other future
+// module) can build screens that are visually consistent with the rest of
+// the app instead of duplicating styles.
+export { themes, C, F, fmt, fmtShort, Avatar, Pill, StatusPill, Card, Btn, Input, SectionHeader, useToast, ThemeSwitcher };
 
 // ══════════════════════════════════════════════════════
 //  ROOT — session lives ONLY in React state, zero storage
