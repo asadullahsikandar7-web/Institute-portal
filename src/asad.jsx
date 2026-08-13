@@ -350,7 +350,7 @@ const StatCard = ({label,value,sub,color,icon,trend,delay=0,onClick,active}) => 
 );
 
 const SectionHeader = ({title,subtitle,icon,action}) => (
-  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:10}}>
     <div style={{display:"flex",alignItems:"center",gap:12}}>
       <div style={{width:36,height:36,borderRadius:10,background:`${C.indigo}18`,
         display:"flex",alignItems:"center",justifyContent:"center",color:C.indigo}}>{icon}</div>
@@ -690,7 +690,7 @@ const StudentDrawer = ({student,api,onClose}) => {
             </div>
             <button onClick={onClose} style={{background:"rgba(255,255,255,0.06)",border:`1px solid ${C.border}`,borderRadius:9,padding:8,cursor:"pointer",color:C.txt2,display:"flex"}}><X size={15}/></button>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:24}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(70px,1fr))",gap:8,marginBottom:24}}>
             {[{label:"Attendance",value:`${attRate}%`,color:attRate>=75?C.emerald:C.rose},{label:"GPA",value:gpa,color:C.indigo},{label:"Avg Score",value:`${avgPct}%`,color:C.cyan},{label:"Streak",value:`${(()=>{let s=0;for(let i=history.length-1;i>=0;i--){if(history[i]?.status==="present")s++;else break;}return s;})()}d`,color:C.amber}].map(k=>(
               <div key={k.label} style={{background:"rgba(255,255,255,0.04)",borderRadius:12,padding:"12px 8px",border:`1px solid ${C.border}`,textAlign:"center"}}>
                 <div style={{fontSize:18,fontWeight:800,color:k.color,lineHeight:1}}>{k.value}</div>
@@ -847,7 +847,7 @@ const ClassesPage = ({api,toast}) => {
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
         <StatCard label="Total Classes" value={classes.length} color={C.indigo} icon={<BookOpen size={15}/>} delay={0}/>
         <StatCard label="Tomorrow's Classes" value={tomorrowClasses?.classes?.length||0} color={C.cyan} icon={<Calendar size={15}/>} delay={0.05}/>
         <StatCard label="Active Semesters" value={new Set(classes.map(c=>c.semester)).size} color={C.emerald} icon={<Layers size={15}/>} delay={0.1}/>
@@ -914,7 +914,7 @@ const ClassesPage = ({api,toast}) => {
       </AnimatePresence>
 
       <Card style={{padding:22}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:10}}>
           <SectionHeader title="All Classes" icon={<BookOpen size={15}/>} subtitle="Semester wise schedule"/>
           <Btn size="sm" onClick={()=>setShowAdd(p=>!p)}><PlusCircle size={13}/>{showAdd?"Cancel":"Add Class"}</Btn>
         </div>
@@ -923,7 +923,7 @@ const ClassesPage = ({api,toast}) => {
           {showAdd&&(
             <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden",marginBottom:16}}>
               <div style={{padding:14,background:"rgba(255,255,255,0.02)",borderRadius:12,border:`1px solid ${C.border}`}}>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:10,marginBottom:12}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10,marginBottom:12}}>
                   <Input placeholder="Class Code *" value={newCls.classCode} onChange={e=>setNewCls(p=>({...p,classCode:e.target.value}))}/>
                   <Input placeholder="Class Name *" value={newCls.className} onChange={e=>setNewCls(p=>({...p,className:e.target.value}))}/>
                   <Input placeholder="Teacher *" value={newCls.teacher} onChange={e=>setNewCls(p=>({...p,teacher:e.target.value}))}/>
@@ -953,7 +953,7 @@ const ClassesPage = ({api,toast}) => {
                 {classes.filter(c=>c.semester===sem).map((c,i)=>(
                   <motion.div key={c._id} initial={{opacity:0,x:-10}} animate={{opacity:1,x:0}} transition={{delay:i*0.05}}>
                     <Card style={{padding:16,marginBottom:8}}>
-                      <div style={{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1fr 1fr auto",alignItems:"center",gap:12}}>
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",alignItems:"center",gap:12}}>
                         <div>
                           <div style={{fontSize:13,fontWeight:700,color:C.txt}}>{c.className}</div>
                           <div style={{fontSize:11,color:C.txt2}}>{c.classCode} · {c.teacher}</div>
@@ -1008,7 +1008,7 @@ const NotificationsPage = ({api,toast}) => {
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
         <StatCard label="Total Notifications" value={notifications.length} color={C.indigo} icon={<Bell size={15}/>} delay={0}/>
         <StatCard label="Unread" value={unread} color={C.rose} icon={<AlertCircle size={15}/>} delay={0.05}/>
         <StatCard label="Today" value={notifications.filter(n=>n.createdAt&&new Date(n.createdAt).toDateString()===new Date().toDateString()).length} color={C.cyan} icon={<Calendar size={15}/>} delay={0.1}/>
@@ -1016,8 +1016,8 @@ const NotificationsPage = ({api,toast}) => {
       </div>
 
       <Card style={{padding:18}}>
-        <div style={{display:"flex",gap:10,justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{display:"flex",gap:3,background:"rgba(255,255,255,0.03)",border:`1px solid ${C.border}`,borderRadius:10,padding:3}}>
+        <div style={{display:"flex",gap:10,justifyContent:"space-between",alignItems:"center",flexWrap:"wrap"}}>
+          <div style={{display:"flex",gap:3,background:"rgba(255,255,255,0.03)",border:`1px solid ${C.border}`,borderRadius:10,padding:3,flexWrap:"wrap"}}>
             {["all","attendance","grade","fee","notice","announcement","alert"].map(t=>(
               <button key={t} onClick={()=>setFilter(t)}
                 style={{padding:"5px 12px",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:"none",fontFamily:F,transition:"all 0.14s",background:filter===t?C.indigo:"transparent",color:filter===t?"#fff":C.txt2}}>
@@ -1109,7 +1109,7 @@ const AdminOverview = ({students,attendance,leaves,api,toast}) => {
   return (
     <div style={{display:"flex",flexDirection:"column",gap:22}}>
       <motion.div initial={{opacity:0,y:16}} animate={{opacity:1,y:0}}
-        style={{background:`linear-gradient(135deg,${C.indigo}18,${C.surface} 60%)`,border:`1px solid ${C.indigo}30`,borderRadius:20,padding:"24px 28px",display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:`0 0 60px ${C.indigo}08`}}>
+        style={{background:`linear-gradient(135deg,${C.indigo}18,${C.surface} 60%)`,border:`1px solid ${C.indigo}30`,borderRadius:20,padding:"24px 28px",display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:`0 0 60px ${C.indigo}08`,flexWrap:"wrap",gap:14}}>
         <div>
           <div style={{fontSize:12,color:C.indigo,fontWeight:700,letterSpacing:1,marginBottom:4}}>GOOD {new Date().getHours()<12?"MORNING":"AFTERNOON"} ☀️</div>
           <div style={{fontSize:22,fontWeight:900,color:C.txt,letterSpacing:-0.5}}>Welcome back, Admin</div>
@@ -1122,14 +1122,14 @@ const AdminOverview = ({students,attendance,leaves,api,toast}) => {
         </div>
       </motion.div>
 
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
         <StatCard label="Total Students" value={totalStudents} color={C.indigo} icon={<Users size={16}/>} trend={analytics?.studentGrowth??5} delay={0.05}/>
         <StatCard label="Present Today" value={presentToday} color={C.emerald} icon={<UserCheck size={16}/>} sub={`of ${totalStudents}`} delay={0.1}/>
         <StatCard label="Leave Requests" value={pendingLeaves} color={C.amber} icon={<FileText size={16}/>} sub="pending review" delay={0.15}/>
         <StatCard label="Attendance Rate" value={`${analytics?.avgAttendance??attRate}%`} color={(analytics?.avgAttendance??attRate)>=75?C.emerald:C.rose} icon={<Activity size={16}/>} trend={analytics?.attendanceTrend??0} delay={0.2}/>
       </div>
 
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:16}}>
         <Card style={{padding:22}}>
           <div style={{fontSize:11,fontWeight:700,color:C.txt2,letterSpacing:1,marginBottom:4}}>WEEKLY ATTENDANCE TREND</div>
           <div style={{fontSize:28,fontWeight:900,color:C.txt,marginBottom:2}}>{weekData[weekData.length-1]}%</div>
@@ -1230,7 +1230,7 @@ const AttendancePage = ({students,attendance,setAttendance,api,toast}) => {
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:12}}>
         {[{key:"all",label:"Total",v:stats.total,col:C.indigo,icon:<Users size={14}/>},{key:"present",label:"Present",v:stats.present,col:C.emerald,icon:<CheckCircle size={14}/>},{key:"absent",label:"Absent",v:stats.absent,col:C.rose,icon:<XCircle size={14}/>},{key:"leave",label:"On Leave",v:stats.leave,col:C.violet,icon:<CalendarDays size={14}/>},{key:"unmarked",label:"Unmarked",v:stats.unmarked,col:C.amber,icon:<Clock size={14}/>}].map((c,i)=>(
           <StatCard key={c.key} label={c.label} value={c.v} color={c.col} icon={c.icon} delay={i*0.05} onClick={()=>setFilter(filter===c.key?"all":c.key)} active={filter===c.key}/>
         ))}
@@ -1250,7 +1250,8 @@ const AttendancePage = ({students,attendance,setAttendance,api,toast}) => {
         </div>
       </Card>
       <Card style={{overflow:"hidden"}}>
-        <div style={{display:"grid",gridTemplateColumns:"2fr 2fr 0.7fr 1fr 180px",padding:"10px 20px",background:"rgba(255,255,255,0.02)",borderBottom:`1px solid ${C.border}`}}>
+      <div style={{overflowX:"auto"}}>
+        <div style={{display:"grid",gridTemplateColumns:"2fr 2fr 0.7fr 1fr 180px",padding:"10px 20px",background:"rgba(255,255,255,0.02)",borderBottom:`1px solid ${C.border}`,minWidth:640}}>
           {["Student","Email","Roll","Status","Actions"].map(h=><div key={h} style={{fontSize:9,fontWeight:700,color:C.dim,letterSpacing:1}}>{h.toUpperCase()}</div>)}
         </div>
         {loading&&<div style={{padding:48,textAlign:"center",color:C.txt2}}><Loader size={20} color={C.indigo} style={{animation:"spin 1s linear infinite",display:"block",margin:"0 auto 10px"}}/>Loading…</div>}
@@ -1259,7 +1260,7 @@ const AttendancePage = ({students,attendance,setAttendance,api,toast}) => {
             const status=getStatus(s._id);
             return (
               <motion.div key={s._id} initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} exit={{opacity:0}} transition={{delay:i*0.025}}
-                style={{display:"grid",gridTemplateColumns:"2fr 2fr 0.7fr 1fr 180px",padding:"12px 20px",borderBottom:`1px solid ${C.border}`,alignItems:"center",transition:"background 0.12s"}}
+                style={{display:"grid",gridTemplateColumns:"2fr 2fr 0.7fr 1fr 180px",padding:"12px 20px",borderBottom:`1px solid ${C.border}`,alignItems:"center",transition:"background 0.12s",minWidth:640}}
                 onMouseEnter={e=>e.currentTarget.style.background="rgba(108,99,255,0.04)"}
                 onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -1294,6 +1295,7 @@ const AttendancePage = ({students,attendance,setAttendance,api,toast}) => {
             );
           })}
         </AnimatePresence>
+      </div>
         <div style={{padding:"9px 20px",borderTop:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between"}}>
           <span style={{fontSize:11,color:C.dim}}>{filtered.length} of {students.length} students</span>
           <span style={{fontSize:11,color:C.dim}}>{stats.present}P · {stats.absent}A · {stats.leave}L · {stats.unmarked} unmarked</span>
@@ -1381,7 +1383,7 @@ const StudentsPage = ({students,setStudents,api,toast}) => {
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
         <StatCard label="Total Enrolled" value={students.length} color={C.indigo} icon={<Users size={15}/>} delay={0}/>
         <StatCard label="With Photos" value={students.filter(s=>s.photo).length} color={C.emerald} icon={<Camera size={15}/>} delay={0.05}/>
         <StatCard label="New This Semester" value={Math.max(1,Math.round(students.length*0.18))} color={C.cyan} icon={<PlusCircle size={15}/>} delay={0.1}/>
@@ -1397,7 +1399,7 @@ const StudentsPage = ({students,setStudents,api,toast}) => {
         <AnimatePresence>
           {showAdd&&(
             <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 0.7fr 0.7fr auto",gap:8,marginTop:14}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:8,marginTop:14}}>
                 {[["name","Full name"],["email","Email"],["rollNo","Roll No"],["password","Password"]].map(([f,ph])=>(
                   <Input key={f} placeholder={ph} value={newS[f]} onChange={e=>setNewS(p=>({...p,[f]:e.target.value}))}/>
                 ))}
@@ -1496,13 +1498,13 @@ const ExamsPage = ({students,api,toast}) => {
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
         <StatCard label="Total Exams" value={exams.length} color={C.cyan} icon={<BookMarked size={15}/>} delay={0}/>
         <StatCard label="Completed" value={exams.filter(e=>e.status==="completed").length} color={C.emerald} icon={<CheckCircle size={15}/>} delay={0.05}/>
         <StatCard label="Upcoming" value={exams.filter(e=>e.status==="upcoming").length} color={C.amber} icon={<Clock size={15}/>} delay={0.1}/>
       </div>
       <Card style={{padding:22}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:10}}>
           <SectionHeader title="Exam Schedule" icon={<BookMarked size={15}/>} subtitle="All scheduled examinations"/>
           <Btn size="sm" onClick={()=>setShowAdd(p=>!p)}><PlusCircle size={13}/>{showAdd?"Cancel":"Add Exam"}</Btn>
         </div>
@@ -1510,7 +1512,7 @@ const ExamsPage = ({students,api,toast}) => {
           {showAdd&&(
             <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden",marginBottom:16}}>
               <div style={{display:"flex",flexDirection:"column",gap:10,padding:"16px",background:"rgba(255,255,255,0.02)",borderRadius:12,border:`1px solid ${C.border}`}}>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 0.5fr",gap:8}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:8}}>
                   <Input placeholder="Exam name" value={newExam.name} onChange={e=>setNewExam(p=>({...p,name:e.target.value}))}/>
                   <Input placeholder="Subject" value={newExam.subject} onChange={e=>setNewExam(p=>({...p,subject:e.target.value}))}/>
                   <Input type="date" value={newExam.date} onChange={e=>setNewExam(p=>({...p,date:e.target.value}))}/>
@@ -1535,7 +1537,7 @@ const ExamsPage = ({students,api,toast}) => {
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {exams.map((exam,i)=>(
             <motion.div key={exam._id||exam.id} initial={{opacity:0,x:-10}} animate={{opacity:1,x:0}} transition={{delay:i*0.06}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 18px",background:"rgba(255,255,255,0.02)",borderRadius:14,border:`1px solid ${C.border}`,transition:"border-color 0.2s"}}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 18px",background:"rgba(255,255,255,0.02)",borderRadius:14,border:`1px solid ${C.border}`,transition:"border-color 0.2s",flexWrap:"wrap",gap:10}}
                 onMouseEnter={e=>e.currentTarget.style.borderColor=C.borderMd}
                 onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
                 <div style={{display:"flex",gap:14,alignItems:"center"}}>
@@ -1600,15 +1602,15 @@ const GradesPage = ({students,api,toast,isAdmin=true}) => {
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
         <StatCard label="Subjects Recorded" value={grades.length} color={C.indigo} icon={<BookMarked size={15}/>} delay={0}/>
         <StatCard label="Average Score" value={`${avgPct}%`} color={gradeColor(avgPct)} icon={<TrendingUp size={15}/>} delay={0.05}/>
         <StatCard label="Overall Grade" value={gradeLabel(avgPct)} color={gradeColor(avgPct)} icon={<Award size={15}/>} delay={0.1}/>
       </div>
       <Card style={{padding:22}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:10}}>
           <SectionHeader title="Grade Report" icon={<GraduationCap size={15}/>} subtitle="Academic performance tracking"/>
-          <div style={{display:"flex",gap:10}}>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
             {isAdmin&&students.length>1&&(
               <select value={selected} onChange={e=>setSelected(e.target.value)}
                 style={{background:C.surface2,border:`1px solid ${C.border}`,borderRadius:10,padding:"8px 14px",color:C.txt,fontFamily:F,fontSize:13,outline:"none"}}>
@@ -1619,7 +1621,7 @@ const GradesPage = ({students,api,toast,isAdmin=true}) => {
           </div>
         </div>
         {student&&(
-          <div style={{display:"flex",gap:16,alignItems:"center",padding:"16px 18px",background:`linear-gradient(135deg,${C.indigo}12,rgba(255,255,255,0.02))`,borderRadius:14,border:`1px solid ${C.indigo}25`,marginBottom:18}}>
+          <div style={{display:"flex",gap:16,alignItems:"center",padding:"16px 18px",background:`linear-gradient(135deg,${C.indigo}12,rgba(255,255,255,0.02))`,borderRadius:14,border:`1px solid ${C.indigo}25`,marginBottom:18,flexWrap:"wrap"}}>
             <Avatar name={student.name} size={44} color={C.indigo} img={student.photo||undefined}/>
             <div style={{flex:1}}>
               <div style={{fontSize:15,fontWeight:700,color:C.txt}}>{student.name}</div>
@@ -1638,7 +1640,7 @@ const GradesPage = ({students,api,toast,isAdmin=true}) => {
         <AnimatePresence>
           {showAdd&&(
             <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden",marginBottom:16}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 0.5fr 0.5fr auto",gap:8,padding:"14px",background:"rgba(255,255,255,0.02)",borderRadius:12,border:`1px solid ${C.border}`}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8,padding:"14px",background:"rgba(255,255,255,0.02)",borderRadius:12,border:`1px solid ${C.border}`}}>
                 <Input placeholder="Subject" value={newGrade.subject} onChange={e=>setNewGrade(p=>({...p,subject:e.target.value}))}/>
                 <Input placeholder="Exam name" value={newGrade.examName} onChange={e=>setNewGrade(p=>({...p,examName:e.target.value}))}/>
                 <Input type="number" placeholder="Marks" value={newGrade.marks} onChange={e=>setNewGrade(p=>({...p,marks:e.target.value}))}/>
@@ -1655,7 +1657,7 @@ const GradesPage = ({students,api,toast,isAdmin=true}) => {
             const pct=Math.round(g.marks/g.maxMarks*100);
             return (
               <motion.div key={g._id||i} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{delay:i*0.06}}>
-                <div style={{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1fr 1fr",alignItems:"center",gap:10,padding:"14px 16px",background:"rgba(255,255,255,0.02)",borderRadius:12,border:`1px solid ${C.border}`}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",alignItems:"center",gap:10,padding:"14px 16px",background:"rgba(255,255,255,0.02)",borderRadius:12,border:`1px solid ${C.border}`}}>
                   <div>
                     <div style={{fontSize:13,fontWeight:700,color:C.txt}}>{g.subject}</div>
                     <div style={{fontSize:11,color:C.txt2}}>{g.examName}</div>
@@ -1718,21 +1720,21 @@ const FeesPage = ({students,api,toast,studentId=null,isAdmin=true}) => {
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
         <StatCard label="Total Fees" value={`₨${(total/1000).toFixed(0)}K`} color={C.indigo} icon={<CreditCard size={15}/>} delay={0}/>
         <StatCard label="Paid" value={`₨${(paid/1000).toFixed(0)}K`} color={C.emerald} icon={<CheckCircle size={15}/>} delay={0.05}/>
         <StatCard label="Unpaid" value={`₨${(unpaid/1000).toFixed(0)}K`} color={C.rose} icon={<XCircle size={15}/>} delay={0.1}/>
         <StatCard label="Overdue" value={fees.filter(f=>f.status==="overdue").length} color={C.orange} icon={<AlertTriangle size={15}/>} delay={0.15}/>
       </div>
       <Card style={{padding:22}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:10}}>
           <SectionHeader title="Fee Records" icon={<CreditCard size={15}/>} subtitle="All fee transactions"/>
           {isAdmin&&<Btn size="sm" onClick={()=>setShowAdd(p=>!p)}><PlusCircle size={13}/>{showAdd?"Cancel":"Add Fee"}</Btn>}
         </div>
         <AnimatePresence>
           {showAdd&&(
             <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden",marginBottom:16}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 0.7fr 0.8fr 0.8fr auto",gap:8,padding:"14px",background:"rgba(255,255,255,0.02)",borderRadius:12,border:`1px solid ${C.border}`}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8,padding:"14px",background:"rgba(255,255,255,0.02)",borderRadius:12,border:`1px solid ${C.border}`}}>
                 <Input placeholder="Fee title" value={newFee.title} onChange={e=>setNewFee(p=>({...p,title:e.target.value}))}/>
                 <Input type="number" placeholder="Amount ₨" value={newFee.amount} onChange={e=>setNewFee(p=>({...p,amount:e.target.value}))}/>
                 <Input type="date" value={newFee.due} onChange={e=>setNewFee(p=>({...p,due:e.target.value}))}/>
@@ -1749,7 +1751,7 @@ const FeesPage = ({students,api,toast,studentId=null,isAdmin=true}) => {
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {fees.map((fee,i)=>(
             <motion.div key={fee._id||i} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{delay:i*0.07}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 18px",background:"rgba(255,255,255,0.02)",borderRadius:14,border:`1px solid ${C.border}`,transition:"border-color 0.2s"}}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 18px",background:"rgba(255,255,255,0.02)",borderRadius:14,border:`1px solid ${C.border}`,transition:"border-color 0.2s",flexWrap:"wrap",gap:10}}
                 onMouseEnter={e=>e.currentTarget.style.borderColor=C.borderMd}
                 onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
                 <div style={{display:"flex",gap:14,alignItems:"center"}}>
@@ -1828,14 +1830,14 @@ const TimetablePage = ({api,toast,isAdmin=false}) => {
   return (
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
       <Card style={{padding:22}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:10}}>
           <SectionHeader title="Class Timetable" icon={<Grid size={15}/>} subtitle="Weekly schedule"/>
           {isAdmin&&<Btn size="sm" onClick={()=>setShowAdd(p=>!p)}><PlusCircle size={13}/>{showAdd?"Cancel":"Add Class"}</Btn>}
         </div>
         <AnimatePresence>
           {showAdd&&(
             <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden",marginBottom:16}}>
-              <div style={{display:"grid",gridTemplateColumns:"0.7fr 0.7fr 1fr 1fr 0.7fr auto",gap:8,padding:"14px",background:"rgba(255,255,255,0.02)",borderRadius:12,border:`1px solid ${C.border}`}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:8,padding:"14px",background:"rgba(255,255,255,0.02)",borderRadius:12,border:`1px solid ${C.border}`}}>
                 <Select value={newCls.day} onChange={e=>setNewCls(p=>({...p,day:e.target.value}))}>
                   {days.map(d=><option key={d} value={d} style={{background:C.surface2}}>{d}</option>)}
                 </Select>
@@ -1923,8 +1925,8 @@ const AnnouncementsPage = ({isAdmin,api,toast}) => {
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
       {isAdmin&&(
         <Card style={{padding:"14px 18px"}}>
-          <div style={{display:"flex",gap:10,justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{display:"flex",gap:4,background:"rgba(255,255,255,0.03)",border:`1px solid ${C.border}`,borderRadius:10,padding:3}}>
+          <div style={{display:"flex",gap:10,justifyContent:"space-between",alignItems:"center",flexWrap:"wrap"}}>
+            <div style={{display:"flex",gap:4,background:"rgba(255,255,255,0.03)",border:`1px solid ${C.border}`,borderRadius:10,padding:3,flexWrap:"wrap"}}>
               {["all","exam","fee","event","general"].map(f=>(
                 <button key={f} onClick={()=>setFilter(f)}
                   style={{padding:"5px 12px",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:"none",fontFamily:F,transition:"all 0.14s",background:filter===f?C.indigo:"transparent",color:filter===f?"#fff":C.txt2}}>
@@ -2011,7 +2013,7 @@ const LeavePanelPage = ({leaves,setLeaves,api,toast}) => {
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
         {[["pending",C.amber],["approved",C.emerald],["rejected",C.rose]].map(([s,c])=>(
           <StatCard key={s} label={s.charAt(0).toUpperCase()+s.slice(1)} value={leaves.filter(l=>l.status===s).length} color={c} icon={<FileText size={15}/>}/>
         ))}
@@ -2046,7 +2048,7 @@ const LeavePanelPage = ({leaves,setLeaves,api,toast}) => {
                   </div>
                   <StatusPill status={l.status}/>
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:9,marginBottom:14}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:9,marginBottom:14}}>
                   {[{label:"Type",value:l.type},{label:"From",value:fmt(l.from)},{label:"To",value:fmt(l.to)},{label:"Days",value:`${days}d`},{label:"Applied",value:fmt(l.appliedAt)}].map(x=>(
                     <div key={x.label} style={{background:"rgba(255,255,255,0.03)",borderRadius:9,padding:"9px 12px",border:`1px solid ${C.border}`}}>
                       <div style={{fontSize:9,color:C.txt2,letterSpacing:0.8,marginBottom:3,fontWeight:700}}>{x.label.toUpperCase()}</div>
@@ -2098,7 +2100,7 @@ const AnalyticsPage = ({students,api}) => {
   return (
     <div style={{display:"flex",flexDirection:"column",gap:20}}>
       <motion.div initial={{opacity:0,y:16}} animate={{opacity:1,y:0}}
-        style={{background:`linear-gradient(135deg,${C.cyan}18,${C.surface} 60%)`,border:`1px solid ${C.cyan}30`,borderRadius:16,padding:"18px 22px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        style={{background:`linear-gradient(135deg,${C.cyan}18,${C.surface} 60%)`,border:`1px solid ${C.cyan}30`,borderRadius:16,padding:"18px 22px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
         <div>
           <div style={{fontSize:11,color:C.cyan,fontWeight:700,letterSpacing:1,marginBottom:2}}>📊 SYSTEM ANALYTICS</div>
           <div style={{fontSize:13,color:C.txt2}}>Generated {lastUpdate.toLocaleDateString("en-US",{month:"short",day:"2-digit"})} at {updateTime}</div>
@@ -2109,7 +2111,7 @@ const AnalyticsPage = ({students,api}) => {
         </div>
       </motion.div>
       
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
         <StatCard label="Avg Attendance" value={`${data?.avgAttendance??76}%`} color={C.indigo} icon={<Activity size={15}/>} trend={data?.attendanceTrend??4} delay={0}/>
         <StatCard label="Class Avg Grade" value={data?.avgGrade??"B"} color={C.emerald} icon={<GraduationCap size={15}/>} delay={0.05}/>
         <StatCard label="Passing Rate" value={`${data?.passingRate??94}%`} color={C.cyan} icon={<TrendingUp size={15}/>} delay={0.1}/>
@@ -2118,7 +2120,7 @@ const AnalyticsPage = ({students,api}) => {
       {loading&&<Card style={{padding:48,textAlign:"center"}}><Loader size={20} color={C.indigo} style={{animation:"spin 1s linear infinite",display:"block",margin:"0 auto 10px"}}/></Card>}
       {!loading&&(
         <>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:16}}>
             <Card style={{padding:22}}>
               <div style={{fontSize:11,fontWeight:700,color:C.txt2,letterSpacing:1,marginBottom:4}}>ATTENDANCE TREND (7 WEEKS)</div>
               <div style={{fontSize:28,fontWeight:900,color:C.txt,marginBottom:2}}>{weeklyAtt[weeklyAtt.length-1]}%</div>
@@ -2251,7 +2253,7 @@ const ParentsPage = ({students,api,toast}) => {
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
         <StatCard label="Total Messages" value={counts.total} color={C.indigo} icon={<MessageSquare size={15}/>} delay={0}/>
         <StatCard label="Emails Sent" value={counts.sent} color={C.emerald} icon={<CheckCircle size={15}/>} delay={0.05}/>
         <StatCard label="Failed" value={counts.failed} color={C.rose} icon={<XCircle size={15}/>} delay={0.1}/>
@@ -2259,7 +2261,7 @@ const ParentsPage = ({students,api,toast}) => {
       </div>
       <Card style={{padding:"14px 18px"}}>
         <div style={{display:"flex",gap:10,justifyContent:"space-between",alignItems:"center",flexWrap:"wrap"}}>
-          <div style={{display:"flex",gap:3,background:"rgba(255,255,255,0.03)",border:`1px solid ${C.border}`,borderRadius:10,padding:3}}>
+          <div style={{display:"flex",gap:3,background:"rgba(255,255,255,0.03)",border:`1px solid ${C.border}`,borderRadius:10,padding:3,flexWrap:"wrap"}}>
             {["all","announcement","complaint","achievement","warning"].map(t=>(
               <button key={t} onClick={()=>setFilterType(t)}
                 style={{padding:"5px 11px",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:"none",fontFamily:F,transition:"all 0.14s",background:filterType===t?(typeConfig[t]||{color:C.indigo}).color||C.indigo:"transparent",color:filterType===t?"#fff":C.txt2}}>
@@ -2278,7 +2280,7 @@ const ParentsPage = ({students,api,toast}) => {
                   <option value="" style={{background:C.surface2}}>— Select student —</option>
                   {students.map(s=><option key={s._id} value={s._id} style={{background:C.surface2}}>{s.name} (#{s.rollNo})</option>)}
                 </Select>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12}}>
                   <Input label="Parent Name" placeholder="Auto-filled or type manually" value={form.parentName} onChange={e=>setForm(p=>({...p,parentName:e.target.value}))}/>
                   <Input label="Parent Email *" type="email" placeholder="parent@example.com" value={form.parentEmail} onChange={e=>setForm(p=>({...p,parentEmail:e.target.value}))}/>
                 </div>
@@ -2501,7 +2503,7 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
     
     return (
       <div style={{display:"flex",flexDirection:"column",gap:18}}>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
           <StatCard label="Attendance Rate" value={`${attRate}%`} color={attRate>=75?C.emerald:C.rose} icon={<Activity size={15}/>} delay={0}/>
           <StatCard label="Days Present" value={present} color={C.emerald} icon={<CheckCircle size={15}/>} delay={0.05}/>
           <StatCard label="On Leave" value={leave} color={C.violet} icon={<CalendarDays size={15}/>} delay={0.1}/>
@@ -2569,7 +2571,7 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
     return (
       <div style={{display:"flex",flexDirection:"column",gap:20}}>
         <motion.div initial={{opacity:0,y:16}} animate={{opacity:1,y:0}}
-          style={{background:`linear-gradient(135deg,${C.violet}18,${C.surface} 60%)`,border:`1px solid ${C.violet}30`,borderRadius:20,padding:"24px 28px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          style={{background:`linear-gradient(135deg,${C.violet}18,${C.surface} 60%)`,border:`1px solid ${C.violet}30`,borderRadius:20,padding:"24px 28px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:14}}>
           <div style={{display:"flex",gap:16,alignItems:"center"}}>
             <Avatar name={student.name} size={56} color={C.violet} img={student.photo||undefined}/>
             <div>
@@ -2583,13 +2585,13 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
             <div style={{fontSize:11,color:C.txt2,fontWeight:700,letterSpacing:0.5}}>CURRENT GRADE</div>
           </div>
         </motion.div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
           <StatCard label="Avg Score" value={`${avgPct}%`} color={gradeColor(avgPct)} icon={<GraduationCap size={15}/>} delay={0}/>
           <StatCard label="Pending Leaves" value={leaves.filter(l=>l.status==="pending").length} color={C.amber} icon={<Clock size={15}/>} delay={0.05}/>
           <StatCard label="Approved Leaves" value={leaves.filter(l=>l.status==="approved").length} color={C.emerald} icon={<CheckCircle size={15}/>} delay={0.1}/>
           <StatCard label="Fees Due" value={unpaidFees>0?`₨${(unpaidFees/1000).toFixed(0)}K`:"Paid"} color={unpaidFees>0?C.rose:C.emerald} icon={<CreditCard size={15}/>} delay={0.15}/>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:16}}>
           <Card style={{padding:22}}>
             <SectionHeader title="My Grades" icon={<GraduationCap size={14}/>} subtitle="Current semester"/>
             {dashGrades.length===0?<div style={{textAlign:"center",color:C.txt2,fontSize:13,padding:20}}>No grades recorded yet.</div>:
@@ -2754,7 +2756,7 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
 
     return (
       <div style={{display:"flex",flexDirection:"column",gap:16}}>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
           <StatCard label="Total Applied" value={myLeaves.length} color={C.indigo} icon={<FileText size={15}/>}/>
           <StatCard label="Approved" value={myLeaves.filter(l=>l.status==="approved").length} color={C.emerald} icon={<CheckCircle size={15}/>}/>
           <StatCard label="Pending" value={myLeaves.filter(l=>l.status==="pending").length} color={C.amber} icon={<Clock size={15}/>}/>
@@ -2773,7 +2775,7 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
               <Card style={{padding:28}}>
                 <SectionHeader title="Leave Application" icon={<FileText size={15}/>} subtitle="Submit a leave request"/>
                 <div style={{display:"flex",flexDirection:"column",gap:16}}>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14}}>
                     <Input label="From Date" type="date" value={form.from} min={today()} onChange={e=>setForm(p=>({...p,from:e.target.value}))}/>
                     <Input label="To Date" type="date" value={form.to} min={form.from||today()} onChange={e=>setForm(p=>({...p,to:e.target.value}))}/>
                   </div>
@@ -2835,7 +2837,7 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
                               )}
                             </div>
                           </div>
-                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:9,marginBottom:12}}>
+                          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(90px,1fr))",gap:9,marginBottom:12}}>
                             {[{label:"From",value:fmt(l.from)},{label:"To",value:fmt(l.to)},{label:"Days",value:`${days}d`}].map(x=>(
                               <div key={x.label} style={{background:"rgba(255,255,255,0.03)",borderRadius:9,padding:"9px 12px",border:`1px solid ${C.border}`}}>
                                 <div style={{fontSize:9,color:C.txt2,letterSpacing:0.8,marginBottom:3,fontWeight:700}}>{x.label.toUpperCase()}</div>
@@ -2879,14 +2881,14 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
     
     return (
       <div style={{display:"flex",flexDirection:"column",gap:18}}>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
           <StatCard label="Total Notifications" value={notifs.length} color={C.indigo} icon={<Bell size={15}/>} delay={0}/>
           <StatCard label="Unread" value={unread} color={C.rose} icon={<AlertCircle size={15}/>} delay={0.05}/>
           <StatCard label="High Priority" value={notifs.filter(n => n.priority === "high").length} color={C.orange} icon={<AlertTriangle size={15}/>} delay={0.1}/>
         </div>
         
         <Card style={{padding:14}}>
-          <div style={{display:"flex",gap:3,background:"rgba(255,255,255,0.03)",border:`1px solid ${C.border}`,borderRadius:10,padding:3}}>
+          <div style={{display:"flex",gap:3,background:"rgba(255,255,255,0.03)",border:`1px solid ${C.border}`,borderRadius:10,padding:3,flexWrap:"wrap"}}>
             {types.map(t => (
               <button key={t} onClick={() => setFilter(t)}
                 style={{padding:"5px 12px",borderRadius:8,fontSize:11,fontWeight:700,cursor:"pointer",border:"none",fontFamily:F,transition:"all 0.14s",background:filter === t ? C.indigo : "transparent",color:filter === t ? "#fff" : C.txt2}}>
