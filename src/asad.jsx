@@ -392,8 +392,11 @@ const StatCard = ({label,value,sub,color,icon,trend,delay=0,onClick,active}) => 
         </div>
       )}
     </div>
-    <div style={{position:"relative",fontSize:30,fontWeight:900,lineHeight:1,marginBottom:5,letterSpacing:-1,
-      background:`linear-gradient(135deg,${C.txt},${C.txt}cc)`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"}}>{value}</div>
+    {/* plain solid color, not background-clip:text — that trick is prone to
+        not recompositing correctly on rapid theme/style changes, which
+        showed up as the number rendering as a solid block instead of
+        digits after switching theme (verified live) */}
+    <div style={{position:"relative",fontSize:30,fontWeight:900,lineHeight:1,marginBottom:5,letterSpacing:-1,color:C.txt}}>{value}</div>
     <div style={{position:"relative",fontSize:11,color,fontWeight:700,letterSpacing:0.5,marginBottom:2}}>{label}</div>
     {sub && <div style={{position:"relative",fontSize:11,color:C.txt2}}>{sub}</div>}
   </motion.div>
@@ -569,7 +572,8 @@ const Sidebar = ({nav,active,setActive,user,onLogout,collapsed,setCollapsed}) =>
     <style>{`
       @media (max-width:900px){
         .appSidebar{position:fixed !important;top:0;left:0;z-index:300;width:230px !important;
-          height:100vh;transform:translateX(-100%);transition:transform 0.28s ease;
+          height:100vh !important;height:100dvh !important;
+          transform:translateX(-100%);transition:transform 0.28s ease;
           box-shadow:12px 0 40px rgba(0,0,0,0.4);}
         .appSidebar.is-open{transform:translateX(0);}
       }
@@ -3546,11 +3550,21 @@ export default function App() {
           display:flex;
           justify-content:space-between;
           align-items:center;
+          gap:10px;
           font-size:11px;
           color:${C.txt2};
           z-index:1000;
           box-shadow:0 -4px 16px rgba(0,0,0,0.08);
         }
+        /* Never wraps to a second line, at any width — the footer's height
+           (and the body padding-bottom / AI button clearance that assume
+           that height) stays constant; the copyright text truncates with
+           an ellipsis instead of pushing the Feedback button off/down. */
+        .signature-copyright{
+          display:flex;align-items:center;gap:4px;min-width:0;overflow:hidden;
+          white-space:nowrap;flex:1;
+        }
+        .signature-copyright span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
         .signature-name{
           font-weight:700;
           background:linear-gradient(135deg,${C.indigo},${C.purple});
@@ -3559,6 +3573,7 @@ export default function App() {
           background-clip:text;
           letter-spacing:0.6px;
           font-style:italic;
+          flex-shrink:0;
         }
         .signature-email{
           cursor:pointer;
@@ -3571,12 +3586,18 @@ export default function App() {
           gap:4px;
           color:${C.txt2};
           border:1px solid transparent;
+          flex-shrink:0;
         }
         .signature-email:hover{
           background:rgba(108,99,255,0.2);
           color:${C.indigo};
           border:1px solid rgba(108,99,255,0.3);
           transform:translateY(-1px);
+        }
+        @media (max-width:480px){
+          .signature-footer{padding:12px 14px;font-size:10px;}
+          .signature-name{display:none;}
+          .signature-email span{display:none;}
         }
       `}</style>
       <AnimatePresence mode="wait">
@@ -3599,17 +3620,17 @@ export default function App() {
       
       {/* Modern Signature Footer */}
       <div className="signature-footer">
-        <div style={{display:'flex',alignItems:'center',gap:2}}>
+        <div className="signature-copyright">
           <span style={{fontSize:10,color:C.dim}}>© 2026 Property of Asad ullah</span>
           <span className="signature-name">❋ Asad Ullah Sikandar</span>
         </div>
-        <button 
+        <button
           onClick={() => setFeedbackOpen(true)}
           className="signature-email"
           title="Send feedback"
           style={{textDecoration:'none',display:'flex',alignItems:'center',gap:4,background:'none',border:'none'}}
         >
-          <MessageSquare size={12}/> Feedback
+          <MessageSquare size={12}/> <span>Feedback</span>
         </button>
       </div>
 
