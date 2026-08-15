@@ -48,6 +48,13 @@ router.get("/", auth("admin"), async (req, res) => {
 
 router.get("/history/:studentId", auth("student"), async (req, res) => {
   try {
+    // This route only ever admits role:"student" tokens (see auth("student")
+    // above), so the sole gap was a student supplying *someone else's*
+    // studentId in the URL — verify it matches their own JWT-derived id.
+    if (req.user.id !== req.params.studentId && req.user.studentId !== req.params.studentId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
     const records = await Attendance.find({
       studentId: req.params.studentId,
     });

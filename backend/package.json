@@ -10,6 +10,7 @@
     "node": "20.x"
   },
   "dependencies": {
+    "@google/genai": "^2.17.1",
     "bcryptjs": "2.4.3",
     "cors": "2.8.5",
     "debug": "^4.4.3",

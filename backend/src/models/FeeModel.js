@@ -11,10 +11,16 @@ const feeSchema = new mongoose.Schema({
   paidOn:     { type: Date, default: null },
 }, { timestamps: true });
 
-// Auto-mark overdue before every find
-feeSchema.pre(/^find/, function() {
-  this.where({ status: "unpaid", dueDate: { $lt: new Date() } })
-      .updateMany({}, { $set: { status: "overdue" } }).exec().catch(() => {});
+// Auto-mark overdue before every find. Must run as an independent query via
+// this.model — chaining .updateMany() directly onto `this` (the in-flight
+// find query) mutates its op to "updateMany" and silently breaks the actual
+// find (verified: it was returning [] for every Fee.find/findById call).
+feeSchema.pre(/^find/, function(next) {
+  this.model.updateMany(
+    { status: "unpaid", dueDate: { $lt: new Date() } },
+    { $set: { status: "overdue" } }
+  ).exec().catch(() => {});
+  next();
 });
 const Fee = mongoose.models.Fee || mongoose.model("Fee", feeSchema);
 export default Fee;

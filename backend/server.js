@@ -75,6 +75,7 @@ import analyticsRoutes from "./src/routes/AnalyticsRoute.js";
 import parentMessageRoutes from "./src/routes/parentMessageRoute.js";
 import feedbackRoutes from "./src/routes/feedbackRoute.js";
 import chatRoutes from "./src/routes/chatRoute.js";
+import aiRoutes from "./src/routes/aiRoute.js";
 import { smtpReady, smtpLastError } from "./src/utils/mailer.js";
 import http from "http";
 import { attachChatSocket } from "./src/socket/chatSocket.js";
@@ -240,6 +241,7 @@ app.use("/api/exams", examRoutes);
 app.use("/api/timetable", timetableRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/ai", aiRoutes);
 
 // ═══════════════════════════════════════════════════════════════
 //  ERROR HANDLING MIDDLEWARE

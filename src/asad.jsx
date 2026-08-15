@@ -34,6 +34,11 @@ const AdminChatPage   = lazy(() => import("./Chat.jsx").then(m => ({ default: m.
 const ChatPageFallback = () => (
   <div style={{padding:60,textAlign:"center",color:C.txt2}}><Loader size={24} color={C.indigo} style={{animation:"spin 1s linear infinite",display:"block",margin:"0 auto 12px"}}/>Loading chat…</div>
 );
+// AI.jsx imports shared UI primitives back from this file too — same
+// circular-import hazard, same lazy-load fix as Chat.jsx above.
+const AIFloatingButton = lazy(() => import("./AI.jsx").then(m => ({ default: m.AIFloatingButton })));
+const AIPanel          = lazy(() => import("./AI.jsx").then(m => ({ default: m.AIPanel })));
+const AISuggestion     = lazy(() => import("./AI.jsx").then(m => ({ default: m.AISuggestion })));
 // https://asad-backend2.vercel.app
 // ═════════════════════════════════════════════════════=
 //  BASE URL
@@ -166,6 +171,11 @@ function makeApi(token) {
     sendChatMessage:      (conversationId,message)=> req("POST", "/api/chat/messages", { conversationId, message }),
     markMessageRead:      (id)                => req("PATCH", `/api/chat/messages/${id}/read`),
     markConversationRead: (conversationId)    => req("PATCH", `/api/chat/conversations/${conversationId}/read`),
+    // AI
+    aiStatus:        ()                  => req("GET",  "/api/ai/status"),
+    aiChat:           (message, history) => req("POST", "/api/ai/chat", { message, history }),
+    aiConfirmAction:  (actionId)         => req("POST", `/api/ai/actions/${actionId}/confirm`),
+    aiCancelAction:   (actionId)         => req("POST", `/api/ai/actions/${actionId}/cancel`),
   };
 }
 
@@ -1113,7 +1123,7 @@ const NotificationsPage = ({api,toast}) => {
 // ══════════════════════════════════════════════════════
 //  ADMIN OVERVIEW
 // ══════════════════════════════════════════════════════
-const AdminOverview = ({students,attendance,leaves,api,toast}) => {
+const AdminOverview = ({students,attendance,leaves,api,toast,onOpenAI}) => {
   const [analytics,setAnalytics]=useState(null);
   const [annsPreview,setAnnsPreview]=useState([]);
   const [timeData,setTimeData]=useState(new Date());
@@ -1130,6 +1140,7 @@ const AdminOverview = ({students,attendance,leaves,api,toast}) => {
   const presentToday=todayAtt.filter(s=>s==="present").length;
   const leaveToday=todayAtt.filter(s=>s==="leave").length;
   const pendingLeaves=leaves.filter(l=>l.status==="pending").length;
+  const absentToday=totalStudents-presentToday-leaveToday;
   const attRate=totalStudents?Math.round(presentToday/totalStudents*100):0;
   const weekData=analytics?.weeklyAttendance||[65,71,68,79,74,82,attRate];
   const currentTime=timeData.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
@@ -1150,6 +1161,14 @@ const AdminOverview = ({students,attendance,leaves,api,toast}) => {
           <div style={{fontSize:11,color:C.emerald,fontWeight:700,letterSpacing:1}}>TODAY'S ATTENDANCE</div>
         </div>
       </motion.div>
+
+      {(pendingLeaves>0||absentToday>0)&&(
+        <Suspense fallback={null}>
+          <AISuggestion
+            text={[pendingLeaves>0?`${pendingLeaves} leave request${pendingLeaves>1?"s":""} awaiting review`:null,absentToday>0?`${absentToday} student${absentToday>1?"s":""} absent today`:null].filter(Boolean).join(" · ")+". Ask ACADEXA to summarize or draft parent emails for absentees."}
+            actionLabel="Ask ACADEXA" onAction={onOpenAI}/>
+        </Suspense>
+      )}
 
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
         <StatCard label="Total Students" value={totalStudents} color={C.indigo} icon={<Users size={16}/>} trend={analytics?.studentGrowth??5} delay={0.05}/>
@@ -1602,7 +1621,7 @@ const ExamsPage = ({students,api,toast}) => {
 // ══════════════════════════════════════════════════════
 //  GRADES PAGE
 // ══════════════════════════════════════════════════════
-const GradesPage = ({students,api,toast,isAdmin=true}) => {
+const GradesPage = ({students,api,toast,isAdmin=true,onOpenAI}) => {
   const [selected,setSelected]=useState(students[0]?._id||"");
   const [grades,setGrades]=useState([]);
   const [loading,setLoading]=useState(false);
@@ -1617,6 +1636,7 @@ const GradesPage = ({students,api,toast,isAdmin=true}) => {
 
   const student=students.find(s=>s._id===selected);
   const avgPct=grades.length?Math.round(grades.reduce((s,g)=>s+(g.marks/g.maxMarks*100),0)/grades.length):0;
+  const weakest=grades.length?[...grades].sort((a,b)=>(a.marks/a.maxMarks)-(b.marks/b.maxMarks))[0]:null;
 
   const saveGrade=async()=>{
     if(!newGrade.subject||!newGrade.examName||!newGrade.marks) return toast("Fill all fields");
@@ -1631,6 +1651,13 @@ const GradesPage = ({students,api,toast,isAdmin=true}) => {
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
+      {!isAdmin&&!loading&&weakest&&(
+        <Suspense fallback={null}>
+          <AISuggestion
+            text={`Your weakest subject is ${weakest.subject} at ${Math.round(weakest.marks/weakest.maxMarks*100)}%. Ask ACADEXA to build you a study plan around it.`}
+            actionLabel="Ask ACADEXA" onAction={onOpenAI}/>
+        </Suspense>
+      )}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
         <StatCard label="Subjects Recorded" value={grades.length} color={C.indigo} icon={<BookMarked size={15}/>} delay={0}/>
         <StatCard label="Average Score" value={`${avgPct}%`} color={gradeColor(avgPct)} icon={<TrendingUp size={15}/>} delay={0.05}/>
@@ -1714,7 +1741,7 @@ const GradesPage = ({students,api,toast,isAdmin=true}) => {
 // ══════════════════════════════════════════════════════
 //  FEES PAGE
 // ══════════════════════════════════════════════════════
-const FeesPage = ({students,api,toast,studentId=null,isAdmin=true}) => {
+const FeesPage = ({students,api,toast,studentId=null,isAdmin=true,onOpenAI}) => {
   const [fees,setFees]=useState([]);
   const [loading,setLoading]=useState(true);
   const [showAdd,setShowAdd]=useState(false);
@@ -1745,10 +1772,19 @@ const FeesPage = ({students,api,toast,studentId=null,isAdmin=true}) => {
 
   const total=fees.reduce((s,f)=>s+(Number(f.amount)||0),0);
   const paid=fees.filter(f=>f.status==="paid").reduce((s,f)=>s+(Number(f.amount)||0),0);
-  const unpaid=fees.filter(f=>f.status!=="paid").reduce((s,f)=>s+(Number(f.amount)||0),0);
+  const unpaidFees=fees.filter(f=>f.status!=="paid");
+  const unpaid=unpaidFees.reduce((s,f)=>s+(Number(f.amount)||0),0);
+  const nearestDue=unpaidFees.map(f=>f.due||f.dueDate).filter(Boolean).sort()[0];
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
+      {!isAdmin&&!loading&&unpaid>0&&(
+        <Suspense fallback={null}>
+          <AISuggestion
+            text={`You have ₨${unpaid.toLocaleString()} in unpaid fees${nearestDue?`, next due ${fmt(nearestDue)}`:""}. Ask ACADEXA for a breakdown or a draft message to your parents.`}
+            actionLabel="Ask ACADEXA" onAction={onOpenAI}/>
+        </Suspense>
+      )}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
         <StatCard label="Total Fees" value={`₨${(total/1000).toFixed(0)}K`} color={C.indigo} icon={<CreditCard size={15}/>} delay={0}/>
         <StatCard label="Paid" value={`₨${(paid/1000).toFixed(0)}K`} color={C.emerald} icon={<CheckCircle size={15}/>} delay={0.05}/>
@@ -2432,6 +2468,7 @@ const AdminDashboard = ({token,onLogout,theme,setTheme}) => {
   const [collapsed, setCollapsed] = useState(()=> typeof window !== "undefined" && window.innerWidth < 900);
   const [toastEl,   toast]        = useToast();
   const [unreadChat,setUnreadChat]= useState(0);
+  const [aiOpen,    setAiOpen]    = useState(false);
 
   useEffect(()=>{
     Promise.all([api.getStudents(),api.getLeaves(),api.getAttendance(today())])
@@ -2455,7 +2492,7 @@ const AdminDashboard = ({token,onLogout,theme,setTheme}) => {
   const renderPage=()=>{
     if(loading) return <div style={{padding:60,textAlign:"center",color:C.txt2}}><Loader size={28} color={C.indigo} style={{animation:"spin 1s linear infinite",display:"block",margin:"0 auto 14px"}}/>Loading system data…</div>;
     switch(view){
-      case "dashboard":    return <AdminOverview students={students} attendance={attendance} leaves={leaves} api={api} toast={toast}/>;
+      case "dashboard":    return <AdminOverview students={students} attendance={attendance} leaves={leaves} api={api} toast={toast} onOpenAI={()=>setAiOpen(true)}/>;
       case "chat":          return <Suspense fallback={<ChatPageFallback/>}><AdminChatPage api={api} token={token}/></Suspense>;
       case "attendance":   return <AttendancePage students={students} attendance={attendance} setAttendance={setAttendance} api={api} toast={toast}/>;
       case "students":     return <StudentsPage students={students} setStudents={setStudents} api={api} toast={toast}/>;
@@ -2506,6 +2543,12 @@ const AdminDashboard = ({token,onLogout,theme,setTheme}) => {
         </div>
       </div>
       {toastEl}
+      <Suspense fallback={null}>
+        <AIFloatingButton open={aiOpen} onClick={()=>setAiOpen(true)}/>
+        <AnimatePresence>
+          {aiOpen && <AIPanel api={api} role="admin" onClose={()=>setAiOpen(false)}/>}
+        </AnimatePresence>
+      </Suspense>
     </div>
   );
 };
@@ -2521,6 +2564,7 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
   const [collapsed,setCollapsed]=useState(()=> typeof window !== "undefined" && window.innerWidth < 900);
   const [toastEl, toast]       = useToast();
   const [unreadChat,setUnreadChat]=useState(0);
+  const [aiOpen,  setAiOpen]   = useState(false);
   const sid=student._id||student.id||"";
 
   useEffect(()=>{
@@ -2554,6 +2598,13 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
     
     return (
       <div style={{display:"flex",flexDirection:"column",gap:18}}>
+        {!loadHist&&history.length>0&&attRate<75&&(
+          <Suspense fallback={null}>
+            <AISuggestion tone="rose"
+              text={`Your attendance is ${attRate}%, below the usual 75% requirement. Ask ACADEXA to break down which days you were marked absent.`}
+              actionLabel="Ask ACADEXA" onAction={()=>setAiOpen(true)}/>
+          </Suspense>
+        )}
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
           <StatCard label="Attendance Rate" value={`${attRate}%`} color={attRate>=75?C.emerald:C.rose} icon={<Activity size={15}/>} delay={0}/>
           <StatCard label="Days Present" value={present} color={C.emerald} icon={<CheckCircle size={15}/>} delay={0.05}/>
@@ -2805,8 +2856,22 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
       finally{setSaving(false);}
     };
 
+    const pendingCount=myLeaves.filter(l=>l.status==="pending").length;
     return (
       <div style={{display:"flex",flexDirection:"column",gap:16}}>
+        {pendingCount>0?(
+          <Suspense fallback={null}>
+            <AISuggestion tone="amber"
+              text={`You have ${pendingCount} leave request${pendingCount>1?"s":""} awaiting review. Ask ACADEXA for the latest status.`}
+              actionLabel="Ask ACADEXA" onAction={()=>setAiOpen(true)}/>
+          </Suspense>
+        ):myLeaves.length===0&&(
+          <Suspense fallback={null}>
+            <AISuggestion
+              text="Need to apply for leave? ACADEXA can walk you through it in chat — it'll show you a preview before anything is submitted."
+              actionLabel="Ask ACADEXA" onAction={()=>setAiOpen(true)}/>
+          </Suspense>
+        )}
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
           <StatCard label="Total Applied" value={myLeaves.length} color={C.indigo} icon={<FileText size={15}/>}/>
           <StatCard label="Approved" value={myLeaves.filter(l=>l.status==="approved").length} color={C.emerald} icon={<CheckCircle size={15}/>}/>
@@ -2990,9 +3055,9 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
       case "chat":          return <Suspense fallback={<ChatPageFallback/>}><StudentChatPage api={api} token={token}/></Suspense>;
       case "attendance":    return <StudentAttendancePage/>;
       case "classes":       return <StudentClasses/>;
-      case "grades":        return <GradesPage students={[student]} api={api} toast={toast} isAdmin={false}/>;
+      case "grades":        return <GradesPage students={[student]} api={api} toast={toast} isAdmin={false} onOpenAI={()=>setAiOpen(true)}/>;
       case "leaves":        return <StudentLeaves/>;
-      case "fees":          return <FeesPage students={[student]} api={api} toast={toast} studentId={sid} isAdmin={false}/>;
+      case "fees":          return <FeesPage students={[student]} api={api} toast={toast} studentId={sid} isAdmin={false} onOpenAI={()=>setAiOpen(true)}/>;
       case "timetable":     return <TimetablePage api={api} toast={toast} isAdmin={false}/>;
       case "notifications": return <StudentNotifications/>;
       case "announcements": return <AnnouncementsPage isAdmin={false} api={api} toast={toast}/>;
@@ -3014,6 +3079,12 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
         </div>
       </div>
       {toastEl}
+      <Suspense fallback={null}>
+        <AIFloatingButton open={aiOpen} onClick={()=>setAiOpen(true)}/>
+        <AnimatePresence>
+          {aiOpen && <AIPanel api={api} role="student" onClose={()=>setAiOpen(false)}/>}
+        </AnimatePresence>
+      </Suspense>
     </div>
   );
 };
