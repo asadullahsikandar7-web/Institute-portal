@@ -49,16 +49,14 @@ router.post("/", adminOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// PATCH mark paid
-router.patch("/:id", auth(), async (req, res) => {
+// PATCH mark paid — admin only. Fee status is a record of what the
+// institution has actually received/verified, not something a student
+// self-attests to, so students get read-only visibility (via the GET
+// routes above) and never a write path here.
+router.patch("/:id", adminOnly, async (req, res) => {
   try {
     const fee = await Fee.findById(req.params.id);
     if (!fee) return res.status(404).json({ error: "Fee not found" });
-
-    // Only admin or the owning student may mark as paid
-    if (req.user.role !== "admin" && req.user.studentId !== fee.studentId.toString() && req.user.id !== fee.studentId.toString()) {
-      return res.status(403).json({ error: "Forbidden" });
-    }
 
     const updated = await Fee.findByIdAndUpdate(
       req.params.id,

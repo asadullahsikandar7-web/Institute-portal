@@ -330,7 +330,6 @@ export const AIFloatingButton = ({ onClick, open }) => {
           style={{
             position: "relative", width: 56, height: 56, borderRadius: "50%",
             background: `linear-gradient(135deg,${C.indigo},${C.violet} 55%,${C.indigoLt})`,
-            backgroundSize: "200% 200%",
             display: "flex", alignItems: "center", justifyContent: "center",
             boxShadow: `0 8px 28px ${C.indigo}60, inset 0 1px 1px rgba(255,255,255,0.3)`,
           }}>

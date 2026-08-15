@@ -285,27 +285,34 @@ const Pill = ({label,color,bg,size="sm"}) => (
 const StatusPill = ({status,size}) => { const m=statusMeta(status); return <Pill label={m.label} color={m.color} bg={m.bg} size={size}/>; };
 
 const Card = ({children,style={},hover=false,glow=false,onClick}) => (
-  <motion.div whileHover={hover||onClick?{y:-2}:{}} onClick={onClick}
-    style={{background:C.surface,border:`1px solid ${glow?C.borderMd:C.border}`,borderRadius:18,
-      backdropFilter:"blur(12px)",
-      boxShadow:glow?`0 0 40px rgba(108,99,255,0.08),inset 0 1px 0 rgba(255,255,255,0.04)`:`inset 0 1px 0 rgba(255,255,255,0.03)`,
-      cursor:onClick?"pointer":"default",transition:"all 0.22s",...style}}>{children}</motion.div>
+  <motion.div
+    whileHover={hover||onClick?{y:-3,boxShadow:`0 20px 48px -14px rgba(2,3,12,0.4), 0 0 0 1px ${C.borderMd}, inset 0 1px 0 rgba(255,255,255,0.06)`}:{}}
+    onClick={onClick}
+    style={{
+      background:`linear-gradient(175deg, ${C.surface} 0%, ${C.surface2}99 130%)`,
+      border:`1px solid ${glow?C.borderMd:C.border}`,borderRadius:18,
+      backdropFilter:"blur(16px) saturate(1.5)",WebkitBackdropFilter:"blur(16px) saturate(1.5)",
+      boxShadow:glow
+        ?`0 0 0 1px ${C.indigo}25, 0 24px 56px -16px ${C.indigo}30, inset 0 1px 0 rgba(255,255,255,0.06)`
+        :`0 10px 30px -14px rgba(2,3,12,0.4), inset 0 1px 0 rgba(255,255,255,0.04)`,
+      cursor:onClick?"pointer":"default",transition:"border-color 0.25s, box-shadow 0.25s",...style
+    }}>{children}</motion.div>
 );
 
 const Btn = ({children,variant="primary",size="md",onClick,disabled,full,style={}}) => {
   const V = {
-    primary:{bg:`linear-gradient(135deg,${C.indigo},${C.indigoLt})`,color:"#fff",border:"none",shadow:`0 4px 20px ${C.indigo}35`},
-    teal:   {bg:`linear-gradient(135deg,${C.cyan},${C.sky})`,color:"#040810",border:"none",shadow:`0 4px 20px ${C.cyan}30`},
-    ghost:  {bg:"rgba(255,255,255,0.05)",color:C.txt2,border:`1px solid ${C.border}`,shadow:"none"},
-    danger: {bg:"rgba(244,63,94,0.1)",color:C.rose,border:`1px solid rgba(244,63,94,0.2)`,shadow:"none"},
-    success:{bg:"rgba(16,185,129,0.1)",color:C.emerald,border:`1px solid rgba(16,185,129,0.2)`,shadow:"none"},
-    amber:  {bg:"rgba(245,158,11,0.1)",color:C.amber,border:`1px solid rgba(245,158,11,0.2)`,shadow:"none"},
+    primary:{bg:`linear-gradient(135deg,${C.indigo},${C.indigoLt})`,color:"#fff",border:"none",shadow:`0 4px 20px ${C.indigo}35`,hoverShadow:`0 8px 30px ${C.indigo}55`,sheen:true},
+    teal:   {bg:`linear-gradient(135deg,${C.cyan},${C.sky})`,color:"#040810",border:"none",shadow:`0 4px 20px ${C.cyan}30`,hoverShadow:`0 8px 30px ${C.cyan}50`,sheen:true},
+    ghost:  {bg:"rgba(255,255,255,0.05)",color:C.txt2,border:`1px solid ${C.border}`,shadow:"none",hoverShadow:"none"},
+    danger: {bg:"rgba(244,63,94,0.1)",color:C.rose,border:`1px solid rgba(244,63,94,0.2)`,shadow:"none",hoverShadow:"none"},
+    success:{bg:"rgba(16,185,129,0.1)",color:C.emerald,border:`1px solid rgba(16,185,129,0.2)`,shadow:"none",hoverShadow:"none"},
+    amber:  {bg:"rgba(245,158,11,0.1)",color:C.amber,border:`1px solid rgba(245,158,11,0.2)`,shadow:"none",hoverShadow:"none"},
   };
   const v = V[variant]||V.primary;
   return (
-    <motion.button whileHover={disabled?{}:{scale:1.03,y:-1}} whileTap={disabled?{}:{scale:0.97}}
+    <motion.button whileHover={disabled?{}:{scale:1.03,y:-1,boxShadow:v.hoverShadow}} whileTap={disabled?{}:{scale:0.97}}
       onClick={disabled?undefined:onClick}
-      style={{background:v.bg,border:v.border,color:v.color,borderRadius:10,
+      style={{position:"relative",overflow:"hidden",background:v.bg,border:v.border,color:v.color,borderRadius:10,
         padding:size==="xs"?"5px 10px":size==="sm"?"7px 14px":size==="lg"?"12px 28px":"9px 18px",
         cursor:disabled?"not-allowed":"pointer",
         fontSize:size==="xs"?10:size==="sm"?12:14,fontWeight:700,fontFamily:F,
@@ -313,6 +320,11 @@ const Btn = ({children,variant="primary",size="md",onClick,disabled,full,style={
         opacity:disabled?0.45:1,boxShadow:v.shadow,
         width:full?"100%":"auto",justifyContent:full?"center":"flex-start",
         transition:"box-shadow 0.2s",...style}}>
+      {v.sheen&&!disabled&&(
+        <motion.span aria-hidden initial={{x:"-120%"}} whileHover={{x:"220%"}} transition={{duration:0.7,ease:"easeInOut"}}
+          style={{position:"absolute",top:0,left:0,width:"40%",height:"100%",pointerEvents:"none",
+            background:"linear-gradient(115deg,transparent,rgba(255,255,255,0.35),transparent)",transform:"skewX(-18deg)"}}/>
+      )}
       {children}
     </motion.button>
   );
@@ -323,9 +335,9 @@ const Input = ({style={},label,...p}) => (
     {label && <div style={{fontSize:10,fontWeight:700,color:C.txt2,letterSpacing:1,textTransform:"uppercase"}}>{label}</div>}
     <input {...p} style={{background:"rgba(255,255,255,0.04)",border:`1px solid ${C.border}`,
       borderRadius:10,padding:"10px 14px",color:C.txt,fontFamily:F,fontSize:14,
-      outline:"none",width:"100%",boxSizing:"border-box",transition:"border-color 0.2s",...style}}
-      onFocus={e=>e.target.style.borderColor=C.indigo}
-      onBlur={e=>e.target.style.borderColor=C.border}/>
+      outline:"none",width:"100%",boxSizing:"border-box",transition:"border-color 0.2s, box-shadow 0.2s",...style}}
+      onFocus={e=>{e.target.style.borderColor=C.indigo;e.target.style.boxShadow=`0 0 0 4px ${C.indigo}1c`;}}
+      onBlur={e=>{e.target.style.borderColor=C.border;e.target.style.boxShadow="none";}}/>
   </div>
 );
 
@@ -346,35 +358,44 @@ const Select = ({children,label,style={},...p}) => (
     {label && <div style={{fontSize:10,fontWeight:700,color:C.txt2,letterSpacing:1,textTransform:"uppercase"}}>{label}</div>}
     <select {...p} style={{background:C.surface2,border:`1px solid ${C.border}`,
       borderRadius:10,padding:"10px 14px",color:C.txt,fontFamily:F,fontSize:14,
-      outline:"none",width:"100%",boxSizing:"border-box",...style}}>
+      outline:"none",width:"100%",boxSizing:"border-box",transition:"border-color 0.2s, box-shadow 0.2s",...style}}
+      onFocus={e=>{e.target.style.borderColor=C.indigo;e.target.style.boxShadow=`0 0 0 4px ${C.indigo}1c`;}}
+      onBlur={e=>{e.target.style.borderColor=C.border;e.target.style.boxShadow="none";}}>
       {children}
     </select>
   </div>
 );
 
 const StatCard = ({label,value,sub,color,icon,trend,delay=0,onClick,active}) => (
-  <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay}}
-    whileHover={{y:-4,scale:1.02}} whileTap={{scale:0.98}} onClick={onClick}
-    style={{background:active?`linear-gradient(135deg,${color}18,${color}06)`:C.surface,
-      border:`1px solid ${active?color+"44":C.border}`,borderRadius:18,padding:"20px 22px",
-      cursor:onClick?"pointer":"default",transition:"all 0.22s",
-      boxShadow:active?`0 8px 32px ${color}15`:"none"}}>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
-      <div style={{width:40,height:40,borderRadius:12,background:`${color}18`,border:`1px solid ${color}25`,
-        display:"flex",alignItems:"center",justifyContent:"center",color,flexShrink:0}}>
+  <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay,duration:0.4,ease:[0.22,1,0.36,1]}}
+    whileHover={{y:-5,scale:1.015}} whileTap={{scale:0.98}} onClick={onClick}
+    style={{position:"relative",overflow:"hidden",
+      background:active?`linear-gradient(160deg,${color}20,${C.surface} 70%)`:`linear-gradient(165deg,${C.surface},${C.surface2}88)`,
+      border:`1px solid ${active?color+"4a":C.border}`,borderRadius:18,padding:"20px 22px",
+      backdropFilter:"blur(14px) saturate(1.4)",WebkitBackdropFilter:"blur(14px) saturate(1.4)",
+      cursor:onClick?"pointer":"default",transition:"border-color 0.25s, box-shadow 0.25s",
+      boxShadow:active?`0 16px 40px -12px ${color}30, inset 0 1px 0 rgba(255,255,255,0.06)`:`0 8px 24px -14px rgba(2,3,12,0.4), inset 0 1px 0 rgba(255,255,255,0.03)`}}>
+    {/* soft corner glow — the "advanced dashboard" cue */}
+    <div aria-hidden style={{position:"absolute",top:-30,right:-30,width:100,height:100,borderRadius:"50%",
+      background:`radial-gradient(circle,${color}30,transparent 70%)`,filter:"blur(10px)",pointerEvents:"none"}}/>
+    <div style={{position:"relative",display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
+      <div style={{width:40,height:40,borderRadius:12,background:`linear-gradient(135deg,${color}28,${color}10)`,border:`1px solid ${color}30`,
+        display:"flex",alignItems:"center",justifyContent:"center",color,flexShrink:0,boxShadow:`0 4px 14px ${color}20`}}>
         {icon}
       </div>
       {trend!==undefined && (
-        <div style={{display:"flex",alignItems:"center",gap:3,fontSize:11,fontWeight:700,
+        <div style={{display:"flex",alignItems:"center",gap:3,fontSize:11,fontWeight:700,padding:"3px 7px",borderRadius:20,
+          background:trend>0?"rgba(16,185,129,0.1)":trend<0?"rgba(244,63,94,0.1)":"rgba(255,255,255,0.05)",
           color:trend>0?C.emerald:trend<0?C.rose:C.txt2}}>
           {trend>0?<ArrowUp size={11}/>:trend<0?<ArrowDown size={11}/>:<Minus size={11}/>}
           {Math.abs(trend)}%
         </div>
       )}
     </div>
-    <div style={{fontSize:30,fontWeight:900,color:C.txt,lineHeight:1,marginBottom:5,letterSpacing:-1}}>{value}</div>
-    <div style={{fontSize:11,color,fontWeight:700,letterSpacing:0.5,marginBottom:2}}>{label}</div>
-    {sub && <div style={{fontSize:11,color:C.txt2}}>{sub}</div>}
+    <div style={{position:"relative",fontSize:30,fontWeight:900,lineHeight:1,marginBottom:5,letterSpacing:-1,
+      background:`linear-gradient(135deg,${C.txt},${C.txt}cc)`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"}}>{value}</div>
+    <div style={{position:"relative",fontSize:11,color,fontWeight:700,letterSpacing:0.5,marginBottom:2}}>{label}</div>
+    {sub && <div style={{position:"relative",fontSize:11,color:C.txt2}}>{sub}</div>}
   </motion.div>
 );
 
@@ -487,6 +508,27 @@ const EmailStatusBadge = ({status,count}) => {
 };
 
 // ══════════════════════════════════════════════════════
+//  AMBIENT BACKGROUND — slow-drifting soft gradient blobs behind the
+//  dashboard shells. Fixed + pointer-events:none + far-negative stacking
+//  so it never interferes with layout or clicks; content sits on opaque
+//  Card surfaces regardless, so this only ever affects the empty page
+//  background, never readability.
+// ══════════════════════════════════════════════════════
+const AmbientBackground = () => (
+  <div aria-hidden style={{position:"fixed",inset:0,zIndex:0,overflow:"hidden",pointerEvents:"none"}}>
+    <motion.div animate={{x:[0,40,0],y:[0,30,0]}} transition={{duration:22,repeat:Infinity,ease:"easeInOut"}}
+      style={{position:"absolute",top:"-10%",left:"-8%",width:520,height:520,borderRadius:"50%",
+        background:`radial-gradient(circle,${C.indigo}22,transparent 68%)`,filter:"blur(60px)"}}/>
+    <motion.div animate={{x:[0,-30,0],y:[0,40,0]}} transition={{duration:26,repeat:Infinity,ease:"easeInOut",delay:2}}
+      style={{position:"absolute",top:"30%",right:"-10%",width:480,height:480,borderRadius:"50%",
+        background:`radial-gradient(circle,${C.violet}1c,transparent 68%)`,filter:"blur(60px)"}}/>
+    <motion.div animate={{x:[0,25,0],y:[0,-25,0]}} transition={{duration:24,repeat:Infinity,ease:"easeInOut",delay:4}}
+      style={{position:"absolute",bottom:"-12%",left:"20%",width:460,height:460,borderRadius:"50%",
+        background:`radial-gradient(circle,${C.cyan}16,transparent 68%)`,filter:"blur(60px)"}}/>
+  </div>
+);
+
+// ══════════════════════════════════════════════════════
 //  SIDEBAR + TOPBAR
 // ══════════════════════════════════════════════════════
 const adminNav = [
@@ -540,11 +582,15 @@ const Sidebar = ({nav,active,setActive,user,onLogout,collapsed,setCollapsed}) =>
       transition:"width 0.25s ease",overflow:"hidden"}}>
     <div style={{padding:"20px 18px",borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <div style={{width:36,height:36,borderRadius:10,flexShrink:0,
-          background:`linear-gradient(135deg,${C.indigo},${C.indigoLt})`,
-          display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 16px ${C.indigo}40`}}>
-          <img src="/dist/assets/acadexa-logo.png" alt="ACADEXA" style={{width:22,height:22,objectFit:"contain",filter:"brightness(1.2) drop-shadow(0 4px 8px rgba(0,0,0,0.25))"}} onError={(e)=>{e.currentTarget.style.display='none';}} />
-          <GraduationCap size={18} color="#fff"/>
+        <div style={{position:"relative",width:36,height:36,flexShrink:0}}>
+          <motion.div aria-hidden animate={{opacity:[0.5,0.9,0.5]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}
+            style={{position:"absolute",inset:-4,borderRadius:13,background:`radial-gradient(circle,${C.indigo}55,transparent 70%)`,filter:"blur(5px)",pointerEvents:"none"}}/>
+          <div style={{position:"relative",width:36,height:36,borderRadius:10,
+            background:`linear-gradient(135deg,${C.indigo},${C.indigoLt})`,
+            display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 16px ${C.indigo}40, inset 0 1px 0 rgba(255,255,255,0.25)`}}>
+            <img src="/dist/assets/acadexa-logo.png" alt="ACADEXA" style={{width:22,height:22,objectFit:"contain",filter:"brightness(1.2) drop-shadow(0 4px 8px rgba(0,0,0,0.25))"}} onError={(e)=>{e.currentTarget.style.display='none';}} />
+            <GraduationCap size={18} color="#fff"/>
+          </div>
         </div>
         {!collapsed && <div><div style={{fontSize:14,fontWeight:900,color:C.txt,letterSpacing:-0.3}}>ACADEXA</div><div style={{fontSize:9,color:C.indigo,fontWeight:700,letterSpacing:1}}>by ASAD</div></div>}
       </div>
@@ -554,21 +600,26 @@ const Sidebar = ({nav,active,setActive,user,onLogout,collapsed,setCollapsed}) =>
         const isActive=active===item.key;
         return (
           <motion.button key={item.key} onClick={()=>{setActive(item.key);closeOnMobile();}}
-            whileHover={{x:2}} whileTap={{scale:0.97}}
-            style={{display:"flex",alignItems:"center",gap:10,padding:"10px 10px",borderRadius:11,
+            whileHover={{x:isActive?0:2}} whileTap={{scale:0.97}}
+            style={{position:"relative",display:"flex",alignItems:"center",gap:10,padding:"10px 10px",borderRadius:11,
               border:"none",cursor:"pointer",fontFamily:F,fontSize:13,fontWeight:isActive?700:500,
-              background:isActive?`linear-gradient(135deg,${C.indigo}20,${C.indigo}08)`:"transparent",
-              color:isActive?C.indigoLt:C.txt2,
-              borderLeft:isActive?`2px solid ${C.indigo}`:"2px solid transparent",
-              transition:"all 0.15s",width:"100%",justifyContent:collapsed?"center":"flex-start",
+              background:"transparent",color:isActive?C.indigoLt:C.txt2,
+              transition:"color 0.15s",width:"100%",justifyContent:collapsed?"center":"flex-start",
               paddingLeft:collapsed?10:isActive?10:12}}>
-            <span style={{flexShrink:0,color:isActive?C.indigo:C.txt2,position:"relative"}}>
+            {isActive && (
+              <motion.span layoutId="sidebarActivePill" transition={{type:"spring",stiffness:420,damping:34}}
+                style={{position:"absolute",inset:0,borderRadius:11,
+                  background:`linear-gradient(135deg,${C.indigo}26,${C.indigo}0a)`,
+                  border:`1px solid ${C.indigo}35`,borderLeft:`2px solid ${C.indigo}`,
+                  boxShadow:`0 4px 16px ${C.indigo}20, inset 0 1px 0 rgba(255,255,255,0.06)`}}/>
+            )}
+            <span style={{position:"relative",flexShrink:0,color:isActive?C.indigo:C.txt2}}>
               {item.icon}
               {collapsed && !!item.badge && <span style={{position:"absolute",top:-4,right:-6,width:8,height:8,borderRadius:"50%",background:C.rose,border:`1.5px solid ${C.panel}`}}/>}
             </span>
-            {!collapsed && <span style={{flex:1}}>{item.label}</span>}
+            {!collapsed && <span style={{position:"relative",flex:1}}>{item.label}</span>}
             {!collapsed && !!item.badge && (
-              <span style={{minWidth:18,height:18,padding:"0 5px",borderRadius:9,background:isActive?C.indigo:C.rose,color:"#fff",fontSize:10,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <span style={{position:"relative",minWidth:18,height:18,padding:"0 5px",borderRadius:9,background:isActive?C.indigo:C.rose,color:"#fff",fontSize:10,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                 {item.badge>99?"99+":item.badge}
               </span>
             )}
@@ -605,10 +656,12 @@ const TopBar = ({title,subtitle,actions,onToggleSidebar,theme}) => {
   const [time,setTime]=useState(new Date());
   useEffect(()=>{const t=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(t);},[]);
   return (
-    <div style={{minHeight:62,background:theme === "light" ? "rgba(255,255,255,0.95)" : "rgba(5,6,15,0.95)",borderBottom:`1px solid ${C.border}`,
+    <div style={{minHeight:62,background:theme === "light" ? "rgba(255,255,255,0.85)" : "rgba(8,10,24,0.82)",borderBottom:`1px solid ${C.border}`,
       color:C.txt,
-      backdropFilter:"blur(20px)",position:"sticky",top:0,zIndex:40,
+      backdropFilter:"blur(20px) saturate(1.6)",WebkitBackdropFilter:"blur(20px) saturate(1.6)",position:"sticky",top:0,zIndex:40,
       display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 24px",flexShrink:0,gap:10}}>
+      <div aria-hidden style={{position:"absolute",bottom:-1,left:0,right:0,height:1,
+        background:`linear-gradient(90deg,transparent,${C.indigo}50,transparent)`}}/>
       <style>{`
         @media (max-width:640px){
           .topbarDateChip{display:none !important;}
@@ -616,10 +669,10 @@ const TopBar = ({title,subtitle,actions,onToggleSidebar,theme}) => {
         }
       `}</style>
       <div style={{display:"flex",alignItems:"center",gap:14,minWidth:0}}>
-        <button onClick={onToggleSidebar}
-          style={{background:theme === "light" ? "rgba(15,23,42,0.05)" : "rgba(255,255,255,0.05)",border:`1px solid ${C.border}`,borderRadius:8,padding:7,cursor:"pointer",color:C.txt2,display:"flex",flexShrink:0}}>
+        <motion.button whileHover={{scale:1.06}} whileTap={{scale:0.94}} onClick={onToggleSidebar}
+          style={{background:theme === "light" ? "rgba(15,23,42,0.05)" : "rgba(255,255,255,0.06)",border:`1px solid ${C.border}`,borderRadius:9,padding:7,cursor:"pointer",color:C.txt2,display:"flex",flexShrink:0}}>
           <Menu size={15}/>
-        </button>
+        </motion.button>
         <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0}}>
           <img className="topbarLogo" src="/assets/acadexa-logo.png" alt="ACADEXA" style={{width:28,height:28,objectFit:"contain",flexShrink:0,filter: theme === "light" ? "none" : "brightness(1.2) drop-shadow(0 4px 8px rgba(0,0,0,0.25))"}} onError={(e)=>{e.currentTarget.style.display='none';}} />
           <div style={{minWidth:0}}>
@@ -629,8 +682,10 @@ const TopBar = ({title,subtitle,actions,onToggleSidebar,theme}) => {
         </div>
       </div>
       <div style={{display:"flex",alignItems:"center",gap:12,flexShrink:0,padding:"10px 0"}}>
-        <div className="topbarDateChip" style={{fontSize:12,color:C.txt2,background:"rgba(255,255,255,0.04)",border:`1px solid ${C.border}`,
-          borderRadius:8,padding:"5px 12px",letterSpacing:0.5,fontWeight:500,whiteSpace:"nowrap"}}>
+        <div className="topbarDateChip" style={{display:"flex",alignItems:"center",gap:7,fontSize:12,color:C.txt2,background:"rgba(255,255,255,0.05)",border:`1px solid ${C.border}`,
+          borderRadius:20,padding:"6px 13px 6px 10px",letterSpacing:0.5,fontWeight:500,whiteSpace:"nowrap"}}>
+          <motion.span aria-hidden animate={{opacity:[1,0.35,1]}} transition={{duration:1.8,repeat:Infinity,ease:"easeInOut"}}
+            style={{width:6,height:6,borderRadius:"50%",background:C.emerald,boxShadow:`0 0 6px ${C.emerald}`,flexShrink:0}}/>
           {time.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})} · {time.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"})}
         </div>
         {actions}
@@ -1838,7 +1893,7 @@ const FeesPage = ({students,api,toast,studentId=null,isAdmin=true,onOpenAI}) => 
                     <div style={{fontSize:10,color:C.txt2,textTransform:"uppercase",letterSpacing:0.5}}>{fee.category}</div>
                   </div>
                   <StatusPill status={fee.status||"unpaid"}/>
-                  {fee.status!=="paid"&&(
+                  {isAdmin&&fee.status!=="paid"&&(
                     <Btn variant="success" size="xs" disabled={paying===fee._id} onClick={()=>payFee(fee._id)}>
                       {paying===fee._id?<Loader size={11} style={{animation:"spin 1s linear infinite"}}/>:<CheckCircle size={11}/>}Pay
                     </Btn>
@@ -2512,6 +2567,7 @@ const AdminDashboard = ({token,onLogout,theme,setTheme}) => {
 
   return (
     <div style={{display:"flex",minHeight:"100vh",background:C.bg,fontFamily:F,color:C.txt,position:"relative"}}>
+      <AmbientBackground/>
       <Sidebar nav={navWithBadges} active={view} setActive={setView} user={{name:"Admin",role:"Administrator"}} onLogout={onLogout} collapsed={collapsed} setCollapsed={setCollapsed}/>
       <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0,position:"relative"}}>
         <TopBar title={pageTitles[view]||"ACADEXA by ASAD"} subtitle={`${students.length} students enrolled`}
@@ -3066,7 +3122,8 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
   };
 
   return (
-    <div style={{display:"flex",minHeight:"100vh",background:C.bg,fontFamily:F,color:C.txt}}>
+    <div style={{display:"flex",minHeight:"100vh",background:C.bg,fontFamily:F,color:C.txt,position:"relative"}}>
+      <AmbientBackground/>
       <Sidebar nav={navWithBadges} active={view} setActive={setView} user={{name:student.name,role:`Roll #${student.rollNo}`}} onLogout={onLogout} collapsed={collapsed} setCollapsed={setCollapsed}/>
       <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0}}>
         <TopBar title={pageTitles[view]||"Student Portal"} theme={theme} onToggleSidebar={()=>setCollapsed(p=>!p)} actions={<ThemeSwitcher theme={theme} setTheme={setTheme}/>}/>
@@ -3394,6 +3451,13 @@ export default function App() {
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackSuccess, setFeedbackSuccess] = useState(false);
 
+  // Reassigned synchronously during render (not in a useEffect) so every
+  // descendant reading the module-level C in *this same* render pass sees
+  // the new theme immediately — doing it in an effect (the previous code)
+  // meant components only picked up the change on some later, unrelated
+  // re-render, since mutating a plain variable doesn't itself schedule one.
+  C = themes[theme] || themes.dark;
+
   const handleLogin=useCallback((data)=>{
     setSession({
       token:   data.token,
@@ -3416,7 +3480,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    C = themes[theme] || themes.dark;
     if (typeof window !== "undefined") {
       document.documentElement.dataset.theme = theme;
       window.localStorage.setItem("edu_theme", theme);
