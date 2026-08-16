@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "seed:demo": "node scripts/seedDemo.js",
+    "seed:demo:reset": "node scripts/seedDemo.js --reset"
   },
   "engines": {
     "node": "20.x"
