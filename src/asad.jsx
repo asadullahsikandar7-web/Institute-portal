@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, CheckCircle, XCircle, Calendar, Search, X, LogOut,
   Send, Inbox, Shield, BookOpen, PlusCircle, CalendarDays,
-  AlertCircle, FileText, Clock, ChevronRight, Trash2,
+  AlertCircle, FileText, Clock, ChevronRight, ChevronLeft, Trash2,
   ThumbsUp, ThumbsDown, RefreshCw, WifiOff, Eye, EyeOff,
   Loader, Bell, BarChart2, TrendingUp, Award, Star,
   DollarSign, Grid, Layers, UserCheck, Hash, Zap,
@@ -177,35 +177,112 @@ function makeApi(token) {
     aiChat:           (message, history) => req("POST", "/api/ai/chat", { message, history }),
     aiConfirmAction:  (actionId)         => req("POST", `/api/ai/actions/${actionId}/confirm`),
     aiCancelAction:   (actionId)         => req("POST", `/api/ai/actions/${actionId}/cancel`),
+
+    // ── Academic hierarchy (Admin) ──
+    teacherLogin: (email, password) => req("POST", "/api/auth/teacher-login", { email, password }),
+    getAcademicSessions:    ()        => req("GET",    "/api/academic-sessions"),
+    addAcademicSession:     (body)    => req("POST",   "/api/academic-sessions", body),
+    editAcademicSession:    (id,body) => req("PATCH",  `/api/academic-sessions/${id}`, body),
+    archiveAcademicSession: (id)      => req("DELETE", `/api/academic-sessions/${id}`),
+    getPrograms:      ()        => req("GET",    "/api/programs"),
+    addProgram:       (body)    => req("POST",   "/api/programs", body),
+    editProgram:      (id,body) => req("PATCH",  `/api/programs/${id}`, body),
+    deactivateProgram:(id)      => req("DELETE", `/api/programs/${id}`),
+    getSections:      (qs)      => req("GET",    `/api/sections${qs?`?${qs}`:""}`),
+    addSection:       (body)    => req("POST",   "/api/sections", body),
+    editSection:      (id,body) => req("PATCH",  `/api/sections/${id}`, body),
+    deactivateSection:(id)      => req("DELETE", `/api/sections/${id}`),
+    getSubjects:      ()        => req("GET",    "/api/subjects"),
+    addSubject:       (body)    => req("POST",   "/api/subjects", body),
+    editSubject:      (id,body) => req("PATCH",  `/api/subjects/${id}`, body),
+    deactivateSubject:(id)      => req("DELETE", `/api/subjects/${id}`),
+    getTeachersList:  ()        => req("GET",    "/api/teachers"),
+    addTeacherAccount:(body)    => req("POST",   "/api/teachers", body),
+    editTeacherAccount:(id,body)=> req("PATCH",  `/api/teachers/${id}`, body),
+    deactivateTeacherAccount:(id)=> req("DELETE",`/api/teachers/${id}`),
+    getTeacherAssignments:   (qs) => req("GET",    `/api/teacher-assignments${qs?`?${qs}`:""}`),
+    addTeacherAssignment:    (body)=> req("POST",   "/api/teacher-assignments", body),
+    deactivateTeacherAssignment:(id)=> req("DELETE", `/api/teacher-assignments/${id}`),
+    getEnrollments: (qs)   => req("GET",  `/api/enrollments${qs?`?${qs}`:""}`),
+    addEnrollment:  (body) => req("POST", "/api/enrollments", body),
+    updateEnrollment:(id,body)=> req("PATCH", `/api/enrollments/${id}`, body),
+    addParent:  (body) => req("POST", "/api/parents", body),
+    getParents: ()     => req("GET",  "/api/parents"),
+    getSubjectAttendanceAdmin: (qs) => req("GET", `/api/subject-attendance${qs?`?${qs}`:""}`),
+
+    // ── Teacher portal (self-service) ──
+    getMyClasses:  ()   => req("GET", "/api/teacher/classes"),
+    getMyClass:    (id) => req("GET", `/api/teacher/classes/${id}`),
+    getClassStudents:(id) => req("GET", `/api/teacher/classes/${id}/students`),
+    getClassAttendance:      (id,date) => req("GET",  `/api/teacher/classes/${id}/attendance?date=${date}`),
+    markClassAttendance:     (id,body) => req("POST", `/api/teacher/classes/${id}/attendance`, body),
+    getClassAttendanceHistory:(id,qs)  => req("GET",  `/api/teacher/classes/${id}/attendance/history${qs?`?${qs}`:""}`),
+    getClassCoursework: (id)      => req("GET",   `/api/teacher/classes/${id}/coursework`),
+    addCoursework:      (id,body) => req("POST",  `/api/teacher/classes/${id}/coursework`, body),
+    editCoursework:     (id,body) => req("PATCH", `/api/teacher/coursework/${id}`, body),
+    deleteCoursework:   (id)      => req("DELETE",`/api/teacher/coursework/${id}`),
+    getClassQuizzes: (id)      => req("GET",   `/api/teacher/classes/${id}/quizzes`),
+    addQuiz:         (id,body) => req("POST",  `/api/teacher/classes/${id}/quizzes`, body),
+    editQuiz:        (id,body) => req("PATCH", `/api/teacher/quizzes/${id}`, body),
+    deleteQuiz:      (id)      => req("DELETE",`/api/teacher/quizzes/${id}`),
+    getClassAnnouncements: (id)      => req("GET",  `/api/teacher/classes/${id}/announcements`),
+    addClassAnnouncement:  (id,body) => req("POST", `/api/teacher/classes/${id}/announcements`, body),
+    getClassChatGroup: (id)         => req("GET",   `/api/teacher/classes/${id}/chat-group`),
+    updateChatGroup:   (groupId,body)=> req("PATCH", `/api/teacher/chat-groups/${groupId}`, body),
+    getGroupMessages:  (groupId)     => req("GET",   `/api/teacher/chat-groups/${groupId}/messages`),
+    sendGroupMessage:  (groupId,message)=> req("POST", `/api/teacher/chat-groups/${groupId}/messages`, { message }),
+
+    // ── Student academic (self-service) ──
+    getMySubjects:       () => req("GET", "/api/student/subjects"),
+    getMySubjectHistory: (teacherAssignmentId) => req("GET", `/api/student/attendance/history?teacherAssignmentId=${teacherAssignmentId}`),
+    getMyCoursework: () => req("GET", "/api/student/coursework"),
+    getMyQuizzes:    () => req("GET", "/api/student/quizzes"),
+    getMyChatGroups: () => req("GET", "/api/student/chat-groups"),
+    getStudentGroupMessages:(groupId) => req("GET", `/api/student/chat-groups/${groupId}/messages`),
+    sendStudentGroupMessage:(groupId,message) => req("POST", `/api/student/chat-groups/${groupId}/messages`, { message }),
   };
 }
 
 // ══════════════════════════════════════════════════════
 //  DESIGN SYSTEM
 // ══════════════════════════════════════════════════════
+// ── ACADEXA visual identity ─────────────────────────────────────────
+// Deliberately not another violet-indigo-glassmorphism SaaS palette — the
+// role names below (indigo/violet/emerald/etc.) stay exactly as every
+// consuming component across the app already references them (C.indigo as
+// "primary brand", C.violet as "secondary accent", C.emerald/rose/amber as
+// success/danger/warning); only the actual hex values they resolve to
+// changed. That's how a real rebrand of a token system works — swap what a
+// role means, not the thousands of call sites that use it. The new
+// identity is a "digital registrar" concept grounded in the subject matter
+// itself: ink-navy + brass (a seal, a ledger, brass fittings on library
+// furniture) instead of generic tech-startup indigo, with a cooler,
+// grey-toned light mode rather than the warm-cream-plus-terracotta combo
+// that's become its own cliché.
 const themes = {
   dark: {
-    bg:"#05060f", bg2:"#080a18", panel:"#0c0e1e", surface:"#101328", surface2:"#161932",
-    border:"rgba(255,255,255,0.07)", borderMd:"rgba(255,255,255,0.12)",
-    indigo:"#6c63ff", indigoLt:"#8b85ff", cyan:"#22d3ee", emerald:"#10b981",
-    rose:"#f43f5e", amber:"#f59e0b", violet:"#a78bfa", purple:"#8b5cf6", pink:"#ec4899",
-    sky:"#38bdf8", orange:"#f97316",
-    txt:"#e2e4f0", txt2:"#9698b0", dim:"rgba(228,230,240,0.2)",
-    success:"#10b981", error:"#f43f5e", warn:"#f59e0b", info:"#22d3ee",
+    bg:"#0a0d14", bg2:"#0e121b", panel:"#10141e", surface:"#151a26", surface2:"#1a2030",
+    border:"rgba(233,225,208,0.08)", borderMd:"rgba(233,225,208,0.15)",
+    indigo:"#c9974c", indigoLt:"#e3bd7c", cyan:"#6fa3ad", emerald:"#4f9a72",
+    rose:"#c15a56", amber:"#d9a53e", violet:"#6d7fc4", purple:"#9077b0", pink:"#bb7791",
+    sky:"#8fb8c9", orange:"#c17a45",
+    txt:"#eae6da", txt2:"#9d9686", dim:"rgba(234,230,218,0.2)",
+    success:"#4f9a72", error:"#c15a56", warn:"#d9a53e", info:"#6fa3ad",
   },
   light: {
-    bg:"#eff2ff", bg2:"#f8f9ff", panel:"#ffffff", surface:"#ffffff", surface2:"#f3f4ff",
-    border:"rgba(15,23,42,0.08)", borderMd:"rgba(15,23,42,0.14)",
-    indigo:"#5b4bff", indigoLt:"#8b5cf6", cyan:"#22d3ee", emerald:"#10b981",
-    rose:"#ef4444", amber:"#f59e0b", violet:"#8b5cf6", purple:"#8b5cf6", pink:"#ec4899",
-    sky:"#38bdf8", orange:"#fb923c",
-    txt:"#0f172a", txt2:"#475569", dim:"rgba(15,23,42,0.2)",
-    success:"#10b981", error:"#ef4444", warn:"#f59e0b", info:"#22d3ee",
+    bg:"#f3f4f7", bg2:"#f8f9fb", panel:"#ffffff", surface:"#ffffff", surface2:"#eef0f4",
+    border:"rgba(20,24,38,0.10)", borderMd:"rgba(20,24,38,0.17)",
+    indigo:"#9c6f2e", indigoLt:"#b98a42", cyan:"#4d7d86", emerald:"#2f7a52",
+    rose:"#a8433f", amber:"#a97a1f", violet:"#4a5a96", purple:"#6f5a8c", pink:"#965a72",
+    sky:"#4f7f92", orange:"#a15c30",
+    txt:"#171a26", txt2:"#545a6e", dim:"rgba(23,26,38,0.2)",
+    success:"#2f7a52", error:"#a8433f", warn:"#a97a1f", info:"#4d7d86",
   }
 };
 let C = themes.dark;
-const F  = "'Outfit', 'DM Sans', system-ui, sans-serif";
-const FD = "'Bebas Neue', 'Outfit', sans-serif";
+const F  = "'IBM Plex Sans', 'DM Sans', system-ui, sans-serif";
+const FD = "'Fraunces', 'IBM Plex Sans', serif";
+const FM = "'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace";
 
 // ══════════════════════════════════════════════════════
 //  UTILS
@@ -217,18 +294,18 @@ const dateRange= (f,t)=>{const d=[],c=new Date(f);while(c<=new Date(t)){d.push(c
 const gradeColor = g => g>=90?C.emerald:g>=75?C.cyan:g>=60?C.amber:C.rose;
 const gradeLabel = g => g>=90?"A+":g>=85?"A":g>=80?"B+":g>=75?"B":g>=70?"C+":g>=65?"C":g>=60?"D":"F";
 const statusMeta = s => ({
-  present:{label:"Present",color:C.emerald,bg:"rgba(16,185,129,0.1)"},
-  absent: {label:"Absent", color:C.rose,   bg:"rgba(244,63,94,0.1)"},
-  leave:  {label:"On Leave",color:C.violet,bg:"rgba(167,139,250,0.1)"},
+  present:{label:"Present",color:C.emerald,bg:"rgba(79,154,114,0.1)"},
+  absent: {label:"Absent", color:C.rose,   bg:"rgba(193,90,86,0.1)"},
+  leave:  {label:"On Leave",color:C.violet,bg:"rgba(109,127,196,0.1)"},
   unmarked:{label:"Unmarked",color:C.txt2, bg:"rgba(255,255,255,0.05)"},
-  pending: {label:"Pending", color:C.amber, bg:"rgba(245,158,11,0.1)"},
-  approved:{label:"Approved",color:C.emerald,bg:"rgba(16,185,129,0.1)"},
-  rejected:{label:"Rejected",color:C.rose,  bg:"rgba(244,63,94,0.1)"},
-  paid:    {label:"Paid",    color:C.emerald,bg:"rgba(16,185,129,0.1)"},
-  unpaid:  {label:"Unpaid",  color:C.rose,  bg:"rgba(244,63,94,0.1)"},
-  overdue: {label:"Overdue", color:C.orange,bg:"rgba(249,115,22,0.1)"},
-  upcoming:{label:"Upcoming",color:C.amber, bg:"rgba(245,158,11,0.1)"},
-  completed:{label:"Completed",color:C.emerald,bg:"rgba(16,185,129,0.1)"},
+  pending: {label:"Pending", color:C.amber, bg:"rgba(217,165,62,0.1)"},
+  approved:{label:"Approved",color:C.emerald,bg:"rgba(79,154,114,0.1)"},
+  rejected:{label:"Rejected",color:C.rose,  bg:"rgba(193,90,86,0.1)"},
+  paid:    {label:"Paid",    color:C.emerald,bg:"rgba(79,154,114,0.1)"},
+  unpaid:  {label:"Unpaid",  color:C.rose,  bg:"rgba(193,90,86,0.1)"},
+  overdue: {label:"Overdue", color:C.orange,bg:"rgba(193,122,69,0.1)"},
+  upcoming:{label:"Upcoming",color:C.amber, bg:"rgba(217,165,62,0.1)"},
+  completed:{label:"Completed",color:C.emerald,bg:"rgba(79,154,114,0.1)"},
 })[s] || {label:s,color:C.txt2,bg:"rgba(255,255,255,0.05)"};
 
 const subjectColors = {
@@ -278,45 +355,49 @@ const Avatar = ({ name, size=38, color=C.indigo, img }) => {
 const Pill = ({label,color,bg,size="sm"}) => (
   <span style={{display:"inline-flex",alignItems:"center",gap:4,
     padding:size==="xs"?"2px 7px":"3px 10px",borderRadius:20,
-    fontSize:size==="xs"?9:11,fontWeight:700,letterSpacing:0.3,background:bg,color,border:`1px solid ${color}25`}}>
+    fontSize:size==="xs"?9:11,fontWeight:600,letterSpacing:0.3,background:bg,color,border:`1px solid ${color}25`,fontFamily:F}}>
     <span style={{width:4,height:4,borderRadius:"50%",background:color,flexShrink:0}}/>
     {label}
   </span>
 );
 const StatusPill = ({status,size}) => { const m=statusMeta(status); return <Pill label={m.label} color={m.color} bg={m.bg} size={size}/>; };
 
+// Flatter, more defined surface than the previous heavy-blur glassmorphism
+// — a crisp 1px border and a shallow, low-spread shadow read as a bounded
+// physical card (closer to an index card or record sheet) rather than a
+// frosted-glass panel. Blur is kept, but modest, for the sticky/overlaid
+// surfaces (topbar, sidebar) that still benefit from it.
 const Card = ({children,style={},hover=false,glow=false,onClick}) => (
   <motion.div
-    whileHover={hover||onClick?{y:-3,boxShadow:`0 20px 48px -14px rgba(2,3,12,0.4), 0 0 0 1px ${C.borderMd}, inset 0 1px 0 rgba(255,255,255,0.06)`}:{}}
+    whileHover={hover||onClick?{y:-2,boxShadow:`0 10px 24px -10px rgba(4,3,1,0.32), 0 0 0 1px ${C.borderMd}`}:{}}
     onClick={onClick}
     style={{
-      background:`linear-gradient(175deg, ${C.surface} 0%, ${C.surface2}99 130%)`,
-      border:`1px solid ${glow?C.borderMd:C.border}`,borderRadius:18,
-      backdropFilter:"blur(16px) saturate(1.5)",WebkitBackdropFilter:"blur(16px) saturate(1.5)",
+      background:C.surface,
+      border:`1px solid ${glow?C.borderMd:C.border}`,borderRadius:14,
       boxShadow:glow
-        ?`0 0 0 1px ${C.indigo}25, 0 24px 56px -16px ${C.indigo}30, inset 0 1px 0 rgba(255,255,255,0.06)`
-        :`0 10px 30px -14px rgba(2,3,12,0.4), inset 0 1px 0 rgba(255,255,255,0.04)`,
-      cursor:onClick?"pointer":"default",transition:"border-color 0.25s, box-shadow 0.25s",...style
+        ?`0 0 0 1px ${C.indigo}30, 0 14px 32px -16px ${C.indigo}25`
+        :`0 6px 18px -12px rgba(4,3,1,0.3)`,
+      cursor:onClick?"pointer":"default",transition:"border-color 0.25s, box-shadow 0.25s, transform 0.25s",...style
     }}>{children}</motion.div>
 );
 
 const Btn = ({children,variant="primary",size="md",onClick,disabled,full,style={}}) => {
   const V = {
-    primary:{bg:`linear-gradient(135deg,${C.indigo},${C.indigoLt})`,color:"#fff",border:"none",shadow:`0 4px 20px ${C.indigo}35`,hoverShadow:`0 8px 30px ${C.indigo}55`,sheen:true},
-    teal:   {bg:`linear-gradient(135deg,${C.cyan},${C.sky})`,color:"#040810",border:"none",shadow:`0 4px 20px ${C.cyan}30`,hoverShadow:`0 8px 30px ${C.cyan}50`,sheen:true},
-    ghost:  {bg:"rgba(255,255,255,0.05)",color:C.txt2,border:`1px solid ${C.border}`,shadow:"none",hoverShadow:"none"},
-    danger: {bg:"rgba(244,63,94,0.1)",color:C.rose,border:`1px solid rgba(244,63,94,0.2)`,shadow:"none",hoverShadow:"none"},
-    success:{bg:"rgba(16,185,129,0.1)",color:C.emerald,border:`1px solid rgba(16,185,129,0.2)`,shadow:"none",hoverShadow:"none"},
-    amber:  {bg:"rgba(245,158,11,0.1)",color:C.amber,border:`1px solid rgba(245,158,11,0.2)`,shadow:"none",hoverShadow:"none"},
+    primary:{bg:`linear-gradient(135deg,${C.indigo},${C.indigoLt})`,color:"#12100a",border:"none",shadow:`0 3px 14px ${C.indigo}30`,hoverShadow:`0 6px 22px ${C.indigo}45`,sheen:true},
+    teal:   {bg:`linear-gradient(135deg,${C.cyan},${C.sky})`,color:"#0a1418",border:"none",shadow:`0 3px 14px ${C.cyan}28`,hoverShadow:`0 6px 22px ${C.cyan}42`,sheen:true},
+    ghost:  {bg:"rgba(127,127,127,0.07)",color:C.txt2,border:`1px solid ${C.border}`,shadow:"none",hoverShadow:"none"},
+    danger: {bg:`${C.rose}18`,color:C.rose,border:`1px solid ${C.rose}30`,shadow:"none",hoverShadow:"none"},
+    success:{bg:`${C.emerald}18`,color:C.emerald,border:`1px solid ${C.emerald}30`,shadow:"none",hoverShadow:"none"},
+    amber:  {bg:`${C.amber}18`,color:C.amber,border:`1px solid ${C.amber}30`,shadow:"none",hoverShadow:"none"},
   };
   const v = V[variant]||V.primary;
   return (
-    <motion.button whileHover={disabled?{}:{scale:1.03,y:-1,boxShadow:v.hoverShadow}} whileTap={disabled?{}:{scale:0.97}}
+    <motion.button whileHover={disabled?{}:{scale:1.02,y:-1,boxShadow:v.hoverShadow}} whileTap={disabled?{}:{scale:0.97}}
       onClick={disabled?undefined:onClick}
-      style={{position:"relative",overflow:"hidden",background:v.bg,border:v.border,color:v.color,borderRadius:10,
+      style={{position:"relative",overflow:"hidden",background:v.bg,border:v.border,color:v.color,borderRadius:8,
         padding:size==="xs"?"5px 10px":size==="sm"?"7px 14px":size==="lg"?"12px 28px":"9px 18px",
         cursor:disabled?"not-allowed":"pointer",
-        fontSize:size==="xs"?10:size==="sm"?12:14,fontWeight:700,fontFamily:F,
+        fontSize:size==="xs"?10:size==="sm"?12:14,fontWeight:600,fontFamily:F,
         display:"flex",alignItems:"center",gap:6,whiteSpace:"nowrap",
         opacity:disabled?0.45:1,boxShadow:v.shadow,
         width:full?"100%":"auto",justifyContent:full?"center":"flex-start",
@@ -324,7 +405,7 @@ const Btn = ({children,variant="primary",size="md",onClick,disabled,full,style={
       {v.sheen&&!disabled&&(
         <motion.span aria-hidden initial={{x:"-120%"}} whileHover={{x:"220%"}} transition={{duration:0.7,ease:"easeInOut"}}
           style={{position:"absolute",top:0,left:0,width:"40%",height:"100%",pointerEvents:"none",
-            background:"linear-gradient(115deg,transparent,rgba(255,255,255,0.35),transparent)",transform:"skewX(-18deg)"}}/>
+            background:"linear-gradient(115deg,transparent,rgba(255,255,255,0.3),transparent)",transform:"skewX(-18deg)"}}/>
       )}
       {children}
     </motion.button>
@@ -333,11 +414,11 @@ const Btn = ({children,variant="primary",size="md",onClick,disabled,full,style={
 
 const Input = ({style={},label,...p}) => (
   <div style={{display:"flex",flexDirection:"column",gap:6}}>
-    {label && <div style={{fontSize:10,fontWeight:700,color:C.txt2,letterSpacing:1,textTransform:"uppercase"}}>{label}</div>}
-    <input {...p} style={{background:"rgba(255,255,255,0.04)",border:`1px solid ${C.border}`,
-      borderRadius:10,padding:"10px 14px",color:C.txt,fontFamily:F,fontSize:14,
+    {label && <div style={{fontSize:10,fontWeight:600,color:C.txt2,letterSpacing:1,textTransform:"uppercase"}}>{label}</div>}
+    <input {...p} style={{background:"rgba(127,127,127,0.05)",border:`1px solid ${C.border}`,
+      borderRadius:8,padding:"10px 14px",color:C.txt,fontFamily:F,fontSize:14,
       outline:"none",width:"100%",boxSizing:"border-box",transition:"border-color 0.2s, box-shadow 0.2s",...style}}
-      onFocus={e=>{e.target.style.borderColor=C.indigo;e.target.style.boxShadow=`0 0 0 4px ${C.indigo}1c`;}}
+      onFocus={e=>{e.target.style.borderColor=C.indigo;e.target.style.boxShadow=`0 0 0 3px ${C.indigo}22`;}}
       onBlur={e=>{e.target.style.borderColor=C.border;e.target.style.boxShadow="none";}}/>
   </div>
 );
@@ -346,9 +427,9 @@ const ThemeSwitcher = ({theme,setTheme}) => {
   const nextTheme = theme === "dark" ? "light" : "dark";
   return (
     <button onClick={() => setTheme(nextTheme)}
-      style={{display:"inline-flex",alignItems:"center",gap:8,padding:"10px 14px",
-        borderRadius:14,border:`1px solid ${C.border}`,background:"rgba(255,255,255,0.05)",color:C.txt2,
-        fontSize:12,fontWeight:700,cursor:"pointer",transition:"all 0.2s"}}>
+      style={{display:"inline-flex",alignItems:"center",gap:8,padding:"9px 14px",
+        borderRadius:8,border:`1px solid ${C.border}`,background:"rgba(127,127,127,0.06)",color:C.txt2,
+        fontSize:12,fontWeight:600,cursor:"pointer",transition:"all 0.2s",fontFamily:F}}>
       {theme === "dark" ? <Sun size={14}/> : <Moon size={14}/>} {nextTheme === "dark" ? "Dark" : "Light"} Mode
     </button>
   );
@@ -356,11 +437,11 @@ const ThemeSwitcher = ({theme,setTheme}) => {
 
 const Select = ({children,label,style={},...p}) => (
   <div style={{display:"flex",flexDirection:"column",gap:6}}>
-    {label && <div style={{fontSize:10,fontWeight:700,color:C.txt2,letterSpacing:1,textTransform:"uppercase"}}>{label}</div>}
+    {label && <div style={{fontSize:10,fontWeight:600,color:C.txt2,letterSpacing:1,textTransform:"uppercase"}}>{label}</div>}
     <select {...p} style={{background:C.surface2,border:`1px solid ${C.border}`,
-      borderRadius:10,padding:"10px 14px",color:C.txt,fontFamily:F,fontSize:14,
+      borderRadius:8,padding:"10px 14px",color:C.txt,fontFamily:F,fontSize:14,
       outline:"none",width:"100%",boxSizing:"border-box",transition:"border-color 0.2s, box-shadow 0.2s",...style}}
-      onFocus={e=>{e.target.style.borderColor=C.indigo;e.target.style.boxShadow=`0 0 0 4px ${C.indigo}1c`;}}
+      onFocus={e=>{e.target.style.borderColor=C.indigo;e.target.style.boxShadow=`0 0 0 3px ${C.indigo}22`;}}
       onBlur={e=>{e.target.style.borderColor=C.border;e.target.style.boxShadow="none";}}>
       {children}
     </select>
@@ -368,25 +449,21 @@ const Select = ({children,label,style={},...p}) => (
 );
 
 const StatCard = ({label,value,sub,color,icon,trend,delay=0,onClick,active}) => (
-  <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay,duration:0.4,ease:[0.22,1,0.36,1]}}
-    whileHover={{y:-5,scale:1.015}} whileTap={{scale:0.98}} onClick={onClick}
+  <motion.div initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} transition={{delay,duration:0.35,ease:[0.22,1,0.36,1]}}
+    whileHover={{y:-3}} whileTap={{scale:0.985}} onClick={onClick}
     style={{position:"relative",overflow:"hidden",
-      background:active?`linear-gradient(160deg,${color}20,${C.surface} 70%)`:`linear-gradient(165deg,${C.surface},${C.surface2}88)`,
-      border:`1px solid ${active?color+"4a":C.border}`,borderRadius:18,padding:"20px 22px",
-      backdropFilter:"blur(14px) saturate(1.4)",WebkitBackdropFilter:"blur(14px) saturate(1.4)",
-      cursor:onClick?"pointer":"default",transition:"border-color 0.25s, box-shadow 0.25s",
-      boxShadow:active?`0 16px 40px -12px ${color}30, inset 0 1px 0 rgba(255,255,255,0.06)`:`0 8px 24px -14px rgba(2,3,12,0.4), inset 0 1px 0 rgba(255,255,255,0.03)`}}>
-    {/* soft corner glow — the "advanced dashboard" cue */}
-    <div aria-hidden style={{position:"absolute",top:-30,right:-30,width:100,height:100,borderRadius:"50%",
-      background:`radial-gradient(circle,${color}30,transparent 70%)`,filter:"blur(10px)",pointerEvents:"none"}}/>
+      background:active?`linear-gradient(160deg,${color}14,${C.surface} 75%)`:C.surface,
+      border:`1px solid ${active?color+"4a":C.border}`,borderRadius:14,padding:"18px 20px",
+      cursor:onClick?"pointer":"default",transition:"border-color 0.25s, box-shadow 0.25s, transform 0.25s",
+      boxShadow:active?`0 10px 26px -14px ${color}35`:`0 4px 14px -10px rgba(4,3,1,0.28)`}}>
     <div style={{position:"relative",display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
-      <div style={{width:40,height:40,borderRadius:12,background:`linear-gradient(135deg,${color}28,${color}10)`,border:`1px solid ${color}30`,
-        display:"flex",alignItems:"center",justifyContent:"center",color,flexShrink:0,boxShadow:`0 4px 14px ${color}20`}}>
+      <div style={{width:36,height:36,borderRadius:9,background:`${color}16`,border:`1px solid ${color}2c`,
+        display:"flex",alignItems:"center",justifyContent:"center",color,flexShrink:0}}>
         {icon}
       </div>
       {trend!==undefined && (
-        <div style={{display:"flex",alignItems:"center",gap:3,fontSize:11,fontWeight:700,padding:"3px 7px",borderRadius:20,
-          background:trend>0?"rgba(16,185,129,0.1)":trend<0?"rgba(244,63,94,0.1)":"rgba(255,255,255,0.05)",
+        <div style={{display:"flex",alignItems:"center",gap:3,fontSize:11,fontWeight:600,padding:"3px 7px",borderRadius:6,
+          background:trend>0?`${C.emerald}18`:trend<0?`${C.rose}18`:"rgba(127,127,127,0.08)",
           color:trend>0?C.emerald:trend<0?C.rose:C.txt2}}>
           {trend>0?<ArrowUp size={11}/>:trend<0?<ArrowDown size={11}/>:<Minus size={11}/>}
           {Math.abs(trend)}%
@@ -397,8 +474,8 @@ const StatCard = ({label,value,sub,color,icon,trend,delay=0,onClick,active}) => 
         not recompositing correctly on rapid theme/style changes, which
         showed up as the number rendering as a solid block instead of
         digits after switching theme (verified live) */}
-    <div style={{position:"relative",fontSize:30,fontWeight:900,lineHeight:1,marginBottom:5,letterSpacing:-1,color:C.txt}}>{value}</div>
-    <div style={{position:"relative",fontSize:11,color,fontWeight:700,letterSpacing:0.5,marginBottom:2}}>{label}</div>
+    <div style={{position:"relative",fontSize:28,fontWeight:600,lineHeight:1,marginBottom:5,letterSpacing:-0.5,color:C.txt,fontFamily:FD,fontVariantNumeric:"tabular-nums"}}>{value}</div>
+    <div style={{position:"relative",fontSize:11,color,fontWeight:600,letterSpacing:0.4,marginBottom:2}}>{label}</div>
     {sub && <div style={{position:"relative",fontSize:11,color:C.txt2}}>{sub}</div>}
   </motion.div>
 );
@@ -406,10 +483,10 @@ const StatCard = ({label,value,sub,color,icon,trend,delay=0,onClick,active}) => 
 const SectionHeader = ({title,subtitle,icon,action}) => (
   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:10}}>
     <div style={{display:"flex",alignItems:"center",gap:12}}>
-      <div style={{width:36,height:36,borderRadius:10,background:`${C.indigo}18`,
+      <div style={{width:34,height:34,borderRadius:8,background:`${C.indigo}16`,border:`1px solid ${C.indigo}2a`,
         display:"flex",alignItems:"center",justifyContent:"center",color:C.indigo}}>{icon}</div>
       <div>
-        <div style={{fontSize:16,fontWeight:800,color:C.txt}}>{title}</div>
+        <div style={{fontSize:15,fontWeight:600,color:C.txt,fontFamily:FD}}>{title}</div>
         {subtitle && <div style={{fontSize:12,color:C.txt2,marginTop:1}}>{subtitle}</div>}
       </div>
     </div>
@@ -417,13 +494,62 @@ const SectionHeader = ({title,subtitle,icon,action}) => (
   </div>
 );
 
+// Shared, presentational academic-group chat window — used by both the
+// teacher class workspace and the student Academic Groups page. Purely
+// controlled (messages/onSend come from the caller), since the two callers
+// hit different REST namespaces (/api/teacher/... vs /api/student/...) and
+// there's no shared realtime transport for this feature (see ChatGroup.js —
+// group chat is REST/poll-based, unlike the socket-backed 1:1 chat in
+// Chat.jsx) — baking fetch logic in here would just mean re-branching on
+// role internally instead of letting the caller own that.
+const GroupChatBox = ({messages,loading,onSend,myModel,disabled,placeholder,height=420}) => {
+  const [text,setText]=useState("");
+  const endRef=useRef(null);
+  useEffect(()=>{ endRef.current?.scrollIntoView({behavior:"smooth"}); },[messages?.length]);
+  const submit=()=>{ if(!text.trim()||disabled) return; onSend(text.trim()); setText(""); };
+  return (
+    <div style={{display:"flex",flexDirection:"column",height,border:`1px solid ${C.border}`,borderRadius:14,overflow:"hidden",background:C.surface}}>
+      <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:10}}>
+        {loading ? (
+          <div style={{margin:"auto",color:C.txt2}}><Loader size={18} color={C.indigo} style={{animation:"spin 1s linear infinite"}}/></div>
+        ) : !messages || messages.length===0 ? (
+          <div style={{margin:"auto",color:C.txt2,fontSize:13,textAlign:"center"}}><MessageSquare size={22} style={{opacity:0.25,display:"block",margin:"0 auto 8px"}}/>No messages yet. Say hello 👋</div>
+        ) : messages.map(m=>{
+          const own=m.senderModel===myModel;
+          return (
+            <div key={m._id} style={{alignSelf:own?"flex-end":"flex-start",maxWidth:"78%"}}>
+              <div style={{fontSize:9,color:C.txt2,marginBottom:2,textAlign:own?"right":"left",fontWeight:700,letterSpacing:0.3}}>
+                {own?"You":m.senderModel} · {new Date(m.createdAt).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"})}
+              </div>
+              <div style={{padding:"9px 13px",borderRadius:own?"14px 14px 3px 14px":"14px 14px 14px 3px",
+                background:own?`linear-gradient(135deg,${C.indigo},${C.indigoLt})`:C.surface2,
+                color:own?"#1a1408":C.txt,border:own?"none":`1px solid ${C.border}`,fontSize:13,lineHeight:1.5,wordBreak:"break-word"}}>
+                {m.message}
+              </div>
+            </div>
+          );
+        })}
+        <div ref={endRef}/>
+      </div>
+      <div style={{display:"flex",gap:8,padding:10,borderTop:`1px solid ${C.border}`,flexShrink:0}}>
+        <input value={text} disabled={disabled} onChange={e=>setText(e.target.value)}
+          onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); submit(); } }}
+          placeholder={disabled?"This group is announcement-only":(placeholder||"Type a message…")}
+          style={{flex:1,background:"rgba(255,255,255,0.04)",border:`1px solid ${C.border}`,borderRadius:10,
+            padding:"10px 12px",color:C.txt,fontFamily:F,fontSize:13,outline:"none",opacity:disabled?0.5:1}}/>
+        <Btn size="sm" onClick={submit} disabled={disabled||!text.trim()}><Send size={13}/></Btn>
+      </div>
+    </div>
+  );
+};
+
 const Toast = ({msg,type,onClose}) => (
   <motion.div initial={{opacity:0,x:60,scale:0.9}} animate={{opacity:1,x:0,scale:1}} exit={{opacity:0,x:60}}
     style={{position:"fixed",bottom:24,right:24,zIndex:9999,
-      background:type==="success"?"rgba(16,185,129,0.12)":"rgba(244,63,94,0.12)",
+      background:C.surface,
       border:`1px solid ${type==="success"?C.emerald:C.rose}44`,
-      borderRadius:14,padding:"14px 18px",display:"flex",alignItems:"center",gap:12,
-      backdropFilter:"blur(20px)",maxWidth:380,fontFamily:F,boxShadow:"0 8px 40px rgba(0,0,0,0.4)"}}>
+      borderRadius:10,padding:"14px 18px",display:"flex",alignItems:"center",gap:12,
+      maxWidth:380,fontFamily:F,boxShadow:"0 10px 30px -10px rgba(4,3,1,0.4)"}}>
     {type==="success"?<CheckCircle size={16} color={C.emerald}/>:<AlertCircle size={16} color={C.rose}/>}
     <span style={{fontSize:13,color:C.txt,flex:1,lineHeight:1.4}}>{msg}</span>
     <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:C.txt2,display:"flex"}}><X size={13}/></button>
@@ -496,10 +622,10 @@ const BarGroup = ({data,maxVal,colors}) => (
 // ══════════════════════════════════════════════════════
 const EmailStatusBadge = ({status,count}) => {
   const S={
-    sending:{label:"Sending…",color:C.amber,bg:"rgba(245,158,11,0.1)",icon:<Loader size={9} style={{animation:"spin 1s linear infinite"}}/>},
-    sent:   {label:`Sent${count?` (${count})`:""}`,color:C.emerald,bg:"rgba(16,185,129,0.1)",icon:<CheckCircle size={9}/>},
-    partial:{label:"Partial",color:C.orange,bg:"rgba(249,115,22,0.1)",icon:<AlertTriangle size={9}/>},
-    failed: {label:"Failed",color:C.rose,bg:"rgba(244,63,94,0.1)",icon:<XCircle size={9}/>},
+    sending:{label:"Sending…",color:C.amber,bg:"rgba(217,165,62,0.1)",icon:<Loader size={9} style={{animation:"spin 1s linear infinite"}}/>},
+    sent:   {label:`Sent${count?` (${count})`:""}`,color:C.emerald,bg:"rgba(79,154,114,0.1)",icon:<CheckCircle size={9}/>},
+    partial:{label:"Partial",color:C.orange,bg:"rgba(193,122,69,0.1)",icon:<AlertTriangle size={9}/>},
+    failed: {label:"Failed",color:C.rose,bg:"rgba(193,90,86,0.1)",icon:<XCircle size={9}/>},
     pending:{label:"Pending",color:C.txt2,bg:"rgba(255,255,255,0.06)",icon:<Clock size={9}/>},
   };
   const s=S[status]||S.pending;
@@ -518,17 +644,17 @@ const EmailStatusBadge = ({status,count}) => {
 //  Card surfaces regardless, so this only ever affects the empty page
 //  background, never readability.
 // ══════════════════════════════════════════════════════
+// Subdued on purpose — a hint of warmth in the corners rather than the
+// floaty multi-orb glow common to modern SaaS dashboards, closer to how
+// light falls unevenly across a reading room than a decorative gradient.
 const AmbientBackground = () => (
   <div aria-hidden style={{position:"fixed",inset:0,zIndex:0,overflow:"hidden",pointerEvents:"none"}}>
-    <motion.div animate={{x:[0,40,0],y:[0,30,0]}} transition={{duration:22,repeat:Infinity,ease:"easeInOut"}}
-      style={{position:"absolute",top:"-10%",left:"-8%",width:520,height:520,borderRadius:"50%",
-        background:`radial-gradient(circle,${C.indigo}22,transparent 68%)`,filter:"blur(60px)"}}/>
-    <motion.div animate={{x:[0,-30,0],y:[0,40,0]}} transition={{duration:26,repeat:Infinity,ease:"easeInOut",delay:2}}
-      style={{position:"absolute",top:"30%",right:"-10%",width:480,height:480,borderRadius:"50%",
-        background:`radial-gradient(circle,${C.violet}1c,transparent 68%)`,filter:"blur(60px)"}}/>
-    <motion.div animate={{x:[0,25,0],y:[0,-25,0]}} transition={{duration:24,repeat:Infinity,ease:"easeInOut",delay:4}}
-      style={{position:"absolute",bottom:"-12%",left:"20%",width:460,height:460,borderRadius:"50%",
-        background:`radial-gradient(circle,${C.cyan}16,transparent 68%)`,filter:"blur(60px)"}}/>
+    <motion.div animate={{x:[0,24,0],y:[0,18,0]}} transition={{duration:28,repeat:Infinity,ease:"easeInOut"}}
+      style={{position:"absolute",top:"-12%",left:"-10%",width:480,height:480,borderRadius:"50%",
+        background:`radial-gradient(circle,${C.indigo}12,transparent 70%)`,filter:"blur(70px)"}}/>
+    <motion.div animate={{x:[0,-18,0],y:[0,22,0]}} transition={{duration:32,repeat:Infinity,ease:"easeInOut",delay:3}}
+      style={{position:"absolute",bottom:"-14%",right:"-8%",width:420,height:420,borderRadius:"50%",
+        background:`radial-gradient(circle,${C.violet}0e,transparent 70%)`,filter:"blur(70px)"}}/>
   </div>
 );
 
@@ -540,6 +666,8 @@ const adminNav = [
   {key:"chat",        icon:<MessageSquare size={16}/>,   label:"Chat"},
   {key:"attendance",  icon:<CheckSquare size={16}/>,     label:"Attendance"},
   {key:"students",    icon:<Users size={16}/>,           label:"Students"},
+  {key:"academic",    icon:<Layers size={16}/>,          label:"Academic Setup"},
+  {key:"teachers",    icon:<UserCheck size={16}/>,       label:"Teachers"},
   {key:"classes",     icon:<BookOpen size={16}/>,        label:"Classes"},
   {key:"exams",       icon:<BookMarked size={16}/>,      label:"Exams"},
   {key:"grades",      icon:<GraduationCap size={16}/>,   label:"Grades"},
@@ -557,12 +685,23 @@ const studentNav = [
   {key:"chat",         icon:<MessageSquare size={16}/>,   label:"Chat"},
   {key:"attendance",   icon:<CheckSquare size={16}/>,     label:"Attendance"},
   {key:"classes",      icon:<BookOpen size={16}/>,        label:"My Classes"},
+  {key:"subjects",     icon:<BookMarked size={16}/>,      label:"My Subjects"},
+  {key:"coursework",   icon:<FileText size={16}/>,        label:"Assignments"},
+  {key:"quizzes",      icon:<Target size={16}/>,          label:"Quizzes"},
+  {key:"academicGroups",icon:<Hash size={16}/>,           label:"Academic Groups"},
   {key:"grades",       icon:<GraduationCap size={16}/>,   label:"My Grades"},
   {key:"leaves",       icon:<CalendarDays size={16}/>,    label:"Leaves"},
   {key:"fees",         icon:<CreditCard size={16}/>,      label:"My Fees"},
   {key:"timetable",    icon:<Grid size={16}/>,            label:"Timetable"},
   {key:"notifications",icon:<Bell size={16}/>,            label:"Notifications"},
   {key:"announcements",icon:<AlertCircle size={16}/>,     label:"Notices"},
+];
+
+const teacherNav = [
+  {key:"dashboard",   icon:<LayoutDashboard size={16}/>, label:"Dashboard"},
+  {key:"classes",     icon:<BookOpen size={16}/>,        label:"My Classes"},
+  {key:"chat",        icon:<Hash size={16}/>,            label:"Academic Groups"},
+  {key:"notifications",icon:<Bell size={16}/>,           label:"Notifications"},
 ];
 
 const Sidebar = ({nav,active,setActive,user,onLogout,collapsed,setCollapsed}) => {
@@ -594,7 +733,7 @@ const Sidebar = ({nav,active,setActive,user,onLogout,collapsed,setCollapsed}) =>
             background:`linear-gradient(135deg,${C.indigo},${C.indigoLt})`,
             display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 16px ${C.indigo}40, inset 0 1px 0 rgba(255,255,255,0.25)`}}>
             <img src="/dist/assets/acadexa-logo.png" alt="ACADEXA" style={{width:22,height:22,objectFit:"contain",filter:"brightness(1.2) drop-shadow(0 4px 8px rgba(0,0,0,0.25))"}} onError={(e)=>{e.currentTarget.style.display='none';}} />
-            <GraduationCap size={18} color="#fff"/>
+            <GraduationCap size={18} color="#1a1408"/>
           </div>
         </div>
         {!collapsed && <div><div style={{fontSize:14,fontWeight:900,color:C.txt,letterSpacing:-0.3}}>ACADEXA</div><div style={{fontSize:9,color:C.indigo,fontWeight:700,letterSpacing:1}}>by ASAD</div></div>}
@@ -624,7 +763,7 @@ const Sidebar = ({nav,active,setActive,user,onLogout,collapsed,setCollapsed}) =>
             </span>
             {!collapsed && <span style={{position:"relative",flex:1}}>{item.label}</span>}
             {!collapsed && !!item.badge && (
-              <span style={{position:"relative",minWidth:18,height:18,padding:"0 5px",borderRadius:9,background:isActive?C.indigo:C.rose,color:"#fff",fontSize:10,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <span style={{position:"relative",minWidth:18,height:18,padding:"0 5px",borderRadius:9,background:isActive?C.indigo:C.rose,color:isActive?"#1a1408":"#fff",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                 {item.badge>99?"99+":item.badge}
               </span>
             )}
@@ -645,10 +784,10 @@ const Sidebar = ({nav,active,setActive,user,onLogout,collapsed,setCollapsed}) =>
       <button onClick={onLogout}
         style={{display:"flex",alignItems:"center",gap:7,padding:"8px 10px",borderRadius:9,
           border:"none",cursor:"pointer",fontFamily:F,fontSize:12,fontWeight:600,
-          background:"rgba(244,63,94,0.08)",color:C.rose,width:"100%",
+          background:"rgba(193,90,86,0.08)",color:C.rose,width:"100%",
           justifyContent:collapsed?"center":"flex-start",transition:"background 0.2s"}}
-        onMouseEnter={e=>e.currentTarget.style.background="rgba(244,63,94,0.15)"}
-        onMouseLeave={e=>e.currentTarget.style.background="rgba(244,63,94,0.08)"}>
+        onMouseEnter={e=>e.currentTarget.style.background="rgba(193,90,86,0.15)"}
+        onMouseLeave={e=>e.currentTarget.style.background="rgba(193,90,86,0.08)"}>
         <LogOut size={13}/>{!collapsed&&"Sign Out"}
       </button>
     </div>
@@ -681,7 +820,7 @@ const TopBar = ({title,subtitle,actions,onToggleSidebar,theme}) => {
         <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0}}>
           <img className="topbarLogo" src="/assets/acadexa-logo.png" alt="ACADEXA" style={{width:28,height:28,objectFit:"contain",flexShrink:0,filter: theme === "light" ? "none" : "brightness(1.2) drop-shadow(0 4px 8px rgba(0,0,0,0.25))"}} onError={(e)=>{e.currentTarget.style.display='none';}} />
           <div style={{minWidth:0}}>
-            <div style={{fontSize:16,fontWeight:800,color:C.txt,letterSpacing:-0.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{title}</div>
+            <div style={{fontSize:18,fontWeight:600,color:C.txt,letterSpacing:-0.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",fontFamily:FD}}>{title}</div>
             {subtitle&&<div style={{fontSize:11,color:C.txt2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{subtitle}</div>}
           </div>
         </div>
@@ -815,8 +954,8 @@ const StudentDrawer = ({student,api,onClose,onUpdated,toast}) => {
                   <div style={{fontSize:20,fontWeight:800,color:C.txt}}>{student.name}</div>
                   <div style={{fontSize:12,color:C.txt2,marginBottom:6}}>{student.email}</div>
                   <div style={{display:"flex",gap:6}}>
-                    <Pill label={`Roll #${student.rollNo}`} color={C.indigo} bg="rgba(108,99,255,0.12)"/>
-                    <Pill label="Active" color={C.emerald} bg="rgba(16,185,129,0.1)"/>
+                    <Pill label={`Roll #${student.rollNo}`} color={C.indigo} bg="rgba(201,151,76,0.12)"/>
+                    <Pill label="Active" color={C.emerald} bg="rgba(79,154,114,0.1)"/>
                   </div>
                 </div>
               )}
@@ -1201,7 +1340,7 @@ const NotificationsPage = ({api,toast}) => {
                       <div style={{fontSize:13,fontWeight:700,color:C.txt}}>{n.title}</div>
                       <div style={{display:"flex",gap:8,alignItems:"center"}}>
                         {!n.isRead&&<div style={{width:8,height:8,borderRadius:"50%",background:C.cyan}}/>}
-                        {n.priority==="high"&&<Pill label="Urgent" color={C.rose} bg="rgba(244,63,94,0.1)" size="xs"/>}
+                        {n.priority==="high"&&<Pill label="Urgent" color={C.rose} bg="rgba(193,90,86,0.1)" size="xs"/>}
                       </div>
                     </div>
                     <div style={{fontSize:12,color:C.txt2,marginBottom:6}}>{n.message}</div>
@@ -1220,26 +1359,34 @@ const NotificationsPage = ({api,toast}) => {
 // ══════════════════════════════════════════════════════
 //  ADMIN OVERVIEW
 // ══════════════════════════════════════════════════════
-const AdminOverview = ({students,attendance,leaves,api,toast,onOpenAI}) => {
+const AdminOverview = ({students,leaves,api,toast,onOpenAI}) => {
   const [analytics,setAnalytics]=useState(null);
   const [annsPreview,setAnnsPreview]=useState([]);
   const [timeData,setTimeData]=useState(new Date());
 
+  // Refetched fresh every time this component mounts — i.e. every time the
+  // admin navigates to the Dashboard tab (it's remounted via the view-keyed
+  // AnimatePresence in AdminDashboard). analytics.today is the ONLY source
+  // for every "today" number below; it comes from a live server query for
+  // the actual current date on every request (see AnalyticsRoute.js), so it
+  // can never be contaminated by, say, someone browsing a past date on the
+  // Attendance page — that page now owns its own separate state entirely.
   useEffect(()=>{
     const timer=setInterval(()=>setTimeData(new Date()),1000);
-    api.getAnalytics().then(d=>setAnalytics(d)).catch(()=>{});
+    api.getAnalytics().then(d=>setAnalytics(d)).catch(()=>toast("Unable to load today's attendance. Please try again."));
     api.getAnnouncements().then(d=>setAnnsPreview(Array.isArray(d)?d.slice(0,3):[])).catch(()=>{});
     return()=>clearInterval(timer);
   },[]);
 
   const totalStudents=students.length;
-  const todayAtt=Object.values(attendance);
-  const presentToday=todayAtt.filter(s=>s==="present").length;
-  const leaveToday=todayAtt.filter(s=>s==="leave").length;
+  const today=analytics?.today;
+  const presentToday=today?.present??0;
+  const leaveToday=today?.leave??0;
+  const absentToday=today?.absent??0;
+  const unmarkedToday=today?.unmarked??totalStudents;
   const pendingLeaves=leaves.filter(l=>l.status==="pending").length;
-  const absentToday=totalStudents-presentToday-leaveToday;
-  const attRate=totalStudents?Math.round(presentToday/totalStudents*100):0;
-  const weekData=analytics?.weeklyAttendance||[65,71,68,79,74,82,attRate];
+  const attRate=analytics?.avgAttendance??0;
+  const weekData=analytics?.weeklyAttendance||[0,0,0,0,0,0,0];
   const currentTime=timeData.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
   const currentDate=timeData.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"2-digit",year:"numeric"});
 
@@ -1254,7 +1401,7 @@ const AdminOverview = ({students,attendance,leaves,api,toast,onOpenAI}) => {
           <div style={{fontSize:11,color:C.dim,marginTop:2}}>Last updated: {currentTime}</div>
         </div>
         <div style={{textAlign:"right"}}>
-          <div style={{fontSize:48,fontWeight:900,color:C.txt,lineHeight:1,letterSpacing:-2,fontFamily:FD}}>{analytics?.avgAttendance??attRate}<span style={{fontSize:24,color:C.emerald}}>%</span></div>
+          <div style={{fontSize:48,fontWeight:900,color:C.txt,lineHeight:1,letterSpacing:-2,fontFamily:FD}}>{attRate}<span style={{fontSize:24,color:C.emerald}}>%</span></div>
           <div style={{fontSize:11,color:C.emerald,fontWeight:700,letterSpacing:1}}>TODAY'S ATTENDANCE</div>
         </div>
       </motion.div>
@@ -1268,10 +1415,10 @@ const AdminOverview = ({students,attendance,leaves,api,toast,onOpenAI}) => {
       )}
 
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
-        <StatCard label="Total Students" value={totalStudents} color={C.indigo} icon={<Users size={16}/>} trend={analytics?.studentGrowth??5} delay={0.05}/>
+        <StatCard label="Total Students" value={totalStudents} color={C.indigo} icon={<Users size={16}/>} trend={analytics?.studentGrowth} delay={0.05}/>
         <StatCard label="Present Today" value={presentToday} color={C.emerald} icon={<UserCheck size={16}/>} sub={`of ${totalStudents}`} delay={0.1}/>
         <StatCard label="Leave Requests" value={pendingLeaves} color={C.amber} icon={<FileText size={16}/>} sub="pending review" delay={0.15}/>
-        <StatCard label="Attendance Rate" value={`${analytics?.avgAttendance??attRate}%`} color={(analytics?.avgAttendance??attRate)>=75?C.emerald:C.rose} icon={<Activity size={16}/>} trend={analytics?.attendanceTrend??0} delay={0.2}/>
+        <StatCard label="Attendance Rate" value={`${attRate}%`} color={attRate>=75?C.emerald:C.rose} icon={<Activity size={16}/>} trend={analytics?.attendanceTrend} delay={0.2}/>
       </div>
 
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:16}}>
@@ -1290,12 +1437,12 @@ const AdminOverview = ({students,attendance,leaves,api,toast,onOpenAI}) => {
               <RingChart size={88} stroke={10} segments={[
                 {color:C.emerald,pct:presentToday/Math.max(totalStudents,1)},
                 {color:C.violet,pct:leaveToday/Math.max(totalStudents,1)},
-                {color:C.rose,pct:todayAtt.filter(s=>s==="absent").length/Math.max(totalStudents,1)},
+                {color:C.rose,pct:absentToday/Math.max(totalStudents,1)},
               ]}/>
               <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:900,color:C.txt}}>{attRate}%</div>
             </div>
             <div style={{flex:1,display:"flex",flexDirection:"column",gap:9}}>
-              {[{col:C.emerald,l:"Present",v:presentToday},{col:C.violet,l:"On Leave",v:leaveToday},{col:C.rose,l:"Absent",v:todayAtt.filter(s=>s==="absent").length},{col:C.txt2,l:"Unmarked",v:totalStudents-todayAtt.length}].map(x=>(
+              {[{col:C.emerald,l:"Present",v:presentToday},{col:C.violet,l:"On Leave",v:leaveToday},{col:C.rose,l:"Absent",v:absentToday},{col:C.txt2,l:"Unmarked",v:unmarkedToday}].map(x=>(
                 <div key={x.l} style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                   <div style={{display:"flex",alignItems:"center",gap:7,fontSize:12,color:C.txt2}}>
                     <div style={{width:8,height:8,borderRadius:2,background:x.col}}/>{x.l}
@@ -1322,7 +1469,7 @@ const AdminOverview = ({students,attendance,leaves,api,toast,onOpenAI}) => {
                   <div style={{fontSize:12,color:C.txt2,lineHeight:1.4,marginBottom:4}}>{(a.body||"").slice(0,80)}{a.body?.length>80?"…":""}</div>
                   <div style={{fontSize:10,color:C.dim}}>{fmt(a.date||a.createdAt)} · {a.createdAt?new Date(a.createdAt).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"}):"N/A"} · {a.author}</div>
                 </div>
-                {a.priority==="high" && <Pill label="Urgent" color={C.rose} bg="rgba(244,63,94,0.1)" size="xs"/>}
+                {a.priority==="high" && <Pill label="Urgent" color={C.rose} bg="rgba(193,90,86,0.1)" size="xs"/>}
               </div>
             ))}
           </div>
@@ -1335,7 +1482,12 @@ const AdminOverview = ({students,attendance,leaves,api,toast,onOpenAI}) => {
 // ══════════════════════════════════════════════════════
 //  ATTENDANCE PAGE
 // ══════════════════════════════════════════════════════
-const AttendancePage = ({students,setStudents,attendance,setAttendance,api,toast}) => {
+const AttendancePage = ({students,setStudents,api,toast}) => {
+  // Owned locally — this page browses ANY date, not just today, so its
+  // attendance map must never be the same shared state the dashboard's
+  // "today" cards read (see AdminDashboard/AdminOverview for why that used
+  // to silently corrupt the dashboard when someone browsed a past date here).
+  const [attendance,setAttendance]=useState({});
   const [date,setDate]=useState(today());
   const [query,setQuery]=useState("");
   const [filter,setFilter]=useState("all");
@@ -1406,7 +1558,7 @@ const AttendancePage = ({students,setStudents,attendance,setAttendance,api,toast
             return (
               <motion.div key={s._id} initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} exit={{opacity:0}} transition={{delay:i*0.025}}
                 style={{display:"grid",gridTemplateColumns:"2fr 2fr 0.7fr 1fr 180px",padding:"12px 20px",borderBottom:`1px solid ${C.border}`,alignItems:"center",transition:"background 0.12s",minWidth:640}}
-                onMouseEnter={e=>e.currentTarget.style.background="rgba(108,99,255,0.04)"}
+                onMouseEnter={e=>e.currentTarget.style.background="rgba(201,151,76,0.04)"}
                 onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
                   <motion.div whileHover={{scale:1.12}} whileTap={{scale:0.95}} onClick={()=>setPhotoModal(s)} style={{cursor:"zoom-in",flexShrink:0}} title="Click to view photo">
@@ -1426,11 +1578,11 @@ const AttendancePage = ({students,setStudents,attendance,setAttendance,api,toast
                   ):(
                     <>
                       <motion.button whileHover={{scale:1.1}} whileTap={{scale:0.9}} onClick={e=>mark(s._id,"present",e)} disabled={!!marking}
-                        style={{background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.2)",borderRadius:7,padding:"6px 10px",cursor:"pointer",color:C.emerald,display:"flex",alignItems:"center",gap:3,fontSize:11,fontWeight:700,fontFamily:F}}>
+                        style={{background:"rgba(79,154,114,0.1)",border:"1px solid rgba(79,154,114,0.2)",borderRadius:7,padding:"6px 10px",cursor:"pointer",color:C.emerald,display:"flex",alignItems:"center",gap:3,fontSize:11,fontWeight:700,fontFamily:F}}>
                         {marking===s._id+"present"?<Loader size={10} style={{animation:"spin 1s linear infinite"}}/>:<CheckCircle size={10}/>}P
                       </motion.button>
                       <motion.button whileHover={{scale:1.1}} whileTap={{scale:0.9}} onClick={e=>mark(s._id,"absent",e)} disabled={!!marking}
-                        style={{background:"rgba(244,63,94,0.1)",border:"1px solid rgba(244,63,94,0.2)",borderRadius:7,padding:"6px 10px",cursor:"pointer",color:C.rose,display:"flex",alignItems:"center",gap:3,fontSize:11,fontWeight:700,fontFamily:F}}>
+                        style={{background:"rgba(193,90,86,0.1)",border:"1px solid rgba(193,90,86,0.2)",borderRadius:7,padding:"6px 10px",cursor:"pointer",color:C.rose,display:"flex",alignItems:"center",gap:3,fontSize:11,fontWeight:700,fontFamily:F}}>
                         {marking===s._id+"absent"?<Loader size={10} style={{animation:"spin 1s linear infinite"}}/>:<XCircle size={10}/>}A
                       </motion.button>
                     </>
@@ -1461,17 +1613,27 @@ const StudentsPage = ({students,setStudents,api,toast}) => {
   const [drawer,setDrawer]=useState(null);
   const [photoModal,setPhotoModal]=useState(null);
   const [uploadingId,setUploadingId]=useState(null);
-  const [newS,setNewS]=useState({name:"",email:"",rollNo:"",password:"1234"});
+  const emptyNewS={name:"",email:"",rollNo:"",registrationNo:"",password:"1234",
+    parentName:"",parentPhone:"",parentEmail:"",academicSession:"",program:"",section:""};
+  const [newS,setNewS]=useState(emptyNewS);
   const [newPhotoFile,setNewPhotoFile]=useState(null);
   const [newPhotoPreview,setNewPhotoPreview]=useState(null);
+  const [academicRefs,setAcademicRefs]=useState({sessions:[],programs:[],sections:[]});
   const filtered=students.filter(s=>[s.name,s.email,s.rollNo].join(" ").toLowerCase().includes(query.toLowerCase()));
 
   useEffect(() => {
     if (!showAdd) {
       setNewPhotoFile(null);
       setNewPhotoPreview(null);
+    } else {
+      Promise.all([api.getAcademicSessions(),api.getPrograms(),api.getSections()])
+        .then(([sessions,programs,sections])=>setAcademicRefs({
+          sessions:Array.isArray(sessions)?sessions:[], programs:Array.isArray(programs)?programs:[], sections:Array.isArray(sections)?sections:[],
+        })).catch(()=>{});
     }
   }, [showAdd]);
+
+  const filteredSections=academicRefs.sections.filter(s=>(!newS.program||s.program?._id===newS.program)&&(!newS.academicSession||s.academicSession?._id===newS.academicSession));
 
   const handlePhotoUpload=async(studentId,file)=>{
     if(!file) return;
@@ -1500,18 +1662,42 @@ const StudentsPage = ({students,setStudents,api,toast}) => {
     catch(e){toast(e.message);}
   };
 
+  // Orchestrates three existing, independent endpoints into one flow — a new
+  // student always needs a first-class Parent record and an academic
+  // enrollment (spec: both required for NEW students) — rather than
+  // widening any single route's responsibility. If the Parent creates fine
+  // but the Student create fails, no orphan Student exists; if enrollment
+  // fails after the Student is created, the student still exists (usable,
+  // just not yet enrolled) rather than the whole flow silently rolling back
+  // data the admin can see was accepted.
   const addStudent=async()=>{
-    if(!newS.name||!newS.email||!newS.rollNo) return toast("All fields required");
+    if(!newS.name||!newS.email||!newS.rollNo) return toast("Name, email and roll number are required");
+    if(!newS.parentName||!newS.parentPhone||!newS.parentEmail) return toast("Parent name, phone and email are required");
+    if(!newS.academicSession||!newS.program||!newS.section) return toast("Academic session, program and section are required");
     try{
-      const s=await api.addStudent(newS);
+      const parent=await api.addParent({name:newS.parentName,phone:newS.parentPhone,email:newS.parentEmail});
+      const s=await api.addStudent({
+        name:newS.name, email:newS.email, rollNo:newS.rollNo, registrationNo:newS.registrationNo, password:newS.password,
+        parentName:newS.parentName, parentEmail:newS.parentEmail, parentId:parent._id,
+      });
+      await api.addEnrollment({student:s._id, academicSession:newS.academicSession, program:newS.program, section:newS.section});
       if(newPhotoFile){
         try{
           const result = await api.uploadPhoto(s._id,newPhotoFile);
           s.photo=result.student.photo;
         }catch(err){toast("Student added, but photo upload failed: "+err.message);}
       }
+      // Patched in locally from the already-loaded reference lists so the
+      // card reflects the enrollment immediately, matching the shape the
+      // populated GET /api/students response uses (see studentRoute.js).
+      s.parentId=parent;
+      s.currentEnrollment={
+        program:academicRefs.programs.find(p=>p._id===newS.program),
+        section:academicRefs.sections.find(sec=>sec._id===newS.section),
+        academicSession:academicRefs.sessions.find(se=>se._id===newS.academicSession),
+      };
       setStudents(p=>[...p,s]);
-      setNewS({name:"",email:"",rollNo:"",password:"1234"});
+      setNewS(emptyNewS);
       setShowAdd(false);
       setNewPhotoFile(null);
       setNewPhotoPreview(null);
@@ -1544,13 +1730,37 @@ const StudentsPage = ({students,setStudents,api,toast}) => {
         <AnimatePresence>
           {showAdd&&(
             <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:8,marginTop:14}}>
-                {[["name","Full name"],["email","Email"],["rollNo","Roll No"],["password","Password"]].map(([f,ph])=>(
+              <div style={{fontSize:10,fontWeight:800,color:C.txt2,letterSpacing:1,textTransform:"uppercase",marginTop:16,marginBottom:6}}>Student Information</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:8}}>
+                {[["name","Full name"],["email","Email"],["rollNo","Roll No"],["registrationNo","Registration No"],["password","Password"]].map(([f,ph])=>(
                   <Input key={f} placeholder={ph} value={newS[f]} onChange={e=>setNewS(p=>({...p,[f]:e.target.value}))}/>
                 ))}
-                <Btn onClick={addStudent}><CheckCircle size={14}/>Save</Btn>
               </div>
-              <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 0 0 0"}}>
+
+              <div style={{fontSize:10,fontWeight:800,color:C.txt2,letterSpacing:1,textTransform:"uppercase",marginTop:16,marginBottom:6}}>Academic Enrollment</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:8}}>
+                <Select value={newS.academicSession} onChange={e=>setNewS(p=>({...p,academicSession:e.target.value,section:""}))}>
+                  <option value="">Academic Session…</option>
+                  {academicRefs.sessions.map(s=><option key={s._id} value={s._id}>{s.name}</option>)}
+                </Select>
+                <Select value={newS.program} onChange={e=>setNewS(p=>({...p,program:e.target.value,section:""}))}>
+                  <option value="">Program…</option>
+                  {academicRefs.programs.map(p=><option key={p._id} value={p._id}>{p.name}</option>)}
+                </Select>
+                <Select value={newS.section} onChange={e=>setNewS(p=>({...p,section:e.target.value}))}>
+                  <option value="">Section…</option>
+                  {filteredSections.map(s=><option key={s._id} value={s._id}>Section {s.name}</option>)}
+                </Select>
+              </div>
+
+              <div style={{fontSize:10,fontWeight:800,color:C.txt2,letterSpacing:1,textTransform:"uppercase",marginTop:16,marginBottom:6}}>Parent / Guardian</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:8}}>
+                <Input placeholder="Parent name" value={newS.parentName} onChange={e=>setNewS(p=>({...p,parentName:e.target.value}))}/>
+                <Input placeholder="Parent phone" value={newS.parentPhone} onChange={e=>setNewS(p=>({...p,parentPhone:e.target.value}))}/>
+                <Input placeholder="Parent email" type="email" value={newS.parentEmail} onChange={e=>setNewS(p=>({...p,parentEmail:e.target.value}))}/>
+              </div>
+
+              <div style={{display:"flex",alignItems:"center",gap:12,padding:"16px 0 0 0"}}>
                 <label htmlFor="new-photo" style={{display:"inline-flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,fontWeight:700,color:C.indigo,background:`rgba(99,102,241,0.08)`,border:`1px solid ${C.indigo}22`,borderRadius:12,padding:"10px 14px"}}>
                   <Upload size={14}/> Upload profile photo
                 </label>
@@ -1563,6 +1773,7 @@ const StudentsPage = ({students,setStudents,api,toast}) => {
                   <div style={{fontSize:12,color:C.txt2}}>Optional profile image</div>
                 )}
               </div>
+              <Btn style={{marginTop:14}} onClick={addStudent}><CheckCircle size={14}/>Save Student</Btn>
             </motion.div>
           )}
         </AnimatePresence>
@@ -1592,14 +1803,20 @@ const StudentsPage = ({students,setStudents,api,toast}) => {
                     </div>
                   </div>
                   <div style={{display:"flex",gap:4,flexDirection:"column",alignItems:"flex-end"}}>
-                    <button onClick={e=>deleteStudent(s._id,e)} style={{background:"rgba(244,63,94,0.08)",border:"none",borderRadius:7,padding:"5px 7px",cursor:"pointer",color:C.rose,display:"flex"}}><Trash2 size={12}/></button>
+                    <button onClick={e=>deleteStudent(s._id,e)} style={{background:"rgba(193,90,86,0.08)",border:"none",borderRadius:7,padding:"5px 7px",cursor:"pointer",color:C.rose,display:"flex"}}><Trash2 size={12}/></button>
                     {s.photo&&<button onClick={e=>removePhoto(s._id,e)} title="Remove photo" style={{background:"rgba(255,255,255,0.04)",border:`1px solid ${C.border}`,borderRadius:7,padding:"4px 6px",cursor:"pointer",color:C.txt2,display:"flex",fontSize:9,alignItems:"center",gap:3}}><X size={9}/>Photo</button>}
                   </div>
                 </div>
                 <div style={{fontSize:11,color:C.txt2,marginBottom:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.email}</div>
+                {s.currentEnrollment?.section&&(
+                  <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
+                    <Pill label={`${s.currentEnrollment.program?.name||"—"} · Sec ${s.currentEnrollment.section?.name}`} color={C.violet} bg={`${C.violet}18`}/>
+                  </div>
+                )}
                 <div style={{background:"rgba(255,255,255,0.03)",borderRadius:9,padding:"9px 10px",border:`1px solid ${C.border}`}}>
-                  <div style={{fontSize:10,color:C.txt2,marginBottom:2}}>PARENT</div>
-                  <div style={{fontSize:13,fontWeight:600,color:C.txt}}>{s.parentName||"—"}</div>
+                  <div style={{fontSize:10,color:C.txt2,marginBottom:2}}>PARENT / GUARDIAN</div>
+                  <div style={{fontSize:13,fontWeight:600,color:C.txt}}>{s.parentId?.name||s.parentName||"—"}</div>
+                  {s.parentId?.phone&&<div style={{fontSize:11,color:C.txt2,marginTop:1}}>{s.parentId.phone}</div>}
                 </div>
               </Card>
             </motion.div>
@@ -1665,7 +1882,7 @@ const ExamsPage = ({students,api,toast}) => {
                 </div>
                 <Input placeholder="Venue (optional)" value={newExam.venue} onChange={e=>setNewExam(p=>({...p,venue:e.target.value}))}/>
                 {newExam.name&&(
-                  <div style={{background:"rgba(34,211,238,0.06)",border:"1px solid rgba(34,211,238,0.18)",borderRadius:9,padding:"9px 13px",display:"flex",gap:8,alignItems:"center"}}>
+                  <div style={{background:"rgba(111,163,173,0.06)",border:"1px solid rgba(111,163,173,0.18)",borderRadius:9,padding:"9px 13px",display:"flex",gap:8,alignItems:"center"}}>
                     <Globe size={11} color={C.cyan}/>
                     <span style={{fontSize:11,color:C.txt2}}>Will email <strong style={{color:C.txt}}>{students.length} students</strong> about this exam</span>
                   </div>
@@ -1842,7 +2059,8 @@ const FeesPage = ({students,api,toast,studentId=null,isAdmin=true,onOpenAI}) => 
   const [fees,setFees]=useState([]);
   const [loading,setLoading]=useState(true);
   const [showAdd,setShowAdd]=useState(false);
-  const [newFee,setNewFee]=useState({title:"",amount:"",due:"",category:"tuition"});
+  const emptyFee={title:"",amount:"",due:"",category:"tuition",target:""};
+  const [newFee,setNewFee]=useState(emptyFee);
   const [paying,setPaying]=useState(null);
 
   useEffect(()=>{
@@ -1858,12 +2076,22 @@ const FeesPage = ({students,api,toast,studentId=null,isAdmin=true,onOpenAI}) => 
 
   const addFee=async()=>{
     if(!newFee.title||!newFee.amount||!newFee.due) return toast("Title, amount, due date required");
+    // Non-admin callers (student's own fee view never shows the Add form,
+    // but keep the prop-driven studentId as a fallback) vs. the admin form,
+    // which requires an explicit choice — a specific student or the
+    // deliberate "all students" opt-in — rather than silently billing
+    // everyone whenever nothing was picked.
+    const target = studentId || newFee.target;
+    if(isAdmin && !target) return toast("Choose a student, or 'All Students' to bill everyone");
+    const body = { title:newFee.title, amount:newFee.amount, due:newFee.due, category:newFee.category,
+      ...(target==="__all__" ? { applyToAll:true } : { studentId: target }) };
     try{
-      const result=await api.addFee({...newFee,studentId:studentId||undefined});
-      setFees(p=>[...p,result.fee||result]);
-      setNewFee({title:"",amount:"",due:"",category:"tuition"});
+      const result=await api.addFee(body);
+      const added = Array.isArray(result.fees) ? result.fees : [result.fee||result];
+      setFees(p=>[...p,...added]);
+      setNewFee(emptyFee);
       setShowAdd(false);
-      toast("Fee added!","success");
+      toast(added.length>1?`Fee added for ${added.length} students!`:"Fee added!","success");
     }catch(e){toast(e.message);}
   };
 
@@ -1897,8 +2125,15 @@ const FeesPage = ({students,api,toast,studentId=null,isAdmin=true,onOpenAI}) => 
           {showAdd&&(
             <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden",marginBottom:16}}>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8,padding:"14px",background:"rgba(255,255,255,0.02)",borderRadius:12,border:`1px solid ${C.border}`}}>
+                {isAdmin&&!studentId&&(
+                  <Select value={newFee.target} onChange={e=>setNewFee(p=>({...p,target:e.target.value}))} style={{gridColumn:"1 / -1"}}>
+                    <option value="">Bill to…</option>
+                    <option value="__all__">⚠ All Students ({students.length})</option>
+                    {students.map(s=><option key={s._id} value={s._id} style={{background:C.surface2}}>{s.name} · #{s.rollNo}</option>)}
+                  </Select>
+                )}
                 <Input placeholder="Fee title" value={newFee.title} onChange={e=>setNewFee(p=>({...p,title:e.target.value}))}/>
-                <Input type="number" placeholder="Amount ₨" value={newFee.amount} onChange={e=>setNewFee(p=>({...p,amount:e.target.value}))}/>
+                <Input type="number" min="1" placeholder="Amount ₨" value={newFee.amount} onChange={e=>setNewFee(p=>({...p,amount:e.target.value}))}/>
                 <Input type="date" value={newFee.due} onChange={e=>setNewFee(p=>({...p,due:e.target.value}))}/>
                 <Select value={newFee.category} onChange={e=>setNewFee(p=>({...p,category:e.target.value}))}>
                   {["tuition","lab","library","exam","other"].map(c=><option key={c} value={c} style={{background:C.surface2}}>{c}</option>)}
@@ -2106,7 +2341,7 @@ const AnnouncementsPage = ({isAdmin,api,toast}) => {
                   <textarea value={newAnn.body} onChange={e=>setNewAnn(p=>({...p,body:e.target.value}))} placeholder="Announcement body…" rows={3}
                     style={{background:"rgba(255,255,255,0.04)",border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 14px",color:C.txt,fontFamily:F,fontSize:14,outline:"none",resize:"vertical"}}/>
                   {newAnn.title&&(
-                    <div style={{background:"rgba(34,211,238,0.06)",border:"1px solid rgba(34,211,238,0.2)",borderRadius:9,padding:"9px 13px",display:"flex",gap:8,alignItems:"center"}}>
+                    <div style={{background:"rgba(111,163,173,0.06)",border:"1px solid rgba(111,163,173,0.2)",borderRadius:9,padding:"9px 13px",display:"flex",gap:8,alignItems:"center"}}>
                       <Globe size={11} color={C.cyan}/>
                       <div style={{fontSize:11,color:C.txt2}}>Email subject: <strong style={{color:C.txt}}>{newAnn.priority==="high"?"🚨 URGENT: ":"📢 "}{newAnn.title}</strong></div>
                     </div>
@@ -2142,7 +2377,7 @@ const AnnouncementsPage = ({isAdmin,api,toast}) => {
                       <div style={{fontSize:15,fontWeight:700,color:C.txt}}>{a.title}</div>
                       <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0,marginLeft:12}}>
                         {a.emailStatus&&<EmailStatusBadge status={a.emailStatus} count={a.emailCount}/>}
-                        {a.priority==="high"&&<Pill label="Urgent" color={C.rose} bg="rgba(244,63,94,0.1)" size="xs"/>}
+                        {a.priority==="high"&&<Pill label="Urgent" color={C.rose} bg="rgba(193,90,86,0.1)" size="xs"/>}
                         <Pill label={(a.category||"general").charAt(0).toUpperCase()+(a.category||"general").slice(1)} color={catColors[a.category]||C.indigo} bg={`${catColors[a.category]||C.indigo}12`} size="xs"/>
                       </div>
                     </div>
@@ -2341,8 +2576,8 @@ const AnalyticsPage = ({students,api}) => {
                       </div>
                     </div>
                     <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                      <Pill label={`Att: ${s.attendance}%`} color={C.orange} bg="rgba(249,115,22,0.1)" size="xs"/>
-                      <Pill label={`Grade: ${s.grade}`} color={C.rose} bg="rgba(244,63,94,0.1)" size="xs"/>
+                      <Pill label={`Att: ${s.attendance}%`} color={C.orange} bg="rgba(193,122,69,0.1)" size="xs"/>
+                      <Pill label={`Grade: ${s.grade}`} color={C.rose} bg="rgba(193,90,86,0.1)" size="xs"/>
                     </div>
                     <div style={{fontSize:11,color:C.rose,marginTop:8,fontWeight:600}}>⚠ {s.issue}</div>
                   </div>
@@ -2405,10 +2640,10 @@ const ParentsPage = ({students,api,toast}) => {
   };
 
   const typeConfig={
-    announcement:{color:C.indigo,bg:"rgba(108,99,255,0.1)",icon:"📢",label:"Announcement"},
-    complaint:   {color:C.orange,bg:"rgba(249,115,22,0.1)", icon:"⚠️",label:"Complaint"},
-    achievement: {color:C.emerald,bg:"rgba(16,185,129,0.1)",icon:"🏆",label:"Achievement"},
-    warning:     {color:C.rose,  bg:"rgba(244,63,94,0.1)",  icon:"🚨",label:"Warning"},
+    announcement:{color:C.indigo,bg:"rgba(201,151,76,0.1)",icon:"📢",label:"Announcement"},
+    complaint:   {color:C.orange,bg:"rgba(193,122,69,0.1)", icon:"⚠️",label:"Complaint"},
+    achievement: {color:C.emerald,bg:"rgba(79,154,114,0.1)",icon:"🏆",label:"Achievement"},
+    warning:     {color:C.rose,  bg:"rgba(193,90,86,0.1)",  icon:"🚨",label:"Warning"},
   };
   const filtered=messages.filter(m=>filterType==="all"||m.type===filterType);
   const counts={total:messages.length,sent:messages.filter(m=>m.emailStatus==="sent").length,failed:messages.filter(m=>m.emailStatus==="failed").length};
@@ -2467,7 +2702,7 @@ const ParentsPage = ({students,api,toast}) => {
                 </div>
                 {form.title&&(
                   <motion.div initial={{opacity:0}} animate={{opacity:1}}
-                    style={{background:"rgba(34,211,238,0.06)",border:"1px solid rgba(34,211,238,0.2)",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:9}}>
+                    style={{background:"rgba(111,163,173,0.06)",border:"1px solid rgba(111,163,173,0.2)",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:9}}>
                     <Globe size={12} color={C.cyan}/>
                     <div>
                       <div style={{fontSize:9,color:C.cyan,fontWeight:700,letterSpacing:0.8,marginBottom:2}}>EMAIL SUBJECT PREVIEW</div>
@@ -2553,12 +2788,563 @@ const ParentsPage = ({students,api,toast}) => {
 };
 
 // ══════════════════════════════════════════════════════
+//  ACADEMIC SETUP (Sessions / Programs / Sections / Subjects / Teacher
+//  Assignments) — one nav entry with internal tabs rather than five separate
+//  sidebar items; every tab is a genuinely independent CRUD screen against
+//  the real /api/academic-sessions, /api/programs, /api/sections,
+//  /api/subjects, /api/teacher-assignments endpoints built in the backend
+//  phase. Reference lists (sessions/programs/sections/subjects/teachers) are
+//  fetched once at the top level and passed down, since Sections and
+//  Teacher Assignments both need several of them for their dropdowns.
+// ══════════════════════════════════════════════════════
+const statusColor = s => s==="active"?C.emerald:s==="archived"||s==="inactive"?C.txt2:C.amber;
+
+const SessionsTab = ({sessions,api,toast,reload}) => {
+  const empty={name:"",startDate:"",endDate:"",status:"active"};
+  const [form,setForm]=useState(empty);
+  const [editingId,setEditingId]=useState(null);
+  const [showForm,setShowForm]=useState(false);
+  const [saving,setSaving]=useState(false);
+
+  const startEdit=s=>{setForm({name:s.name,startDate:(s.startDate||"").slice(0,10),endDate:(s.endDate||"").slice(0,10),status:s.status});setEditingId(s._id);setShowForm(true);};
+  const cancel=()=>{setForm(empty);setEditingId(null);setShowForm(false);};
+  const save=async()=>{
+    if(!form.name.trim()||!form.startDate||!form.endDate) return toast("Name, start date and end date are required");
+    setSaving(true);
+    try{
+      if(editingId) await api.editAcademicSession(editingId,form);
+      else await api.addAcademicSession(form);
+      toast(editingId?"Session updated":"Session created","success");
+      cancel();reload();
+    }catch(e){toast(e.message);}
+    finally{setSaving(false);}
+  };
+  const archive=async id=>{
+    if(!confirm("Archive this academic session?")) return;
+    try{await api.archiveAcademicSession(id);toast("Session archived","success");reload();}catch(e){toast(e.message);}
+  };
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <Card style={{padding:"14px 18px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+          <SectionHeader title="Academic Sessions" icon={<CalendarDays size={15}/>} subtitle={`${sessions.length} total`}/>
+          <Btn size="sm" onClick={()=>showForm?cancel():setShowForm(true)}><PlusCircle size={13}/>{showForm?"Cancel":"New Session"}</Btn>
+        </div>
+        <AnimatePresence>
+          {showForm&&(
+            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:8,marginTop:14}}>
+                <Input label="Name" placeholder="e.g. 2026-27" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/>
+                <Input label="Start Date" type="date" value={form.startDate} onChange={e=>setForm(p=>({...p,startDate:e.target.value}))}/>
+                <Input label="End Date" type="date" value={form.endDate} onChange={e=>setForm(p=>({...p,endDate:e.target.value}))}/>
+                <Select label="Status" value={form.status} onChange={e=>setForm(p=>({...p,status:e.target.value}))}>
+                  <option value="active">Active</option><option value="inactive">Inactive</option><option value="archived">Archived</option>
+                </Select>
+              </div>
+              <Btn size="sm" style={{marginTop:12}} onClick={save} disabled={saving}><CheckCircle size={13}/>{editingId?"Update":"Save"}</Btn>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:14}}>
+        {sessions.length===0?<Card style={{padding:40,textAlign:"center",gridColumn:"1/-1"}}><div style={{color:C.txt2}}>No academic data available yet.</div></Card>:
+        sessions.map(s=>(
+          <Card key={s._id} hover style={{padding:18}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+              <div>
+                <div style={{fontSize:15,fontWeight:800,color:C.txt}}>{s.name}</div>
+                <div style={{fontSize:11,color:C.txt2,marginTop:4}}>{fmt(s.startDate)} → {fmt(s.endDate)}</div>
+              </div>
+              <Pill label={s.status} color={statusColor(s.status)} bg={`${statusColor(s.status)}18`}/>
+            </div>
+            <div style={{display:"flex",gap:6,marginTop:14}}>
+              <Btn size="xs" variant="ghost" onClick={()=>startEdit(s)}><Edit3 size={11}/>Edit</Btn>
+              {s.status!=="archived"&&<Btn size="xs" variant="danger" onClick={()=>archive(s._id)}><Trash2 size={11}/>Archive</Btn>}
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const ProgramsTab = ({programs,sessions,api,toast,reload}) => {
+  const empty={name:"",code:"",description:"",academicSession:""};
+  const [form,setForm]=useState(empty);
+  const [editingId,setEditingId]=useState(null);
+  const [showForm,setShowForm]=useState(false);
+  const [saving,setSaving]=useState(false);
+
+  const startEdit=p=>{setForm({name:p.name,code:p.code,description:p.description||"",academicSession:p.academicSession?._id||""});setEditingId(p._id);setShowForm(true);};
+  const cancel=()=>{setForm(empty);setEditingId(null);setShowForm(false);};
+  const save=async()=>{
+    if(!form.name.trim()||!form.code.trim()) return toast("Name and code are required");
+    setSaving(true);
+    try{
+      if(editingId) await api.editProgram(editingId,form);
+      else await api.addProgram(form);
+      toast(editingId?"Program updated":"Program created","success");
+      cancel();reload();
+    }catch(e){toast(e.message);}
+    finally{setSaving(false);}
+  };
+  const deactivate=async id=>{
+    if(!confirm("Deactivate this program?")) return;
+    try{await api.deactivateProgram(id);toast("Program deactivated","success");reload();}catch(e){toast(e.message);}
+  };
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <Card style={{padding:"14px 18px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+          <SectionHeader title="Programs / Classes" icon={<Layers size={15}/>} subtitle={`${programs.length} total`}/>
+          <Btn size="sm" onClick={()=>showForm?cancel():setShowForm(true)}><PlusCircle size={13}/>{showForm?"Cancel":"New Program"}</Btn>
+        </div>
+        <AnimatePresence>
+          {showForm&&(
+            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:8,marginTop:14}}>
+                <Input label="Program Name" placeholder="e.g. BS Artificial Intelligence" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/>
+                <Input label="Code" placeholder="e.g. BSAI" value={form.code} onChange={e=>setForm(p=>({...p,code:e.target.value}))}/>
+                <Select label="Academic Session" value={form.academicSession} onChange={e=>setForm(p=>({...p,academicSession:e.target.value}))}>
+                  <option value="">— None —</option>
+                  {sessions.map(s=><option key={s._id} value={s._id}>{s.name}</option>)}
+                </Select>
+                <Input label="Description" placeholder="Optional" value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))}/>
+              </div>
+              <Btn size="sm" style={{marginTop:12}} onClick={save} disabled={saving}><CheckCircle size={13}/>{editingId?"Update":"Save"}</Btn>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:14}}>
+        {programs.length===0?<Card style={{padding:40,textAlign:"center",gridColumn:"1/-1"}}><div style={{color:C.txt2}}>No academic data available yet.</div></Card>:
+        programs.map(p=>(
+          <Card key={p._id} hover style={{padding:18}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+              <div>
+                <div style={{fontSize:15,fontWeight:800,color:C.txt}}>{p.name}</div>
+                <div style={{fontSize:11,color:C.txt2,marginTop:4}}>{p.code}{p.academicSession?.name?` · ${p.academicSession.name}`:""}</div>
+              </div>
+              <Pill label={p.status} color={statusColor(p.status)} bg={`${statusColor(p.status)}18`}/>
+            </div>
+            <div style={{display:"flex",gap:6,marginTop:14}}>
+              <Btn size="xs" variant="ghost" onClick={()=>startEdit(p)}><Edit3 size={11}/>Edit</Btn>
+              {p.status==="active"&&<Btn size="xs" variant="danger" onClick={()=>deactivate(p._id)}><Trash2 size={11}/>Deactivate</Btn>}
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SectionsTab = ({sections,programs,sessions,api,toast,reload}) => {
+  const empty={name:"",code:"",program:"",academicSession:"",capacity:""};
+  const [form,setForm]=useState(empty);
+  const [editingId,setEditingId]=useState(null);
+  const [showForm,setShowForm]=useState(false);
+  const [saving,setSaving]=useState(false);
+
+  const startEdit=s=>{setForm({name:s.name,code:s.code,program:s.program?._id||"",academicSession:s.academicSession?._id||"",capacity:s.capacity||""});setEditingId(s._id);setShowForm(true);};
+  const cancel=()=>{setForm(empty);setEditingId(null);setShowForm(false);};
+  const save=async()=>{
+    if(!form.name.trim()||!form.code.trim()) return toast("Name and code are required");
+    if(!editingId&&(!form.program||!form.academicSession)) return toast("Program and academic session are required");
+    setSaving(true);
+    try{
+      if(editingId) await api.editSection(editingId,{name:form.name,code:form.code,capacity:form.capacity||undefined});
+      else await api.addSection(form);
+      toast(editingId?"Section updated":"Section created","success");
+      cancel();reload();
+    }catch(e){toast(e.message);}
+    finally{setSaving(false);}
+  };
+  const deactivate=async id=>{
+    if(!confirm("Deactivate this section?")) return;
+    try{await api.deactivateSection(id);toast("Section deactivated","success");reload();}catch(e){toast(e.message);}
+  };
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <Card style={{padding:"14px 18px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+          <SectionHeader title="Sections" icon={<Grid size={15}/>} subtitle={`${sections.length} total`}/>
+          <Btn size="sm" onClick={()=>showForm?cancel():setShowForm(true)}><PlusCircle size={13}/>{showForm?"Cancel":"New Section"}</Btn>
+        </div>
+        <AnimatePresence>
+          {showForm&&(
+            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:8,marginTop:14}}>
+                <Input label="Section Name" placeholder="e.g. A" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/>
+                <Input label="Code" placeholder="e.g. BSAI-A" value={form.code} onChange={e=>setForm(p=>({...p,code:e.target.value}))}/>
+                <Select label="Program" value={form.program} disabled={!!editingId} onChange={e=>setForm(p=>({...p,program:e.target.value}))}>
+                  <option value="">Select program…</option>
+                  {programs.map(p=><option key={p._id} value={p._id}>{p.name}</option>)}
+                </Select>
+                <Select label="Academic Session" value={form.academicSession} disabled={!!editingId} onChange={e=>setForm(p=>({...p,academicSession:e.target.value}))}>
+                  <option value="">Select session…</option>
+                  {sessions.map(s=><option key={s._id} value={s._id}>{s.name}</option>)}
+                </Select>
+                <Input label="Capacity" type="number" placeholder="Optional" value={form.capacity} onChange={e=>setForm(p=>({...p,capacity:e.target.value}))}/>
+              </div>
+              <Btn size="sm" style={{marginTop:12}} onClick={save} disabled={saving}><CheckCircle size={13}/>{editingId?"Update":"Save"}</Btn>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:14}}>
+        {sections.length===0?<Card style={{padding:40,textAlign:"center",gridColumn:"1/-1"}}><div style={{color:C.txt2}}>No academic data available yet.</div></Card>:
+        sections.map(s=>(
+          <Card key={s._id} hover style={{padding:18}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+              <div>
+                <div style={{fontSize:15,fontWeight:800,color:C.txt}}>{s.program?.name||"—"} · Section {s.name}</div>
+                <div style={{fontSize:11,color:C.txt2,marginTop:4}}>{s.academicSession?.name||"—"}{s.capacity?` · Capacity ${s.capacity}`:""}</div>
+              </div>
+              <Pill label={s.status} color={statusColor(s.status)} bg={`${statusColor(s.status)}18`}/>
+            </div>
+            <div style={{display:"flex",gap:6,marginTop:14}}>
+              <Btn size="xs" variant="ghost" onClick={()=>startEdit(s)}><Edit3 size={11}/>Edit</Btn>
+              {s.status==="active"&&<Btn size="xs" variant="danger" onClick={()=>deactivate(s._id)}><Trash2 size={11}/>Deactivate</Btn>}
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SubjectsTab = ({subjects,api,toast,reload}) => {
+  const empty={name:"",code:"",description:"",creditHours:""};
+  const [form,setForm]=useState(empty);
+  const [editingId,setEditingId]=useState(null);
+  const [showForm,setShowForm]=useState(false);
+  const [saving,setSaving]=useState(false);
+
+  const startEdit=s=>{setForm({name:s.name,code:s.code,description:s.description||"",creditHours:s.creditHours||""});setEditingId(s._id);setShowForm(true);};
+  const cancel=()=>{setForm(empty);setEditingId(null);setShowForm(false);};
+  const save=async()=>{
+    if(!form.name.trim()||!form.code.trim()) return toast("Name and code are required");
+    setSaving(true);
+    try{
+      if(editingId) await api.editSubject(editingId,form);
+      else await api.addSubject(form);
+      toast(editingId?"Subject updated":"Subject created","success");
+      cancel();reload();
+    }catch(e){toast(e.message);}
+    finally{setSaving(false);}
+  };
+  const deactivate=async id=>{
+    if(!confirm("Deactivate this subject?")) return;
+    try{await api.deactivateSubject(id);toast("Subject deactivated","success");reload();}catch(e){toast(e.message);}
+  };
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <Card style={{padding:"14px 18px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+          <SectionHeader title="Subjects" icon={<BookOpen size={15}/>} subtitle={`${subjects.length} total`}/>
+          <Btn size="sm" onClick={()=>showForm?cancel():setShowForm(true)}><PlusCircle size={13}/>{showForm?"Cancel":"New Subject"}</Btn>
+        </div>
+        <AnimatePresence>
+          {showForm&&(
+            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:8,marginTop:14}}>
+                <Input label="Subject Name" placeholder="e.g. Data Structures" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/>
+                <Input label="Code" placeholder="e.g. CS-201" value={form.code} onChange={e=>setForm(p=>({...p,code:e.target.value}))}/>
+                <Input label="Credit Hours" type="number" placeholder="Optional" value={form.creditHours} onChange={e=>setForm(p=>({...p,creditHours:e.target.value}))}/>
+                <Input label="Description" placeholder="Optional" value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))}/>
+              </div>
+              <Btn size="sm" style={{marginTop:12}} onClick={save} disabled={saving}><CheckCircle size={13}/>{editingId?"Update":"Save"}</Btn>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:14}}>
+        {subjects.length===0?<Card style={{padding:40,textAlign:"center",gridColumn:"1/-1"}}><div style={{color:C.txt2}}>No academic data available yet.</div></Card>:
+        subjects.map(s=>(
+          <Card key={s._id} hover style={{padding:18}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+              <div>
+                <div style={{fontSize:15,fontWeight:800,color:C.txt}}>{s.name}</div>
+                <div style={{fontSize:11,color:C.txt2,marginTop:4}}>{s.code}{s.creditHours?` · ${s.creditHours} credit hrs`:""}</div>
+              </div>
+              <Pill label={s.status} color={statusColor(s.status)} bg={`${statusColor(s.status)}18`}/>
+            </div>
+            <div style={{display:"flex",gap:6,marginTop:14}}>
+              <Btn size="xs" variant="ghost" onClick={()=>startEdit(s)}><Edit3 size={11}/>Edit</Btn>
+              {s.status==="active"&&<Btn size="xs" variant="danger" onClick={()=>deactivate(s._id)}><Trash2 size={11}/>Deactivate</Btn>}
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const AssignmentsTab = ({assignments,sessions,programs,sections,subjects,teachers,api,toast,reload}) => {
+  const empty={teacher:"",academicSession:"",program:"",section:"",subject:""};
+  const [form,setForm]=useState(empty);
+  const [showForm,setShowForm]=useState(false);
+  const [saving,setSaving]=useState(false);
+
+  const filteredSections=sections.filter(s=>(!form.program||s.program?._id===form.program)&&(!form.academicSession||s.academicSession?._id===form.academicSession));
+
+  const cancel=()=>{setForm(empty);setShowForm(false);};
+  const save=async()=>{
+    if(!form.teacher||!form.academicSession||!form.program||!form.section||!form.subject) return toast("All five fields are required");
+    setSaving(true);
+    try{
+      await api.addTeacherAssignment(form);
+      toast("Teacher assigned","success");
+      cancel();reload();
+    }catch(e){toast(e.message);}
+    finally{setSaving(false);}
+  };
+  const deactivate=async id=>{
+    if(!confirm("Remove this teacher assignment?")) return;
+    try{await api.deactivateTeacherAssignment(id);toast("Assignment removed","success");reload();}catch(e){toast(e.message);}
+  };
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <Card style={{padding:"14px 18px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+          <SectionHeader title="Teacher Assignments" icon={<UserCheck size={15}/>} subtitle={`${assignments.length} active assignments`}/>
+          <Btn size="sm" onClick={()=>showForm?cancel():setShowForm(true)}><PlusCircle size={13}/>{showForm?"Cancel":"Assign Teacher"}</Btn>
+        </div>
+        <AnimatePresence>
+          {showForm&&(
+            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:8,marginTop:14}}>
+                <Select label="Teacher" value={form.teacher} onChange={e=>setForm(p=>({...p,teacher:e.target.value}))}>
+                  <option value="">Select teacher…</option>
+                  {teachers.map(t=><option key={t._id} value={t._id}>{t.name}</option>)}
+                </Select>
+                <Select label="Academic Session" value={form.academicSession} onChange={e=>setForm(p=>({...p,academicSession:e.target.value,section:""}))}>
+                  <option value="">Select session…</option>
+                  {sessions.map(s=><option key={s._id} value={s._id}>{s.name}</option>)}
+                </Select>
+                <Select label="Program" value={form.program} onChange={e=>setForm(p=>({...p,program:e.target.value,section:""}))}>
+                  <option value="">Select program…</option>
+                  {programs.map(p=><option key={p._id} value={p._id}>{p.name}</option>)}
+                </Select>
+                <Select label="Section" value={form.section} onChange={e=>setForm(p=>({...p,section:e.target.value}))}>
+                  <option value="">Select section…</option>
+                  {filteredSections.map(s=><option key={s._id} value={s._id}>Section {s.name}</option>)}
+                </Select>
+                <Select label="Subject" value={form.subject} onChange={e=>setForm(p=>({...p,subject:e.target.value}))}>
+                  <option value="">Select subject…</option>
+                  {subjects.map(s=><option key={s._id} value={s._id}>{s.name}</option>)}
+                </Select>
+              </div>
+              <Btn size="sm" style={{marginTop:12}} onClick={save} disabled={saving}><CheckCircle size={13}/>Assign</Btn>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {assignments.length===0?<Card style={{padding:40,textAlign:"center"}}><div style={{color:C.txt2}}>No teacher assignments yet.</div></Card>:
+        assignments.map(a=>(
+          <Card key={a._id} style={{padding:16,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+            <div style={{display:"flex",gap:12,alignItems:"center"}}>
+              <Avatar name={a.teacher?.name||"?"} size={38} color={C.violet}/>
+              <div>
+                <div style={{fontSize:14,fontWeight:800,color:C.txt}}>{a.teacher?.name||"—"}</div>
+                <div style={{fontSize:11,color:C.txt2,marginTop:2}}>
+                  {a.academicSession?.name} · {a.program?.name} · Section {a.section?.name} · {a.subject?.name}
+                </div>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <Pill label={a.status} color={statusColor(a.status)} bg={`${statusColor(a.status)}18`}/>
+              {a.status==="active"&&<Btn size="xs" variant="danger" onClick={()=>deactivate(a._id)}><Trash2 size={11}/>Remove</Btn>}
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const AcademicSetupPage = ({api,toast}) => {
+  const [tab,setTab]=useState("sessions");
+  const [data,setData]=useState({sessions:[],programs:[],sections:[],subjects:[],teachers:[],assignments:[]});
+  const [loading,setLoading]=useState(true);
+
+  const reload=useCallback(()=>{
+    setLoading(true);
+    Promise.all([api.getAcademicSessions(),api.getPrograms(),api.getSections(),api.getSubjects(),api.getTeachersList(),api.getTeacherAssignments()])
+      .then(([sessions,programs,sections,subjects,teachers,assignments])=>{
+        setData({
+          sessions:Array.isArray(sessions)?sessions:[], programs:Array.isArray(programs)?programs:[],
+          sections:Array.isArray(sections)?sections:[], subjects:Array.isArray(subjects)?subjects:[],
+          teachers:Array.isArray(teachers)?teachers:[], assignments:Array.isArray(assignments)?assignments:[],
+        });
+      }).catch(e=>toast(e.message)).finally(()=>setLoading(false));
+  },[api]);
+  useEffect(reload,[]);
+
+  const tabs=[
+    {k:"sessions",label:"Sessions",icon:CalendarDays},
+    {k:"programs",label:"Programs",icon:Layers},
+    {k:"sections",label:"Sections",icon:Grid},
+    {k:"subjects",label:"Subjects",icon:BookOpen},
+    {k:"assignments",label:"Teacher Assignments",icon:UserCheck},
+  ];
+
+  if(loading) return <div style={{padding:60,textAlign:"center"}}><Loader size={26} color={C.indigo} style={{animation:"spin 1s linear infinite",display:"block",margin:"0 auto 12px"}}/></div>;
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:18}}>
+      <Card style={{padding:6}}>
+        <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>
+          {tabs.map(t=>{
+            const Icon=t.icon,active=tab===t.k;
+            return (
+              <button key={t.k} onClick={()=>setTab(t.k)}
+                style={{display:"flex",alignItems:"center",gap:7,padding:"9px 14px",borderRadius:10,border:"none",cursor:"pointer",
+                  fontFamily:F,fontSize:12.5,fontWeight:700,transition:"all 0.15s",
+                  background:active?`linear-gradient(135deg,${C.indigo},${C.indigoLt})`:"transparent",color:active?"#1a1408":C.txt2}}>
+                <Icon size={13}/>{t.label}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+      {tab==="sessions"&&<SessionsTab sessions={data.sessions} api={api} toast={toast} reload={reload}/>}
+      {tab==="programs"&&<ProgramsTab programs={data.programs} sessions={data.sessions} api={api} toast={toast} reload={reload}/>}
+      {tab==="sections"&&<SectionsTab sections={data.sections} programs={data.programs} sessions={data.sessions} api={api} toast={toast} reload={reload}/>}
+      {tab==="subjects"&&<SubjectsTab subjects={data.subjects} api={api} toast={toast} reload={reload}/>}
+      {tab==="assignments"&&<AssignmentsTab assignments={data.assignments} sessions={data.sessions} programs={data.programs} sections={data.sections} subjects={data.subjects} teachers={data.teachers} api={api} toast={toast} reload={reload}/>}
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════
+//  TEACHERS (Admin management of Teacher accounts)
+// ══════════════════════════════════════════════════════
+const TeachersPage = ({api,toast}) => {
+  const [teachers,setTeachers]=useState([]);
+  const [assignments,setAssignments]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [showForm,setShowForm]=useState(false);
+  const [editingId,setEditingId]=useState(null);
+  const [query,setQuery]=useState("");
+  const empty={name:"",email:"",password:"",phone:""};
+  const [form,setForm]=useState(empty);
+  const [saving,setSaving]=useState(false);
+
+  const reload=useCallback(()=>{
+    setLoading(true);
+    Promise.all([api.getTeachersList(),api.getTeacherAssignments()])
+      .then(([t,a])=>{setTeachers(Array.isArray(t)?t:[]);setAssignments(Array.isArray(a)?a:[]);})
+      .catch(e=>toast(e.message)).finally(()=>setLoading(false));
+  },[api]);
+  useEffect(reload,[]);
+
+  const assignedCount=id=>assignments.filter(a=>a.teacher?._id===id&&a.status==="active").length;
+  const filtered=teachers.filter(t=>[t.name,t.email].join(" ").toLowerCase().includes(query.toLowerCase()));
+
+  const startEdit=t=>{setForm({name:t.name,email:t.email,password:"",phone:t.phone||""});setEditingId(t._id);setShowForm(true);};
+  const cancel=()=>{setForm(empty);setEditingId(null);setShowForm(false);};
+  const save=async()=>{
+    if(!form.name.trim()||!form.email.trim()) return toast("Name and email are required");
+    if(!editingId&&(!form.password||form.password.length<6)) return toast("Password must be at least 6 characters");
+    setSaving(true);
+    try{
+      if(editingId){
+        const body={name:form.name,phone:form.phone};
+        if(form.password) body.password=form.password;
+        await api.editTeacherAccount(editingId,body);
+        toast("Teacher updated","success");
+      }else{
+        await api.addTeacherAccount(form);
+        toast("Teacher account created","success");
+      }
+      cancel();reload();
+    }catch(e){toast(e.message);}
+    finally{setSaving(false);}
+  };
+  const toggleActive=async t=>{
+    try{
+      if(t.isActive) await api.deactivateTeacherAccount(t._id);
+      else await api.editTeacherAccount(t._id,{isActive:true});
+      toast(t.isActive?"Teacher deactivated":"Teacher activated","success");
+      reload();
+    }catch(e){toast(e.message);}
+  };
+
+  if(loading) return <div style={{padding:60,textAlign:"center"}}><Loader size={26} color={C.indigo} style={{animation:"spin 1s linear infinite",display:"block",margin:"0 auto 12px"}}/></div>;
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:18}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
+        <StatCard label="Total Teachers" value={teachers.length} color={C.indigo} icon={<UserCheck size={15}/>} delay={0}/>
+        <StatCard label="Active" value={teachers.filter(t=>t.isActive).length} color={C.emerald} icon={<CheckCircle size={15}/>} delay={0.05}/>
+        <StatCard label="Total Assignments" value={assignments.filter(a=>a.status==="active").length} color={C.violet} icon={<Layers size={15}/>} delay={0.1}/>
+      </div>
+      <Card style={{padding:"14px 18px"}}>
+        <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+          <div style={{position:"relative",flex:1,minWidth:200}}>
+            <Search size={13} style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",color:C.txt2,pointerEvents:"none"}}/>
+            <Input placeholder="Search by name or email…" value={query} onChange={e=>setQuery(e.target.value)} style={{paddingLeft:36}}/>
+          </div>
+          <Btn size="sm" onClick={()=>showForm?cancel():setShowForm(true)}><PlusCircle size={13}/>{showForm?"Cancel":"Add Teacher"}</Btn>
+        </div>
+        <AnimatePresence>
+          {showForm&&(
+            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:8,marginTop:14}}>
+                <Input label="Full Name" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/>
+                <Input label="Email" type="email" disabled={!!editingId} value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))}/>
+                <Input label={editingId?"New Password (optional)":"Password"} type="password" value={form.password} onChange={e=>setForm(p=>({...p,password:e.target.value}))}/>
+                <Input label="Phone" value={form.phone} onChange={e=>setForm(p=>({...p,phone:e.target.value}))}/>
+              </div>
+              <Btn size="sm" style={{marginTop:12}} onClick={save} disabled={saving}><CheckCircle size={13}/>{editingId?"Update":"Save"}</Btn>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(270px,1fr))",gap:14}}>
+        {filtered.length===0?<Card style={{padding:40,textAlign:"center",gridColumn:"1/-1"}}><div style={{color:C.txt2}}>No academic data available yet.</div></Card>:
+        filtered.map(t=>(
+          <Card key={t._id} hover style={{padding:18}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+              <div style={{display:"flex",gap:11,alignItems:"center"}}>
+                <Avatar name={t.name} size={44} color={C.violet}/>
+                <div>
+                  <div style={{fontSize:14,fontWeight:800,color:C.txt}}>{t.name}</div>
+                  <div style={{fontSize:11,color:C.txt2}}>{t.email}</div>
+                </div>
+              </div>
+              <Pill label={t.isActive?"active":"inactive"} color={t.isActive?C.emerald:C.rose} bg={`${t.isActive?C.emerald:C.rose}18`}/>
+            </div>
+            <div style={{background:"rgba(255,255,255,0.03)",borderRadius:9,padding:"9px 10px",border:`1px solid ${C.border}`,marginBottom:12}}>
+              <div style={{fontSize:10,color:C.txt2,marginBottom:2}}>ASSIGNED CLASSES</div>
+              <div style={{fontSize:13,fontWeight:700,color:C.txt}}>{assignedCount(t._id)}</div>
+            </div>
+            <div style={{display:"flex",gap:6}}>
+              <Btn size="xs" variant="ghost" onClick={()=>startEdit(t)}><Edit3 size={11}/>Edit</Btn>
+              <Btn size="xs" variant={t.isActive?"danger":"success"} onClick={()=>toggleActive(t)}>
+                {t.isActive?<><XCircle size={11}/>Deactivate</>:<><CheckCircle size={11}/>Activate</>}
+              </Btn>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════
 //  ADMIN DASHBOARD CONTAINER
 // ══════════════════════════════════════════════════════
 const AdminDashboard = ({token,onLogout,theme,setTheme}) => {
   const api = useMemo(()=>makeApi(token),[token]);
   const [students,  setStudents]  = useState([]);
-  const [attendance,setAttendance]= useState({});
   const [leaves,    setLeaves]    = useState([]);
   const [view,      setView]      = useState("dashboard");
   const [loading,   setLoading]   = useState(true);
@@ -2567,9 +3353,18 @@ const AdminDashboard = ({token,onLogout,theme,setTheme}) => {
   const [unreadChat,setUnreadChat]= useState(0);
   const [aiOpen,    setAiOpen]    = useState(false);
 
+  // Deliberately does NOT fetch attendance here — that used to be lifted
+  // into this component and shared with both AdminOverview ("today's"
+  // stats) and AttendancePage (browse-any-date). AttendancePage rebinding
+  // that shared state to whatever date its picker was on meant the
+  // dashboard's "today" cards could silently show a different day's data.
+  // AttendancePage now owns its own attendance state; AdminOverview sources
+  // "today" exclusively from GET /api/analytics (analytics.today), a fresh
+  // server-computed snapshot for the actual current date every time it's
+  // viewed — see AnalyticsRoute.js.
   useEffect(()=>{
-    Promise.all([api.getStudents(),api.getLeaves(),api.getAttendance(today())])
-      .then(([s,l,a])=>{setStudents(s);setLeaves(l);setAttendance(a);})
+    Promise.all([api.getStudents(),api.getLeaves()])
+      .then(([s,l])=>{setStudents(s);setLeaves(l);})
       .catch(e=>toast(e.message))
       .finally(()=>setLoading(false));
   },[]);
@@ -2577,22 +3372,26 @@ const AdminDashboard = ({token,onLogout,theme,setTheme}) => {
   // Refetched whenever the active page changes — cheap, and guarantees the
   // sidebar badge is correct after leaving Chat (where messages just got
   // marked read) without needing a second always-on socket connection just
-  // to keep a badge in sync.
+  // to keep a badge in sync. Leaves are refetched the same way so a leave
+  // request a student submits mid-session shows up without a full reload.
   useEffect(()=>{
     api.getConversations().then(list=>setUnreadChat(list.reduce((s,c)=>s+(c.unreadCount||0),0))).catch(()=>{});
+    api.getLeaves().then(setLeaves).catch(()=>{});
   },[view]);
 
   const navWithBadges = useMemo(()=>adminNav.map(n=>n.key==="chat"?{...n,badge:unreadChat}:n),[unreadChat]);
 
-  const pageTitles={dashboard:"Overview",chat:"Chat",attendance:"Attendance",students:"Students",classes:"Classes",exams:"Exams",grades:"Grades",leaves:"Leave Requests",fees:"Fee Management",timetable:"Timetable",announcements:"Announcements",parents:"Parent Communication",notifications:"Notifications",analytics:"Analytics"};
+  const pageTitles={dashboard:"Overview",chat:"Chat",attendance:"Attendance",students:"Students",academic:"Academic Setup",teachers:"Teachers",classes:"Classes",exams:"Exams",grades:"Grades",leaves:"Leave Requests",fees:"Fee Management",timetable:"Timetable",announcements:"Announcements",parents:"Parent Communication",notifications:"Notifications",analytics:"Analytics"};
 
   const renderPage=()=>{
     if(loading) return <div style={{padding:60,textAlign:"center",color:C.txt2}}><Loader size={28} color={C.indigo} style={{animation:"spin 1s linear infinite",display:"block",margin:"0 auto 14px"}}/>Loading system data…</div>;
     switch(view){
-      case "dashboard":    return <AdminOverview students={students} attendance={attendance} leaves={leaves} api={api} toast={toast} onOpenAI={()=>setAiOpen(true)}/>;
+      case "dashboard":    return <AdminOverview students={students} leaves={leaves} api={api} toast={toast} onOpenAI={()=>setAiOpen(true)}/>;
       case "chat":          return <Suspense fallback={<ChatPageFallback/>}><AdminChatPage api={api} token={token}/></Suspense>;
-      case "attendance":   return <AttendancePage students={students} setStudents={setStudents} attendance={attendance} setAttendance={setAttendance} api={api} toast={toast}/>;
+      case "attendance":   return <AttendancePage students={students} setStudents={setStudents} api={api} toast={toast}/>;
       case "students":     return <StudentsPage students={students} setStudents={setStudents} api={api} toast={toast}/>;
+      case "academic":     return <AcademicSetupPage api={api} toast={toast}/>;
+      case "teachers":     return <TeachersPage api={api} toast={toast}/>;
       case "classes":      return <ClassesPage api={api} toast={toast}/>;
       case "exams":        return <ExamsPage students={students} api={api} toast={toast}/>;
       case "grades":       return <GradesPage students={students} api={api} toast={toast} isAdmin={true}/>;
@@ -3015,7 +3814,7 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
                   <AnimatePresence mode="wait">
                     {success?(
                       <motion.div initial={{opacity:0,scale:0.95}} animate={{opacity:1,scale:1}}
-                        style={{background:"rgba(16,185,129,0.1)",border:"1px solid rgba(16,185,129,0.25)",borderRadius:12,padding:"15px 20px",display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
+                        style={{background:"rgba(79,154,114,0.1)",border:"1px solid rgba(79,154,114,0.25)",borderRadius:12,padding:"15px 20px",display:"flex",alignItems:"center",justifyContent:"center",gap:10}}>
                         <CheckCircle size={18} color={C.emerald}/><span style={{fontSize:14,fontWeight:700,color:C.emerald}}>Submitted! Redirecting…</span>
                       </motion.div>
                     ):(
@@ -3045,7 +3844,7 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
                               <StatusPill status={l.status}/>
                               {l.status==="pending"&&(
                                 <button onClick={async()=>{try{await api.deleteLeave(l._id);setLeaves(p=>p.filter(x=>x._id!==l._id));toast("Cancelled","success");}catch(e){toast(e.message);}}}
-                                  style={{background:"rgba(244,63,94,0.08)",border:"none",borderRadius:7,padding:"5px 7px",cursor:"pointer",color:C.rose,display:"flex"}}>
+                                  style={{background:"rgba(193,90,86,0.08)",border:"none",borderRadius:7,padding:"5px 7px",cursor:"pointer",color:C.rose,display:"flex"}}>
                                   <Trash2 size={12}/>
                                 </button>
                               )}
@@ -3144,7 +3943,179 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
     );
   };
 
-  const pageTitles={dashboard:"My Dashboard",chat:"Chat",attendance:"My Attendance",grades:"My Grades",leaves:"Leave Requests",fees:"My Fees",timetable:"Timetable",announcements:"Notices",classes:"My Classes",notifications:"Notifications"};
+  // My Subjects — per-subject attendance %, sourced from the student's own
+  // active enrollment via GET /api/student/subjects. Expanding a subject
+  // lazy-loads its day-by-day history (GET /api/student/attendance/history)
+  // rather than fetching every subject's full history up front.
+  const StudentSubjects = () => {
+    const [subjects,setSubjects]=useState([]);
+    const [loading,setLoading]=useState(true);
+    const [expanded,setExpanded]=useState(null);
+    const [history,setHistory]=useState([]);
+    const [loadingHistory,setLoadingHistory]=useState(false);
+
+    useEffect(()=>{
+      api.getMySubjects().then(d=>setSubjects(Array.isArray(d)?d:[])).catch(e=>toast(e.message)).finally(()=>setLoading(false));
+    },[]);
+
+    const toggleExpand=async s=>{
+      if(expanded===s.teacherAssignmentId){setExpanded(null);return;}
+      setExpanded(s.teacherAssignmentId);
+      setLoadingHistory(true);
+      try{const h=await api.getMySubjectHistory(s.teacherAssignmentId);setHistory(Array.isArray(h)?h:[]);}
+      catch(e){toast(e.message);}
+      finally{setLoadingHistory(false);}
+    };
+
+    if(loading) return <div style={{padding:40,textAlign:"center"}}><Loader size={20} color={C.violet} style={{animation:"spin 1s linear infinite"}}/></div>;
+    if(subjects.length===0) return <Card style={{padding:48,textAlign:"center"}}><BookMarked size={30} style={{color:C.txt2,opacity:0.2,display:"block",margin:"0 auto 12px"}}/><div style={{color:C.txt2}}>No academic data available yet.</div></Card>;
+
+    return (
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        {subjects.map(s=>{
+          const rate=s.attendance.rate;
+          const open=expanded===s.teacherAssignmentId;
+          return (
+            <Card key={s.teacherAssignmentId} style={{padding:20}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10,cursor:"pointer"}} onClick={()=>toggleExpand(s)}>
+                <div>
+                  <div style={{fontSize:15,fontWeight:800,color:C.txt}}>{s.subject?.name}</div>
+                  <div style={{fontSize:12,color:C.txt2,marginTop:3}}>Teacher: {s.teacher?.name||"—"}</div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:22,fontWeight:900,color:rate==null?C.txt2:rate>=75?C.emerald:C.rose}}>{rate==null?"—":`${rate}%`}</div>
+                  <div style={{fontSize:10,color:C.txt2}}>Attendance</div>
+                </div>
+              </div>
+              <AnimatePresence>
+                {open&&(
+                  <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden",marginTop:14,paddingTop:14,borderTop:`1px solid ${C.border}`}}>
+                    {loadingHistory?<div style={{textAlign:"center",padding:10}}><Loader size={16} color={C.violet} style={{animation:"spin 1s linear infinite"}}/></div>:
+                    history.length===0?<div style={{fontSize:12,color:C.txt2,textAlign:"center"}}>No attendance recorded yet.</div>:(
+                      <div style={{display:"flex",flexDirection:"column",gap:5,maxHeight:200,overflowY:"auto"}}>
+                        {history.map(r=>(
+                          <div key={r._id} style={{display:"flex",justifyContent:"space-between",fontSize:12}}>
+                            <span style={{color:C.txt2}}>{fmt(r.date)}</span>
+                            <StatusPill status={r.status} size="xs"/>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const StudentCoursework = () => {
+    const [items,setItems]=useState([]);
+    const [loading,setLoading]=useState(true);
+    useEffect(()=>{
+      api.getMyCoursework().then(d=>setItems(Array.isArray(d)?d:[])).catch(e=>toast(e.message)).finally(()=>setLoading(false));
+    },[]);
+    if(loading) return <div style={{padding:40,textAlign:"center"}}><Loader size={20} color={C.violet} style={{animation:"spin 1s linear infinite"}}/></div>;
+    if(items.length===0) return <Card style={{padding:48,textAlign:"center"}}><FileText size={30} style={{color:C.txt2,opacity:0.2,display:"block",margin:"0 auto 12px"}}/><div style={{color:C.txt2}}>No assignments yet.</div></Card>;
+    return (
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:14}}>
+        {items.map(it=>{
+          const overdue=new Date(it.dueDate)<new Date();
+          return (
+            <Card key={it._id} style={{padding:18}}>
+              <div style={{fontSize:11,color:C.violet,fontWeight:700}}>{it.teacherAssignment?.subject?.name}</div>
+              <div style={{fontSize:15,fontWeight:800,color:C.txt,marginTop:4}}>{it.title}</div>
+              {it.description&&<div style={{fontSize:12,color:C.txt2,marginTop:6}}>{it.description}</div>}
+              <div style={{fontSize:11,color:C.txt2,marginTop:12}}>Teacher: {it.teacherAssignment?.teacher?.name||"—"}{it.totalMarks?` · ${it.totalMarks} marks`:""}</div>
+              <div style={{marginTop:8}}><Pill label={overdue?"Overdue":`Due ${fmt(it.dueDate)}`} color={overdue?C.rose:C.amber} bg={`${overdue?C.rose:C.amber}18`}/></div>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const StudentQuizzes = () => {
+    const [items,setItems]=useState([]);
+    const [loading,setLoading]=useState(true);
+    useEffect(()=>{
+      api.getMyQuizzes().then(d=>setItems(Array.isArray(d)?d:[])).catch(e=>toast(e.message)).finally(()=>setLoading(false));
+    },[]);
+    if(loading) return <div style={{padding:40,textAlign:"center"}}><Loader size={20} color={C.violet} style={{animation:"spin 1s linear infinite"}}/></div>;
+    if(items.length===0) return <Card style={{padding:48,textAlign:"center"}}><Target size={30} style={{color:C.txt2,opacity:0.2,display:"block",margin:"0 auto 12px"}}/><div style={{color:C.txt2}}>No quizzes yet.</div></Card>;
+    return (
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:14}}>
+        {items.map(it=>{
+          const upcoming=new Date(it.scheduledAt)>new Date();
+          return (
+            <Card key={it._id} style={{padding:18}}>
+              <div style={{fontSize:11,color:C.violet,fontWeight:700}}>{it.teacherAssignment?.subject?.name}</div>
+              <div style={{fontSize:15,fontWeight:800,color:C.txt,marginTop:4}}>{it.title}</div>
+              {it.description&&<div style={{fontSize:12,color:C.txt2,marginTop:6}}>{it.description}</div>}
+              <div style={{fontSize:11,color:C.txt2,marginTop:12}}>Teacher: {it.teacherAssignment?.teacher?.name||"—"}{it.totalMarks?` · ${it.totalMarks} marks`:""}</div>
+              <div style={{marginTop:8}}>
+                <Pill label={new Date(it.scheduledAt).toLocaleString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})} color={upcoming?C.cyan:C.txt2} bg={`${upcoming?C.cyan:C.txt2}18`}/>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const StudentAcademicGroups = () => {
+    const [groups,setGroups]=useState([]);
+    const [loading,setLoading]=useState(true);
+    const [selected,setSelected]=useState(null);
+    const [messages,setMessages]=useState([]);
+    const [loadingMsgs,setLoadingMsgs]=useState(false);
+
+    useEffect(()=>{
+      api.getMyChatGroups().then(d=>setGroups(Array.isArray(d)?d:[])).catch(e=>toast(e.message)).finally(()=>setLoading(false));
+    },[]);
+
+    useEffect(()=>{
+      if(!selected?._id) return;
+      let stop=false;
+      setLoadingMsgs(true);
+      const load=()=>api.getStudentGroupMessages(selected._id).then(m=>{if(!stop)setMessages(Array.isArray(m)?m:[]);}).catch(()=>{}).finally(()=>setLoadingMsgs(false));
+      load();
+      const t=setInterval(load,4000);
+      return ()=>{stop=true;clearInterval(t);};
+    },[selected?._id]);
+
+    const send=text=>{
+      api.sendStudentGroupMessage(selected._id,text).then(m=>setMessages(p=>[...p,m])).catch(e=>toast(e.message));
+    };
+
+    if(loading) return <div style={{padding:40,textAlign:"center"}}><Loader size={20} color={C.violet} style={{animation:"spin 1s linear infinite"}}/></div>;
+    if(groups.length===0) return <Card style={{padding:48,textAlign:"center"}}><Hash size={30} style={{color:C.txt2,opacity:0.2,display:"block",margin:"0 auto 12px"}}/><div style={{color:C.txt2}}>No academic groups yet.</div></Card>;
+
+    return (
+      <div style={{display:"grid",gridTemplateColumns:"260px 1fr",gap:16,alignItems:"start"}}>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {groups.map(g=>{
+            const active=selected?._id===g._id;
+            return (
+              <Card key={g._id} hover onClick={()=>setSelected(g)} style={{padding:14,border:`1px solid ${active?C.violet:C.border}`,cursor:"pointer"}}>
+                <div style={{fontSize:13,fontWeight:800,color:C.txt}}>{g.teacherAssignment?.subject?.name}</div>
+                <div style={{fontSize:11,color:C.txt2,marginTop:2}}>{g.teacherAssignment?.teacher?.name}</div>
+              </Card>
+            );
+          })}
+        </div>
+        {selected?(
+          <GroupChatBox messages={messages} loading={loadingMsgs} onSend={send} myModel="Student" disabled={selected.mode==="teacher_only"} placeholder="Message the class…" height={480}/>
+        ):(
+          <Card style={{padding:60,textAlign:"center"}}><div style={{color:C.txt2}}>Select a group to view messages.</div></Card>
+        )}
+      </div>
+    );
+  };
+
+  const pageTitles={dashboard:"My Dashboard",chat:"Chat",attendance:"My Attendance",classes:"My Classes",subjects:"My Subjects",coursework:"Assignments",quizzes:"Quizzes",academicGroups:"Academic Groups",grades:"My Grades",leaves:"Leave Requests",fees:"My Fees",timetable:"Timetable",announcements:"Notices",notifications:"Notifications"};
 
   const renderPage=()=>{
     if(loading) return <div style={{padding:60,textAlign:"center",color:C.txt2}}><Loader size={24} color={C.violet} style={{animation:"spin 1s linear infinite",display:"block",margin:"0 auto 12px"}}/>Loading…</div>;
@@ -3153,6 +4124,10 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
       case "chat":          return <Suspense fallback={<ChatPageFallback/>}><StudentChatPage api={api} token={token}/></Suspense>;
       case "attendance":    return <StudentAttendancePage/>;
       case "classes":       return <StudentClasses/>;
+      case "subjects":      return <StudentSubjects/>;
+      case "coursework":    return <StudentCoursework/>;
+      case "quizzes":       return <StudentQuizzes/>;
+      case "academicGroups":return <StudentAcademicGroups/>;
       case "grades":        return <GradesPage students={[student]} api={api} toast={toast} isAdmin={false} onOpenAI={()=>setAiOpen(true)}/>;
       case "leaves":        return <StudentLeaves/>;
       case "fees":          return <FeesPage students={[student]} api={api} toast={toast} studentId={sid} isAdmin={false} onOpenAI={()=>setAiOpen(true)}/>;
@@ -3189,6 +4164,739 @@ const StudentPortal = ({student,token,onLogout,theme,setTheme}) => {
 };
 
 // ══════════════════════════════════════════════════════
+//  TEACHER PORTAL — CLASS WORKSPACE TABS
+//  A "class" here is one active TeacherAssignment (session+program+section+
+//  subject). Every tab below is scoped to a single cls._id and talks only
+//  to /api/teacher/* — the backend re-verifies ownership on every call
+//  (see requireOwnAssignment in services/teacherAuth.js), so nothing here
+//  needs its own authorization logic; it just renders what the API returns.
+// ══════════════════════════════════════════════════════
+const thStyle={padding:"10px 16px",fontSize:10,fontWeight:800,color:C.txt2,textTransform:"uppercase",letterSpacing:0.5};
+const tdStyle={padding:"10px 16px",fontSize:13,color:C.txt};
+
+const ClassOverviewTab = ({cls,api,toast}) => {
+  const [stats,setStats]=useState(null);
+  useEffect(()=>{
+    Promise.all([
+      api.getClassStudents(cls._id).catch(()=>[]),
+      api.getClassAttendance(cls._id,today()).catch(()=>({students:[]})),
+      api.getClassCoursework(cls._id).catch(()=>[]),
+      api.getClassQuizzes(cls._id).catch(()=>[]),
+    ]).then(([students,att,cw,qz])=>{
+      const todayStudents=att.students||[];
+      setStats({
+        students:students.length,
+        todayMarked:todayStudents.filter(s=>s.status!=="unmarked").length,
+        todayTotal:todayStudents.length,
+        coursework:cw.filter(x=>x.status==="active").length,
+        quizzes:qz.filter(x=>x.status==="active").length,
+      });
+    }).catch(e=>toast(e.message));
+  },[cls._id]);
+
+  if(!stats) return <div style={{padding:40,textAlign:"center"}}><Loader size={22} color={C.indigo} style={{animation:"spin 1s linear infinite"}}/></div>;
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
+        <StatCard label="Students" value={stats.students} color={C.indigo} icon={<Users size={15}/>} delay={0}/>
+        <StatCard label="Today's Attendance" value={`${stats.todayMarked}/${stats.todayTotal}`} color={C.emerald} icon={<CheckSquare size={15}/>} delay={0.05}/>
+        <StatCard label="Active Coursework" value={stats.coursework} color={C.cyan} icon={<FileText size={15}/>} delay={0.1}/>
+        <StatCard label="Active Quizzes" value={stats.quizzes} color={C.violet} icon={<Target size={15}/>} delay={0.15}/>
+      </div>
+      <Card style={{padding:22}}>
+        <SectionHeader title="Class Details" icon={<BookOpen size={15}/>}/>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:14}}>
+          {[["Academic Session",cls.academicSession?.name],["Program",cls.program?.name],["Section",cls.section?.name],["Subject",cls.subject?.name]].map(([l,v])=>(
+            <div key={l}>
+              <div style={{fontSize:10,color:C.txt2,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",marginBottom:4}}>{l}</div>
+              <div style={{fontSize:14,fontWeight:700,color:C.txt}}>{v||"—"}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+const ClassStudentsTab = ({cls,api,toast}) => {
+  const [rows,setRows]=useState([]);
+  const [loading,setLoading]=useState(true);
+  useEffect(()=>{
+    api.getClassAttendance(cls._id,today()).then(d=>setRows(Array.isArray(d.students)?d.students:[])).catch(e=>toast(e.message)).finally(()=>setLoading(false));
+  },[cls._id]);
+  if(loading) return <div style={{padding:40,textAlign:"center"}}><Loader size={22} color={C.indigo} style={{animation:"spin 1s linear infinite"}}/></div>;
+  return (
+    <Card style={{padding:0,overflow:"hidden"}}>
+      <div style={{padding:"16px 20px",borderBottom:`1px solid ${C.border}`}}>
+        <SectionHeader title="Student Roster" icon={<Users size={15}/>} subtitle={`${rows.length} student(s) · today's attendance status`}/>
+      </div>
+      {rows.length===0?<div style={{padding:40,textAlign:"center",color:C.txt2}}>No students enrolled in this section yet.</div>:(
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead><tr><th style={thStyle}>Student</th><th style={thStyle}>Roll No</th><th style={thStyle}>Today's Status</th></tr></thead>
+            <tbody>
+              {rows.map(s=>(
+                <tr key={s.studentId} style={{borderTop:`1px solid ${C.border}`}}>
+                  <td style={tdStyle}><div style={{display:"flex",gap:10,alignItems:"center"}}><Avatar name={s.name} size={28} color={C.indigo} img={s.photo||undefined}/>{s.name}</div></td>
+                  <td style={tdStyle}>{s.rollNo}</td>
+                  <td style={tdStyle}><StatusPill status={s.status}/></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  );
+};
+
+const ClassAttendanceTab = ({cls,api,toast}) => {
+  const [date,setDate]=useState(today());
+  const [students,setStudents]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [saving,setSaving]=useState(false);
+  const [history,setHistory]=useState([]);
+  const [loadingHistory,setLoadingHistory]=useState(true);
+
+  const loadDay=useCallback(()=>{
+    setLoading(true);
+    api.getClassAttendance(cls._id,date).then(d=>setStudents(Array.isArray(d.students)?d.students:[])).catch(e=>toast(e.message)).finally(()=>setLoading(false));
+  },[cls._id,date]);
+  useEffect(loadDay,[date]);
+
+  const loadHistory=useCallback(()=>{
+    api.getClassAttendanceHistory(cls._id).then(d=>setHistory(Array.isArray(d)?d:[])).catch(()=>{}).finally(()=>setLoadingHistory(false));
+  },[cls._id]);
+  useEffect(loadHistory,[cls._id]);
+
+  const setStatus=(studentId,status)=>setStudents(p=>p.map(s=>s.studentId===studentId?{...s,status}:s));
+  const markAllPresent=()=>setStudents(p=>p.map(s=>({...s,status:"present"})));
+
+  const save=async()=>{
+    const records=students.filter(s=>s.status!=="unmarked").map(s=>({student:s.studentId,status:s.status}));
+    if(records.length===0) return toast("Mark at least one student first");
+    setSaving(true);
+    try{
+      const res=await api.markClassAttendance(cls._id,{date,records});
+      toast(`Attendance saved for ${res.marked} student(s)`,"success");
+      loadDay();loadHistory();
+    }catch(e){toast(e.message);}
+    finally{setSaving(false);}
+  };
+
+  const windowStats=days=>{
+    const cutoff=new Date();cutoff.setDate(cutoff.getDate()-days);
+    const recs=history.filter(r=>new Date(r.date)>=cutoff);
+    const present=recs.filter(r=>r.status==="present").length;
+    return {total:recs.length,rate:recs.length?Math.round(present/recs.length*100):null};
+  };
+  const week=windowStats(7),month=windowStats(30);
+  const byDate=history.reduce((acc,r)=>{(acc[r.date]=acc[r.date]||[]).push(r);return acc;},{});
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:18}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
+        <StatCard label="Today Marked" value={`${students.filter(s=>s.status!=="unmarked").length}/${students.length}`} color={C.indigo} icon={<CheckSquare size={15}/>} delay={0}/>
+        <StatCard label="7-Day Rate" value={week.rate!=null?`${week.rate}%`:"—"} color={C.emerald} icon={<Activity size={15}/>} delay={0.05}/>
+        <StatCard label="30-Day Rate" value={month.rate!=null?`${month.rate}%`:"—"} color={C.cyan} icon={<TrendingUp size={15}/>} delay={0.1}/>
+      </div>
+      <Card style={{padding:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10,marginBottom:16}}>
+          <SectionHeader title="Mark Attendance" icon={<CheckSquare size={15}/>} subtitle={fmt(date)}/>
+          <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+            <input type="date" value={date} max={today()} onChange={e=>setDate(e.target.value)}
+              style={{background:C.surface2,border:`1px solid ${C.border}`,borderRadius:9,padding:"8px 10px",color:C.txt,fontFamily:F,fontSize:12,outline:"none"}}/>
+            <Btn size="sm" variant="ghost" onClick={markAllPresent}><CheckCircle size={13}/>Mark All Present</Btn>
+            <Btn size="sm" onClick={save} disabled={saving||loading}><Zap size={13}/>Save Attendance</Btn>
+          </div>
+        </div>
+        {loading?<div style={{padding:30,textAlign:"center"}}><Loader size={20} color={C.indigo} style={{animation:"spin 1s linear infinite"}}/></div>:
+        students.length===0?<div style={{padding:30,textAlign:"center",color:C.txt2}}>No students enrolled in this section yet.</div>:(
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {students.map(s=>(
+              <div key={s.studentId} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",background:"rgba(255,255,255,0.02)",border:`1px solid ${C.border}`,borderRadius:10,flexWrap:"wrap",gap:8}}>
+                <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                  <Avatar name={s.name} size={32} color={C.indigo} img={s.photo||undefined}/>
+                  <div><div style={{fontSize:13,fontWeight:700,color:C.txt}}>{s.name}</div><div style={{fontSize:11,color:C.txt2}}>Roll #{s.rollNo}</div></div>
+                </div>
+                <div style={{display:"flex",gap:4}}>
+                  {["present","absent","leave"].map(st=>{
+                    const m=statusMeta(st);
+                    return (
+                      <button key={st} onClick={()=>setStatus(s.studentId,st)}
+                        style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${s.status===st?m.color:C.border}`,
+                          background:s.status===st?m.bg:"transparent",color:s.status===st?m.color:C.txt2,
+                          fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:F,textTransform:"capitalize"}}>
+                        {st}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+      <Card style={{padding:20}}>
+        <SectionHeader title="Attendance History" icon={<Clock size={15}/>} subtitle="Every date marked for this subject"/>
+        {loadingHistory?<div style={{padding:20,textAlign:"center"}}><Loader size={18} color={C.indigo} style={{animation:"spin 1s linear infinite"}}/></div>:
+        Object.keys(byDate).length===0?<div style={{textAlign:"center",color:C.txt2,padding:20}}>No attendance recorded yet.</div>:(
+          <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:280,overflowY:"auto"}}>
+            {Object.entries(byDate).sort((a,b)=>b[0].localeCompare(a[0])).map(([d,recs])=>{
+              const present=recs.filter(r=>r.status==="present").length;
+              return (
+                <div key={d} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",borderRadius:8,background:"rgba(255,255,255,0.02)"}}>
+                  <div style={{fontSize:12,color:C.txt}}>{fmt(d)}</div>
+                  <div style={{fontSize:12,color:C.txt2}}>{present}/{recs.length} present ({Math.round(present/recs.length*100)}%)</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
+
+const ClassCourseworkTab = ({cls,api,toast}) => {
+  const [items,setItems]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [showForm,setShowForm]=useState(false);
+  const empty={title:"",description:"",dueDate:"",totalMarks:""};
+  const [form,setForm]=useState(empty);
+  const [saving,setSaving]=useState(false);
+
+  const reload=useCallback(()=>{
+    setLoading(true);
+    api.getClassCoursework(cls._id).then(d=>setItems(Array.isArray(d)?d:[])).catch(e=>toast(e.message)).finally(()=>setLoading(false));
+  },[cls._id]);
+  useEffect(reload,[cls._id]);
+
+  const save=async()=>{
+    if(!form.title.trim()||!form.dueDate) return toast("Title and due date are required");
+    setSaving(true);
+    try{
+      await api.addCoursework(cls._id,{...form,totalMarks:form.totalMarks||undefined});
+      toast("Assignment created","success");
+      setForm(empty);setShowForm(false);reload();
+    }catch(e){toast(e.message);}
+    finally{setSaving(false);}
+  };
+  const remove=async id=>{
+    if(!confirm("Delete this assignment?")) return;
+    try{await api.deleteCoursework(id);toast("Deleted","success");reload();}catch(e){toast(e.message);}
+  };
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <Card style={{padding:"14px 18px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+          <SectionHeader title="Coursework / Assignments" icon={<FileText size={15}/>} subtitle={`${items.length} total`}/>
+          <Btn size="sm" onClick={()=>setShowForm(p=>!p)}><PlusCircle size={13}/>{showForm?"Cancel":"New Assignment"}</Btn>
+        </div>
+        <AnimatePresence>
+          {showForm&&(
+            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:8,marginTop:14}}>
+                <Input label="Title" value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))}/>
+                <Input label="Due Date" type="date" value={form.dueDate} onChange={e=>setForm(p=>({...p,dueDate:e.target.value}))}/>
+                <Input label="Total Marks" type="number" value={form.totalMarks} onChange={e=>setForm(p=>({...p,totalMarks:e.target.value}))}/>
+                <Input label="Description" value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))}/>
+              </div>
+              <Btn size="sm" style={{marginTop:12}} onClick={save} disabled={saving}><CheckCircle size={13}/>Save</Btn>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14}}>
+        {loading?<div style={{padding:30,textAlign:"center",gridColumn:"1/-1"}}><Loader size={20} color={C.indigo} style={{animation:"spin 1s linear infinite"}}/></div>:
+        items.length===0?<Card style={{padding:40,textAlign:"center",gridColumn:"1/-1"}}><div style={{color:C.txt2}}>No assignments yet.</div></Card>:
+        items.map(it=>(
+          <Card key={it._id} style={{padding:18}}>
+            <div style={{fontSize:14,fontWeight:800,color:C.txt}}>{it.title}</div>
+            {it.description&&<div style={{fontSize:12,color:C.txt2,marginTop:4}}>{it.description}</div>}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:12}}>
+              <div style={{fontSize:11,color:C.txt2}}>Due {fmt(it.dueDate)}{it.totalMarks?` · ${it.totalMarks} marks`:""}</div>
+              <Btn size="xs" variant="danger" onClick={()=>remove(it._id)}><Trash2 size={11}/></Btn>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const ClassQuizzesTab = ({cls,api,toast}) => {
+  const [items,setItems]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [showForm,setShowForm]=useState(false);
+  const empty={title:"",description:"",scheduledAt:"",durationMinutes:"",totalMarks:""};
+  const [form,setForm]=useState(empty);
+  const [saving,setSaving]=useState(false);
+
+  const reload=useCallback(()=>{
+    setLoading(true);
+    api.getClassQuizzes(cls._id).then(d=>setItems(Array.isArray(d)?d:[])).catch(e=>toast(e.message)).finally(()=>setLoading(false));
+  },[cls._id]);
+  useEffect(reload,[cls._id]);
+
+  const save=async()=>{
+    if(!form.title.trim()||!form.scheduledAt) return toast("Title and scheduled date/time are required");
+    setSaving(true);
+    try{
+      await api.addQuiz(cls._id,{...form,durationMinutes:form.durationMinutes||undefined,totalMarks:form.totalMarks||undefined});
+      toast("Quiz created","success");
+      setForm(empty);setShowForm(false);reload();
+    }catch(e){toast(e.message);}
+    finally{setSaving(false);}
+  };
+  const remove=async id=>{
+    if(!confirm("Delete this quiz?")) return;
+    try{await api.deleteQuiz(id);toast("Deleted","success");reload();}catch(e){toast(e.message);}
+  };
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <Card style={{padding:"14px 18px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+          <SectionHeader title="Quizzes" icon={<Target size={15}/>} subtitle={`${items.length} total`}/>
+          <Btn size="sm" onClick={()=>setShowForm(p=>!p)}><PlusCircle size={13}/>{showForm?"Cancel":"New Quiz"}</Btn>
+        </div>
+        <AnimatePresence>
+          {showForm&&(
+            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:8,marginTop:14}}>
+                <Input label="Title" value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))}/>
+                <Input label="Scheduled" type="datetime-local" value={form.scheduledAt} onChange={e=>setForm(p=>({...p,scheduledAt:e.target.value}))}/>
+                <Input label="Duration (min)" type="number" value={form.durationMinutes} onChange={e=>setForm(p=>({...p,durationMinutes:e.target.value}))}/>
+                <Input label="Total Marks" type="number" value={form.totalMarks} onChange={e=>setForm(p=>({...p,totalMarks:e.target.value}))}/>
+                <Input label="Description" value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))}/>
+              </div>
+              <Btn size="sm" style={{marginTop:12}} onClick={save} disabled={saving}><CheckCircle size={13}/>Save</Btn>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14}}>
+        {loading?<div style={{padding:30,textAlign:"center",gridColumn:"1/-1"}}><Loader size={20} color={C.indigo} style={{animation:"spin 1s linear infinite"}}/></div>:
+        items.length===0?<Card style={{padding:40,textAlign:"center",gridColumn:"1/-1"}}><div style={{color:C.txt2}}>No quizzes yet.</div></Card>:
+        items.map(it=>(
+          <Card key={it._id} style={{padding:18}}>
+            <div style={{fontSize:14,fontWeight:800,color:C.txt}}>{it.title}</div>
+            {it.description&&<div style={{fontSize:12,color:C.txt2,marginTop:4}}>{it.description}</div>}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:12}}>
+              <div style={{fontSize:11,color:C.txt2}}>{new Date(it.scheduledAt).toLocaleString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}{it.totalMarks?` · ${it.totalMarks} marks`:""}</div>
+              <Btn size="xs" variant="danger" onClick={()=>remove(it._id)}><Trash2 size={11}/></Btn>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const ClassAnnouncementsTab = ({cls,api,toast}) => {
+  const [items,setItems]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [form,setForm]=useState({title:"",message:""});
+  const [showForm,setShowForm]=useState(false);
+  const [saving,setSaving]=useState(false);
+
+  const reload=useCallback(()=>{
+    setLoading(true);
+    api.getClassAnnouncements(cls._id).then(d=>setItems(Array.isArray(d)?d:[])).catch(e=>toast(e.message)).finally(()=>setLoading(false));
+  },[cls._id]);
+  useEffect(reload,[cls._id]);
+
+  const send=async()=>{
+    if(!form.title.trim()||!form.message.trim()) return toast("Title and message are required");
+    setSaving(true);
+    try{
+      const res=await api.addClassAnnouncement(cls._id,form);
+      toast(`Sent to ${res.recipientCount} student(s)`,"success");
+      setForm({title:"",message:""});setShowForm(false);reload();
+    }catch(e){toast(e.message);}
+    finally{setSaving(false);}
+  };
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <Card style={{padding:"14px 18px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+          <SectionHeader title="Class Announcements" icon={<Megaphone size={15}/>} subtitle={`${items.length} sent`}/>
+          <Btn size="sm" onClick={()=>setShowForm(p=>!p)}><PlusCircle size={13}/>{showForm?"Cancel":"New Announcement"}</Btn>
+        </div>
+        <AnimatePresence>
+          {showForm&&(
+            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} style={{overflow:"hidden",marginTop:14}}>
+              <Input label="Title" value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))}/>
+              <div style={{marginTop:10}}>
+                <div style={{fontSize:10,fontWeight:700,color:C.txt2,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Message</div>
+                <textarea value={form.message} onChange={e=>setForm(p=>({...p,message:e.target.value}))} rows={3}
+                  style={{width:"100%",background:"rgba(255,255,255,0.04)",border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 14px",color:C.txt,fontFamily:F,fontSize:13,outline:"none",resize:"vertical",boxSizing:"border-box"}}/>
+              </div>
+              <Btn size="sm" style={{marginTop:12}} onClick={send} disabled={saving}><Send size={13}/>Send to Class</Btn>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+      {loading?<div style={{padding:30,textAlign:"center"}}><Loader size={20} color={C.indigo} style={{animation:"spin 1s linear infinite"}}/></div>:
+      items.length===0?<Card style={{padding:40,textAlign:"center"}}><div style={{color:C.txt2}}>No announcements sent yet.</div></Card>:(
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {items.map(a=>(
+            <Card key={a._id} style={{padding:16}}>
+              <div style={{display:"flex",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
+                <div style={{fontSize:14,fontWeight:800,color:C.txt}}>{a.title}</div>
+                <div style={{fontSize:10,color:C.txt2}}>{fmt(a.createdAt)}</div>
+              </div>
+              <div style={{fontSize:12,color:C.txt2,marginTop:6}}>{a.message}</div>
+              <div style={{fontSize:10,color:C.violet,marginTop:8,fontWeight:700}}>Sent to {a.recipientCount} student(s)</div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ClassChatTab = ({cls,api,toast}) => {
+  const [group,setGroup]=useState(null);
+  const [students,setStudents]=useState([]);
+  const [messages,setMessages]=useState([]);
+  const [loadingMsgs,setLoadingMsgs]=useState(true);
+  const [loadingGroup,setLoadingGroup]=useState(true);
+  const [savingMode,setSavingMode]=useState(false);
+
+  useEffect(()=>{
+    api.getClassChatGroup(cls._id).then(setGroup).catch(e=>toast(e.message)).finally(()=>setLoadingGroup(false));
+    api.getClassStudents(cls._id).then(d=>setStudents(Array.isArray(d)?d:[])).catch(()=>{});
+  },[cls._id]);
+
+  useEffect(()=>{
+    if(!group?._id) return;
+    let stop=false;
+    const load=()=>api.getGroupMessages(group._id).then(m=>{if(!stop)setMessages(Array.isArray(m)?m:[]);}).catch(()=>{}).finally(()=>setLoadingMsgs(false));
+    load();
+    const t=setInterval(load,4000);
+    return ()=>{stop=true;clearInterval(t);};
+  },[group?._id]);
+
+  const send=text=>{
+    api.sendGroupMessage(group._id,text).then(m=>setMessages(p=>[...p,m])).catch(e=>toast(e.message));
+  };
+  const setMode=async mode=>{
+    setSavingMode(true);
+    try{
+      const updated=await api.updateChatGroup(group._id,{mode});
+      setGroup(p=>({...p,mode:updated.mode,members:updated.members}));
+    }catch(e){toast(e.message);}
+    finally{setSavingMode(false);}
+  };
+  const toggleMember=async studentId=>{
+    const current=group.members||[];
+    const has=current.map(String).includes(String(studentId));
+    const next=has?current.filter(id=>String(id)!==String(studentId)):[...current,studentId];
+    try{
+      const updated=await api.updateChatGroup(group._id,{members:next});
+      setGroup(p=>({...p,members:updated.members}));
+    }catch(e){toast(e.message);}
+  };
+
+  if(loadingGroup) return <div style={{padding:40,textAlign:"center"}}><Loader size={22} color={C.indigo} style={{animation:"spin 1s linear infinite"}}/></div>;
+  if(!group) return <div style={{padding:40,textAlign:"center",color:C.txt2}}>Could not load this class's chat group.</div>;
+
+  const memberIds=(group.memberIds||[]).map(String);
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <Card style={{padding:18}}>
+        <SectionHeader title="Group Settings" icon={<Hash size={15}/>} subtitle={`${memberIds.length} student(s) currently see this group`}/>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {[["teacher_only","Teacher Only"],["teacher_selected","Selected Students"],["teacher_all","All Students"]].map(([k,label])=>(
+            <button key={k} disabled={savingMode} onClick={()=>setMode(k)}
+              style={{padding:"8px 14px",borderRadius:9,border:`1px solid ${group.mode===k?C.indigo:C.border}`,
+                background:group.mode===k?`${C.indigo}18`:"transparent",color:group.mode===k?C.indigo:C.txt2,
+                fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:F}}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {group.mode==="teacher_selected"&&(
+          <div style={{marginTop:14,display:"flex",flexWrap:"wrap",gap:8}}>
+            {students.map(s=>{
+              const active=memberIds.includes(String(s._id));
+              return (
+                <button key={s._id} onClick={()=>toggleMember(s._id)}
+                  style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px",borderRadius:20,
+                    border:`1px solid ${active?C.emerald:C.border}`,background:active?`${C.emerald}18`:"transparent",
+                    color:active?C.emerald:C.txt2,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:F}}>
+                  {active?<CheckCircle size={11}/>:<PlusCircle size={11}/>}{s.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+      <GroupChatBox messages={messages} loading={loadingMsgs} onSend={send} myModel="Teacher" disabled={group.mode==="teacher_only"} placeholder="Message the class…"/>
+    </div>
+  );
+};
+
+const ClassWorkspace = ({cls,api,toast,onBack}) => {
+  const [tab,setTab]=useState("overview");
+  const tabs=[
+    {k:"overview",label:"Overview",icon:LayoutDashboard},
+    {k:"students",label:"Students",icon:Users},
+    {k:"attendance",label:"Attendance",icon:CheckSquare},
+    {k:"coursework",label:"Coursework",icon:FileText},
+    {k:"quizzes",label:"Quizzes",icon:Target},
+    {k:"announcements",label:"Announcements",icon:Megaphone},
+    {k:"chat",label:"Chat",icon:Hash},
+  ];
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <button onClick={onBack} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:C.indigo,fontFamily:F,fontSize:12,fontWeight:700,cursor:"pointer",width:"fit-content",padding:0}}>
+        <ChevronLeft size={14}/>Back to My Classes
+      </button>
+      <div>
+        <div style={{fontSize:19,fontWeight:900,color:C.txt}}>{cls.subject?.name}</div>
+        <div style={{fontSize:12,color:C.txt2,marginTop:2}}>{cls.program?.name} · Section {cls.section?.name} · {cls.academicSession?.name}</div>
+      </div>
+      <Card style={{padding:6}}>
+        <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>
+          {tabs.map(t=>{
+            const Icon=t.icon,active=tab===t.k;
+            return (
+              <button key={t.k} onClick={()=>setTab(t.k)}
+                style={{display:"flex",alignItems:"center",gap:6,padding:"8px 13px",borderRadius:9,border:"none",cursor:"pointer",
+                  fontFamily:F,fontSize:12,fontWeight:700,background:active?`linear-gradient(135deg,${C.indigo},${C.indigoLt})`:"transparent",color:active?"#1a1408":C.txt2}}>
+                <Icon size={12}/>{t.label}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+      {tab==="overview"&&<ClassOverviewTab cls={cls} api={api} toast={toast}/>}
+      {tab==="students"&&<ClassStudentsTab cls={cls} api={api} toast={toast}/>}
+      {tab==="attendance"&&<ClassAttendanceTab cls={cls} api={api} toast={toast}/>}
+      {tab==="coursework"&&<ClassCourseworkTab cls={cls} api={api} toast={toast}/>}
+      {tab==="quizzes"&&<ClassQuizzesTab cls={cls} api={api} toast={toast}/>}
+      {tab==="announcements"&&<ClassAnnouncementsTab cls={cls} api={api} toast={toast}/>}
+      {tab==="chat"&&<ClassChatTab cls={cls} api={api} toast={toast}/>}
+    </div>
+  );
+};
+
+const TeacherOverviewPage = ({teacher,classes,api,toast,onOpenClass}) => {
+  const [stats,setStats]=useState({students:0,coursework:0,quizzes:0});
+  const [announcements,setAnnouncements]=useState([]);
+  const [loadingStats,setLoadingStats]=useState(true);
+
+  useEffect(()=>{
+    if(classes.length===0){setLoadingStats(false);return;}
+    Promise.all(classes.map(c=>Promise.all([
+      api.getClassStudents(c._id).catch(()=>[]),
+      api.getClassCoursework(c._id).catch(()=>[]),
+      api.getClassQuizzes(c._id).catch(()=>[]),
+      api.getClassAnnouncements(c._id).catch(()=>[]),
+    ]))).then(results=>{
+      let students=0,coursework=0,quizzes=0;const anns=[];
+      results.forEach(([st,cw,qz,an],i)=>{
+        students+=st.length;
+        coursework+=cw.filter(x=>x.status==="active").length;
+        quizzes+=qz.filter(x=>x.status==="active").length;
+        an.forEach(a=>anns.push({...a,subjectName:classes[i].subject?.name}));
+      });
+      setStats({students,coursework,quizzes});
+      setAnnouncements(anns.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,5));
+    }).finally(()=>setLoadingStats(false));
+  },[classes]);
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:20}}>
+      <motion.div initial={{opacity:0,y:16}} animate={{opacity:1,y:0}}
+        style={{background:`linear-gradient(135deg,${C.violet}18,${C.surface} 60%)`,border:`1px solid ${C.violet}30`,borderRadius:20,padding:"24px 28px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:14}}>
+        <div style={{display:"flex",gap:16,alignItems:"center"}}>
+          <Avatar name={teacher.name} size={56} color={C.violet}/>
+          <div>
+            <div style={{fontSize:12,color:C.violet,fontWeight:700,letterSpacing:1,marginBottom:3}}>TEACHER PORTAL</div>
+            <div style={{fontSize:20,fontWeight:900,color:C.txt}}>{teacher.name}</div>
+            <div style={{fontSize:12,color:C.txt2}}>{teacher.email}</div>
+          </div>
+        </div>
+      </motion.div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:14}}>
+        <StatCard label="My Classes" value={classes.length} color={C.indigo} icon={<BookOpen size={15}/>} delay={0}/>
+        <StatCard label="Total Students" value={loadingStats?"…":stats.students} color={C.emerald} icon={<Users size={15}/>} delay={0.05}/>
+        <StatCard label="Active Coursework" value={loadingStats?"…":stats.coursework} color={C.cyan} icon={<FileText size={15}/>} delay={0.1}/>
+        <StatCard label="Active Quizzes" value={loadingStats?"…":stats.quizzes} color={C.violet} icon={<Target size={15}/>} delay={0.15}/>
+      </div>
+      <Card style={{padding:22}}>
+        <SectionHeader title="My Classes" icon={<BookOpen size={15}/>} subtitle="Click a class to open its workspace"/>
+        {classes.length===0?<div style={{textAlign:"center",color:C.txt2,padding:24}}>No classes available yet. Ask your admin to assign you to a class.</div>:(
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:12}}>
+            {classes.map(c=>(
+              <div key={c._id} onClick={()=>onOpenClass(c._id)} style={{cursor:"pointer",padding:14,background:"rgba(255,255,255,0.02)",border:`1px solid ${C.border}`,borderRadius:12,borderLeft:`3px solid ${C.violet}`}}>
+                <div style={{fontSize:13,fontWeight:800,color:C.txt}}>{c.subject?.name}</div>
+                <div style={{fontSize:11,color:C.txt2,marginTop:4}}>{c.program?.name} · Section {c.section?.name}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+      <Card style={{padding:22}}>
+        <SectionHeader title="Recent Announcements" icon={<Megaphone size={15}/>} subtitle="Across all your classes"/>
+        {loadingStats?<div style={{padding:20,textAlign:"center"}}><Loader size={18} color={C.indigo} style={{animation:"spin 1s linear infinite"}}/></div>:
+        announcements.length===0?<div style={{textAlign:"center",color:C.txt2,padding:24}}>No announcements sent yet.</div>:
+        announcements.map(a=>(
+          <div key={a._id} style={{padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
+            <div style={{display:"flex",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
+              <div style={{fontSize:13,fontWeight:700,color:C.txt}}>{a.title}</div>
+              <div style={{fontSize:10,color:C.txt2}}>{a.subjectName}</div>
+            </div>
+            <div style={{fontSize:12,color:C.txt2,marginTop:3}}>{a.message}</div>
+          </div>
+        ))}
+      </Card>
+    </div>
+  );
+};
+
+const TeacherClassesPage = ({classes,onOpenClass}) => (
+  <div style={{display:"flex",flexDirection:"column",gap:18}}>
+    <StatCard label="Total Classes" value={classes.length} color={C.indigo} icon={<BookOpen size={15}/>} delay={0}/>
+    {classes.length===0?(
+      <Card style={{padding:40,textAlign:"center"}}><div style={{color:C.txt2}}>No classes available yet. Ask your admin to assign you to a class.</div></Card>
+    ):(
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:14}}>
+        {classes.map(c=>(
+          <Card key={c._id} hover style={{padding:20}} onClick={()=>onOpenClass(c._id)}>
+            <div style={{fontSize:11,color:C.violet,fontWeight:700,letterSpacing:0.5,marginBottom:4}}>{c.academicSession?.name}</div>
+            <div style={{fontSize:16,fontWeight:900,color:C.txt}}>{c.subject?.name}</div>
+            <div style={{fontSize:12,color:C.txt2,marginTop:4}}>{c.program?.name} · Section {c.section?.name}</div>
+            <Btn size="xs" style={{marginTop:14}}><ChevronRight size={11}/>Open Class</Btn>
+          </Card>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
+const TeacherChatGroupsPage = ({classes,api,toast}) => {
+  const [groups,setGroups]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [selected,setSelected]=useState(null);
+  const [messages,setMessages]=useState([]);
+  const [loadingMsgs,setLoadingMsgs]=useState(false);
+
+  useEffect(()=>{
+    if(classes.length===0){setLoading(false);return;}
+    Promise.all(classes.map(c=>api.getClassChatGroup(c._id).then(g=>({...g,cls:c})).catch(()=>null)))
+      .then(list=>setGroups(list.filter(Boolean)))
+      .finally(()=>setLoading(false));
+  },[classes]);
+
+  useEffect(()=>{
+    if(!selected?._id) return;
+    let stop=false;
+    setLoadingMsgs(true);
+    const load=()=>api.getGroupMessages(selected._id).then(m=>{if(!stop)setMessages(Array.isArray(m)?m:[]);}).catch(()=>{}).finally(()=>setLoadingMsgs(false));
+    load();
+    const t=setInterval(load,4000);
+    return ()=>{stop=true;clearInterval(t);};
+  },[selected?._id]);
+
+  const send=text=>{
+    api.sendGroupMessage(selected._id,text).then(m=>setMessages(p=>[...p,m])).catch(e=>toast(e.message));
+  };
+
+  if(loading) return <div style={{padding:40,textAlign:"center"}}><Loader size={22} color={C.indigo} style={{animation:"spin 1s linear infinite"}}/></div>;
+  if(groups.length===0) return <Card style={{padding:40,textAlign:"center"}}><div style={{color:C.txt2}}>No academic groups yet — open a class to create one.</div></Card>;
+
+  return (
+    <div style={{display:"grid",gridTemplateColumns:"260px 1fr",gap:16,alignItems:"start"}}>
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {groups.map(g=>{
+          const active=selected?._id===g._id;
+          return (
+            <Card key={g._id} hover onClick={()=>setSelected(g)} style={{padding:14,border:`1px solid ${active?C.indigo:C.border}`,cursor:"pointer"}}>
+              <div style={{fontSize:13,fontWeight:800,color:C.txt}}>{g.cls.subject?.name}</div>
+              <div style={{fontSize:11,color:C.txt2,marginTop:2}}>{g.cls.program?.name} · Sec {g.cls.section?.name}</div>
+            </Card>
+          );
+        })}
+      </div>
+      {selected?(
+        <GroupChatBox messages={messages} loading={loadingMsgs} onSend={send} myModel="Teacher" disabled={selected.mode==="teacher_only"} placeholder="Message the class…" height={520}/>
+      ):(
+        <Card style={{padding:60,textAlign:"center"}}><div style={{color:C.txt2}}>Select a group to view messages.</div></Card>
+      )}
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════
+//  TEACHER DASHBOARD CONTAINER
+// ══════════════════════════════════════════════════════
+const TeacherDashboard = ({teacher,token,onLogout,theme,setTheme}) => {
+  const api=useMemo(()=>makeApi(token),[token]);
+  const [view,setView]=useState("dashboard");
+  const [classes,setClasses]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [collapsed,setCollapsed]=useState(()=>typeof window!=="undefined"&&window.innerWidth<900);
+  const [toastEl,toast]=useToast();
+  const [aiOpen,setAiOpen]=useState(false);
+  const [activeClassId,setActiveClassId]=useState(null);
+
+  useEffect(()=>{
+    api.getMyClasses().then(c=>setClasses(Array.isArray(c)?c:[])).catch(e=>toast(e.message)).finally(()=>setLoading(false));
+  },[]);
+
+  const openClass=id=>{setActiveClassId(id);setView("classWorkspace");};
+  const pageTitles={dashboard:"Overview",classes:"My Classes",classWorkspace:"Class Workspace",chat:"Academic Groups",notifications:"Notifications"};
+
+  const renderPage=()=>{
+    if(loading) return <div style={{padding:60,textAlign:"center",color:C.txt2}}><Loader size={28} color={C.indigo} style={{animation:"spin 1s linear infinite",display:"block",margin:"0 auto 14px"}}/>Loading your classes…</div>;
+    switch(view){
+      case "dashboard": return <TeacherOverviewPage teacher={teacher} classes={classes} api={api} toast={toast} onOpenClass={openClass}/>;
+      case "classes":    return <TeacherClassesPage classes={classes} onOpenClass={openClass}/>;
+      case "classWorkspace": {
+        const cls=classes.find(c=>c._id===activeClassId);
+        if(!cls) return <div style={{padding:40,textAlign:"center",color:C.txt2}}>Class not found.</div>;
+        return <ClassWorkspace cls={cls} api={api} toast={toast} onBack={()=>setView("classes")}/>;
+      }
+      case "chat":          return <TeacherChatGroupsPage classes={classes} api={api} toast={toast}/>;
+      case "notifications": return <NotificationsPage api={api} toast={toast}/>;
+      default: return null;
+    }
+  };
+
+  return (
+    <div style={{display:"flex",minHeight:"100vh",background:C.bg,fontFamily:F,color:C.txt,position:"relative"}}>
+      <AmbientBackground/>
+      <Sidebar nav={teacherNav} active={view==="classWorkspace"?"classes":view} setActive={setView} user={{name:teacher.name,role:"Teacher"}} onLogout={onLogout} collapsed={collapsed} setCollapsed={setCollapsed}/>
+      <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0}}>
+        <TopBar title={pageTitles[view]||"Teacher Portal"} theme={theme} onToggleSidebar={()=>setCollapsed(p=>!p)} actions={<ThemeSwitcher theme={theme} setTheme={setTheme}/>}/>
+        <div style={{flex:1,padding:"24px 28px",overflowY:"auto"}}>
+          <AnimatePresence mode="wait">
+            <motion.div key={view+(activeClassId||"")} initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}} transition={{duration:0.2}}>
+              {renderPage()}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+      {toastEl}
+      <Suspense fallback={null}>
+        <AIFloatingButton open={aiOpen} onClick={()=>setAiOpen(true)}/>
+        <AnimatePresence>
+          {aiOpen && <AIPanel api={api} role="teacher" onClose={()=>setAiOpen(false)}/>}
+        </AnimatePresence>
+      </Suspense>
+    </div>
+  );
+};
+
+// ══════════════════════════════════════════════════════
 //  LOGIN — AUTH FIELD (icon input with animated focus ring)
 // ══════════════════════════════════════════════════════
 const AuthField = ({icon:Icon, label, error, endAdornment, wrapStyle={}, theme, accent, ...p}) => {
@@ -3218,13 +4926,15 @@ const AuthField = ({icon:Icon, label, error, endAdornment, wrapStyle={}, theme, 
 // ══════════════════════════════════════════════════════
 //  LOGIN
 // ══════════════════════════════════════════════════════
-// Brand palette pulled from the ACADEXA crest (deep violet + gold) — used only
-// for this page's accents so the login screen reads as custom-branded rather
-// than a generic indigo/cyan SaaS template.
+// Brand palette — ink-navy + brass, matching the app-wide "digital
+// registrar" identity (see the themes object above) rather than a
+// login-only one-off. Same two-color structure as before (a cool secondary
+// + a warm primary), re-grounded in the new hues; kept as its own object
+// since this page's CSS-in-JS block references B.* directly throughout.
 const B = {
-  violet:'#7c3aed', violetLt:'#a78bfa', violetDp:'#4c1d95',
-  gold:'#d4af37', goldLt:'#f3d78a',
-  ink:'#0b0716',
+  violet:'#4a5a96', violetLt:'#6d7fc4', violetDp:'#2c3868',
+  gold:'#c9974c', goldLt:'#e3bd7c',
+  ink:'#07090e',
 };
 
 const Login = ({onLogin, theme, setTheme}) => {
@@ -3245,13 +4955,14 @@ const Login = ({onLogin, theme, setTheme}) => {
   const submit=async()=>{
     setError("");
     if(role==='student' && !roll.trim()){setError("Please enter your roll number.");triggerShake();return;}
-    if(role==='admin' && !email.trim()){setError("Please enter your email address.");triggerShake();return;}
+    if(role!=='student' && !email.trim()){setError("Please enter your email address.");triggerShake();return;}
     if(!pass){setError("Please enter your password.");triggerShake();return;}
     setLoading(true);
     try{
       let data;
-      if(role==="admin") data=await api.adminLogin(email,pass);
-      else               data=await api.studentLogin(roll,pass);
+      if(role==="admin")        data=await api.adminLogin(email,pass);
+      else if(role==="teacher") data=await api.teacherLogin(email,pass);
+      else                      data=await api.studentLogin(roll,pass);
       onLogin(data);
     }catch(e){setError(e.message);triggerShake();}
     finally{setLoading(false);}
@@ -3279,26 +4990,26 @@ const Login = ({onLogin, theme, setTheme}) => {
         .brandPanel{flex:0 0 42%;position:relative;min-height:100vh;overflow:hidden;display:flex;flex-direction:column;background:${C.bg2}}
         @media (max-width:980px){.brandPanel{flex:0 0 auto;min-height:240px}}
         .campusImage{position:absolute;inset:0;background-image:url('/assets/campus-photo.png');background-position:center 65%;background-size:cover;transform-origin:center;animation:kbZoom 26s ease-in-out infinite alternate}
-        .campusOverlay{position:absolute;inset:0;background:linear-gradient(195deg,rgba(24,10,48,0.4) 0%,rgba(18,7,38,0.6) 38%,rgba(11,6,22,0.94) 82%,rgba(8,4,16,0.98) 100%)}
-        .campusOverlay2{position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,6,22,0.55) 0%,transparent 45%)}
+        .campusOverlay{position:absolute;inset:0;background:linear-gradient(195deg,rgba(9,11,18,0.45) 0%,rgba(7,9,15,0.65) 38%,rgba(6,7,11,0.94) 82%,rgba(5,6,9,0.98) 100%)}
+        .campusOverlay2{position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,7,11,0.55) 0%,transparent 45%)}
         .heroOrb{position:absolute;border-radius:50%;filter:blur(90px);z-index:1;pointer-events:none}
         .heroOrb1{width:280px;height:280px;background:${B.violet};opacity:0.35;bottom:-60px;left:-60px;animation:floatSlow 12s ease-in-out infinite}
         .heroOrb2{width:220px;height:220px;background:${B.gold};opacity:0.18;top:-60px;right:-50px;animation:floatSlow 15s ease-in-out infinite reverse}
         .brandInner{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;color:#fff;padding:44px 44px 32px}
         @media (max-width:980px){.brandInner{padding:26px 26px 20px}}
         .brandTop{display:flex;align-items:center;gap:10px}
-        .brandLogoBadge{width:40px;height:40px;border-radius:10px;background:${B.ink};border:1px solid ${B.gold}55;box-shadow:0 4px 14px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
-        .brandWordmark{font-size:13px;font-weight:800;letter-spacing:1.2px;color:rgba(255,255,255,0.96)}
+        .brandLogoBadge{width:40px;height:40px;border-radius:9px;background:${B.ink};border:1px solid ${B.gold}55;box-shadow:0 4px 14px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+        .brandWordmark{font-size:13px;font-weight:700;letter-spacing:1.2px;color:rgba(255,255,255,0.96);font-family:${F}}
         .brandWordmark small{display:block;font-size:10px;font-weight:600;letter-spacing:1.4px;color:${B.goldLt};text-transform:uppercase;margin-top:1px}
         .brandBody{flex:1;display:flex;flex-direction:column;justify-content:flex-end;max-width:460px}
         @media (max-width:980px){.brandBody{display:none}}
-        .eyebrow{display:inline-flex;align-items:center;gap:6px;padding:5px 12px 5px 10px;border-radius:100px;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:${B.goldLt};margin-bottom:18px;width:fit-content}
-        .heading{font-size:34px;font-weight:800;line-height:1.16;margin-bottom:14px;letter-spacing:-0.6px}
+        .eyebrow{display:inline-flex;align-items:center;gap:6px;padding:5px 12px 5px 10px;border-radius:100px;background:rgba(201,151,76,0.12);border:1px solid rgba(201,151,76,0.3);font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${B.goldLt};margin-bottom:18px;width:fit-content;font-family:${F}}
+        .heading{font-size:36px;font-weight:600;line-height:1.14;margin-bottom:14px;letter-spacing:-0.5px;font-family:${FD}}
         .headingAccent{background:linear-gradient(120deg,${B.violetLt},${B.goldLt});-webkit-background-clip:text;background-clip:text;color:transparent}
         .sub{color:rgba(255,255,255,0.72);font-size:14.5px;line-height:1.65;max-width:400px}
         .featureList{display:flex;flex-direction:column;gap:13px;margin-top:30px}
         .featureItem{display:flex;align-items:center;gap:12px}
-        .featureIconBox{width:32px;height:32px;border-radius:10px;background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.22);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .featureIconBox{width:32px;height:32px;border-radius:9px;background:rgba(201,151,76,0.1);border:1px solid rgba(201,151,76,0.22);display:flex;align-items:center;justify-content:center;flex-shrink:0}
         .featureText{font-size:13px;font-weight:600;color:rgba(255,255,255,0.85)}
         .brandFooter{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;margin-top:32px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.12);font-size:11.5px;color:rgba(255,255,255,0.5)}
         @media (max-width:980px){.brandFooter{display:none}}
@@ -3316,19 +5027,19 @@ const Login = ({onLogin, theme, setTheme}) => {
         .formCenter{position:relative;z-index:2;width:100%;display:flex;justify-content:center}
         @media (max-width:980px){.formCenter{width:100%}}
 
-        .loginCard{position:relative;width:100%;max-width:412px;background:${C.surface};border-radius:22px;padding:38px 34px 32px;box-shadow:0 1px 0 rgba(255,255,255,0.04) inset, 0 20px 60px rgba(2,3,12,0.2);border:1px solid ${C.border};overflow:hidden}
+        .loginCard{position:relative;width:100%;max-width:412px;background:${C.surface};border-radius:16px;padding:38px 34px 32px;box-shadow:0 1px 0 rgba(255,255,255,0.03) inset, 0 16px 44px rgba(2,3,12,0.22);border:1px solid ${C.border};overflow:hidden}
         .cardAccentBar{position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,${B.violetDp},${B.gold},${B.violet})}
         .loginCardHeader{display:flex;align-items:center;gap:12px;margin-bottom:22px}
-        .loginCardTitle{font-size:19px;font-weight:900;color:${C.txt};margin-bottom:3px;display:flex;align-items:center;gap:7px}
+        .loginCardTitle{font-size:20px;font-weight:600;color:${C.txt};margin-bottom:3px;display:flex;align-items:center;gap:7px;font-family:${FD}}
         .loginCardSubtitle{font-size:12.5px;color:${C.txt2};line-height:1.5}
-        .segmented{position:relative;display:flex;background:rgba(127,127,127,0.07);border-radius:13px;padding:4px;border:1px solid ${C.border};width:100%}
-        .segThumb{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:9px;background:linear-gradient(135deg,${B.violetDp},${B.violet});box-shadow:0 4px 14px ${B.violet}55;z-index:0}
-        .segBtn{position:relative;z-index:1;flex:1;padding:10px 14px;border-radius:9px;border:none;background:transparent;cursor:pointer;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;gap:7px;transition:color 0.2s;font-family:${F}}
+        .segmented{position:relative;display:flex;background:rgba(127,127,127,0.07);border-radius:10px;padding:4px;border:1px solid ${C.border};width:100%}
+        .segThumb{position:absolute;top:4px;bottom:4px;left:4px;width:calc(33.333% - 4px);border-radius:7px;background:linear-gradient(135deg,${B.violetDp},${B.violet});box-shadow:0 4px 14px ${B.violet}55;z-index:0}
+        .segBtn{position:relative;z-index:1;flex:1;padding:10px 14px;border-radius:7px;border:none;background:transparent;cursor:pointer;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:7px;transition:color 0.2s;font-family:${F}}
         .fieldStack{display:flex;flex-direction:column;gap:15px;margin-top:20px}
         .shakeWrap{animation:none}
         .shakeWrap.shaking{animation:shakeX 0.42s ease}
         .capsWarn{display:flex;align-items:center;gap:6px;font-size:11px;color:${C.amber};font-weight:700;margin-top:6px}
-        .submitBtnWrap{position:relative;border-radius:13px;overflow:hidden;margin-top:4px}
+        .submitBtnWrap{position:relative;border-radius:10px;overflow:hidden;margin-top:4px}
         .submitBtnWrap::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,0.25),transparent);transform:translateX(-120%);transition:transform 0.6s}
         .submitBtnWrap:hover::after{transform:translateX(120%)}
         .trustRow{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:22px;padding-top:16px;border-top:1px solid ${C.border}}
@@ -3406,8 +5117,8 @@ const Login = ({onLogin, theme, setTheme}) => {
                 </div>
 
                 <div className="segmented">
-                  <motion.div className="segThumb" animate={{x: role==='admin' ? '100%' : '0%'}} transition={{type:'spring',stiffness:500,damping:34}}/>
-                  {[{k:'student',label:'Student',icon:User},{k:'admin',label:'Admin',icon:Shield}].map(s=>{
+                  <motion.div className="segThumb" animate={{x: role==='admin' ? '100%' : role==='teacher' ? '200%' : '0%'}} transition={{type:'spring',stiffness:500,damping:34}}/>
+                  {[{k:'student',label:'Student',icon:User},{k:'admin',label:'Admin',icon:Shield},{k:'teacher',label:'Teacher',icon:GraduationCap}].map(s=>{
                     const Icon=s.icon;
                     const active=role===s.k;
                     return (
@@ -3419,9 +5130,11 @@ const Login = ({onLogin, theme, setTheme}) => {
                 </div>
 
               <AnimatePresence mode="wait">
-                <motion.div key={role} initial={{opacity:0,x:role==='admin'?12:-12}} animate={{opacity:1,x:0}} transition={{duration:0.25}} className="fieldStack">
+                <motion.div key={role} initial={{opacity:0,x:role==='student'?-12:12}} animate={{opacity:1,x:0}} transition={{duration:0.25}} className="fieldStack">
                   {role==='student' ? (
                     <AuthField theme={theme} accent={B.violet} icon={Hash} label="Roll Number" placeholder="e.g. CS-101" value={roll} onChange={e=>setRoll(e.target.value)} onKeyDown={handleKeyDown} autoFocus />
+                  ) : role==='teacher' ? (
+                    <AuthField theme={theme} accent={B.violet} icon={Mail} label="Email address" type="email" placeholder="teacher@university.edu" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={handleKeyDown} autoFocus />
                   ) : (
                     <AuthField theme={theme} accent={B.violet} icon={Mail} label="Email address" type="email" placeholder="admin@university.edu" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={handleKeyDown} autoFocus />
                   )}
@@ -3446,7 +5159,7 @@ const Login = ({onLogin, theme, setTheme}) => {
 
                   <AnimatePresence>
                     {error && (
-                      <motion.div initial={{opacity:0,y:-6}} animate={{opacity:1,y:0}} exit={{opacity:0}} style={{display:'flex',gap:10,alignItems:'center',background:`rgba(244,63,94,0.08)`,border:`1px solid rgba(244,63,94,0.22)`,padding:'10px 12px',borderRadius:10}}>
+                      <motion.div initial={{opacity:0,y:-6}} animate={{opacity:1,y:0}} exit={{opacity:0}} style={{display:'flex',gap:10,alignItems:'center',background:`rgba(193,90,86,0.08)`,border:`1px solid rgba(193,90,86,0.22)`,padding:'10px 12px',borderRadius:10}}>
                         <AlertTriangle size={16} color={C.rose}/>
                         <div style={{fontSize:13,color:C.rose,fontWeight:600}}>{error}</div>
                       </motion.div>
@@ -3455,7 +5168,7 @@ const Login = ({onLogin, theme, setTheme}) => {
 
                   <div className="submitBtnWrap">
                     <Btn full size="lg" onClick={submit} disabled={loading}
-                      style={{background:`linear-gradient(135deg,${B.violetDp},${B.violet})`,boxShadow:`0 6px 24px ${B.violet}45`}}>
+                      style={{background:`linear-gradient(135deg,${B.violetDp},${B.violet})`,boxShadow:`0 6px 24px ${B.violet}45`,color:"#f4f0e6"}}>
                       {loading ? <><Loader size={15} style={{animation:'spin 1s linear infinite'}}/>Signing in…</> : <><Zap size={15}/>Sign In</>}
                     </Btn>
                   </div>
@@ -3505,6 +5218,7 @@ export default function App() {
       token:   data.token,
       role:    data.role,
       student: data.student||null,
+      teacher: data.teacher||null,
     });
   },[]);
 
@@ -3565,12 +5279,12 @@ export default function App() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Bebas+Neue&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800;9..144,900&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
         body{background:${C.bg};font-family:${F};-webkit-font-smoothing:antialiased;padding-bottom:50px;}
         ::-webkit-scrollbar{width:4px;height:4px;}
         ::-webkit-scrollbar-track{background:transparent;}
-        ::-webkit-scrollbar-thumb{background:rgba(108,99,255,0.3);border-radius:4px;}
+        ::-webkit-scrollbar-thumb{background:rgba(201,151,76,0.3);border-radius:4px;}
         input::placeholder,textarea::placeholder{color:${C.txt2};}
         select option{background:${C.surface2};color:${C.txt};}
         @keyframes spin{to{transform:rotate(360deg);}}
@@ -3580,10 +5294,10 @@ export default function App() {
           bottom:0;
           left:0;
           right:0;
-          background:linear-gradient(135deg,rgba(108,99,255,0.05) 0%,rgba(139,92,246,0.08) 100%);
+          background:linear-gradient(135deg,rgba(201,151,76,0.05) 0%,rgba(144,119,176,0.08) 100%);
           backdrop-filter:blur(12px);
           -webkit-backdrop-filter:blur(12px);
-          border-top:1px solid rgba(108,99,255,0.15);
+          border-top:1px solid rgba(201,151,76,0.15);
           padding:14px 20px;
           display:flex;
           justify-content:space-between;
@@ -3627,9 +5341,9 @@ export default function App() {
           flex-shrink:0;
         }
         .signature-email:hover{
-          background:rgba(108,99,255,0.2);
+          background:rgba(201,151,76,0.2);
           color:${C.indigo};
-          border:1px solid rgba(108,99,255,0.3);
+          border:1px solid rgba(201,151,76,0.3);
           transform:translateY(-1px);
         }
         @media (max-width:480px){
@@ -3652,6 +5366,11 @@ export default function App() {
         {session?.role==="student"&&session?.student&&(
           <motion.div key="student" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
             <StudentPortal student={session.student} token={session.token} onLogout={logout} theme={theme} setTheme={setTheme}/>
+          </motion.div>
+        )}
+        {session?.role==="teacher"&&session?.teacher&&(
+          <motion.div key="teacher" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+            <TeacherDashboard teacher={session.teacher} token={session.token} onLogout={logout} theme={theme} setTheme={setTheme}/>
           </motion.div>
         )}
       </AnimatePresence>

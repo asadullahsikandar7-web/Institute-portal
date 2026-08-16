@@ -58,7 +58,19 @@ async function uploadToCloudinary(file) {
 // ── Get all students (Admin only) ──
 router.get("/", auth("admin"), async (req, res) => {
   try {
-    const students = await Student.find().select("-password").sort({ createdAt: -1 });
+    // Populate is additive: currentEnrollment/parentId are new, optional
+    // fields (see studentModel.js) that older records simply have as null,
+    // so this changes nothing for any existing consumer of this response.
+    const students = await Student.find().select("-password").sort({ createdAt: -1 })
+      .populate({
+        path: "currentEnrollment",
+        populate: [
+          { path: "program", select: "name code" },
+          { path: "section", select: "name code" },
+          { path: "academicSession", select: "name" },
+        ],
+      })
+      .populate("parentId");
     res.json(students);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -68,7 +80,7 @@ router.get("/", auth("admin"), async (req, res) => {
 // ── Add student (Admin only) ──
 router.post("/", auth("admin"), async (req, res) => {
   try {
-    const { name, email, rollNo, password, parentName, parentEmail } = req.body;
+    const { name, email, rollNo, password, parentName, parentEmail, registrationNo, parentId } = req.body;
     if (!name || !email || !rollNo || !password)
       return res.status(400).json({ error: "name, email, rollNo, password are required" });
 
@@ -79,6 +91,11 @@ router.post("/", auth("admin"), async (req, res) => {
       password: hashedPassword,
       parentName:  parentName  || "",
       parentEmail: parentEmail || "",
+      registrationNo: registrationNo || "",
+      // Optional first-class Parent record link (see models/Parent.js) — set
+      // at creation time only. The main student PATCH route below is
+      // deliberately narrow (name/password only) and isn't the place for this.
+      parentId: parentId || null,
     });
 
     await student.save();
