@@ -64,19 +64,24 @@ function useChatSocket(token, handlers = {}) {
   const socketRef = useRef(null);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(true);
-  const [socketError, setSocketError] = useState(null);
+  // "gave up" is distinct from a mid-retry "connecting" blip: once reconnect
+  // attempts are exhausted (e.g. this deployment has no persistent process
+  // for Socket.IO to reach at all — see resolveSocketUrl's comment), the UI
+  // settles into one calm, permanent state instead of flashing between
+  // "Reconnecting…" and "Offline" every few seconds forever.
+  const [gaveUp, setGaveUp] = useState(false);
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
 
   useEffect(() => {
     if (!token) return undefined;
     setConnecting(true);
-    setSocketError(null);
+    setGaveUp(false);
 
     const socket = io(resolveSocketUrl(), {
       auth: { token },
       reconnection: true,
-      reconnectionAttempts: Infinity,
+      reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 8000,
       timeout: 8000,
@@ -84,10 +89,15 @@ function useChatSocket(token, handlers = {}) {
     });
     socketRef.current = socket;
 
-    socket.on("connect", () => { setConnected(true); setConnecting(false); setSocketError(null); });
+    socket.on("connect", () => { setConnected(true); setConnecting(false); setGaveUp(false); });
     socket.on("disconnect", () => setConnected(false));
-    socket.on("connect_error", (err) => { setConnecting(false); setConnected(false); setSocketError(err.message || "Connection failed"); });
+    // The raw error (e.g. "websocket error", "xhr poll error") is really
+    // only meaningful to a developer — log it, don't surface it as user
+    //-facing copy; the banner below covers what the user actually needs
+    // to know (chat still works, just not instantly).
+    socket.on("connect_error", (err) => { setConnecting(false); setConnected(false); console.error("[chat] socket connect_error:", err.message); });
     socket.io.on("reconnect_attempt", () => setConnecting(true));
+    socket.io.on("reconnect_failed", () => { setConnecting(false); setGaveUp(true); });
 
     socket.on("receive_message", (msg) => handlersRef.current.onReceiveMessage?.(msg));
     socket.on("conversation_updated", (data) => handlersRef.current.onConversationUpdated?.(data));
@@ -119,7 +129,7 @@ function useChatSocket(token, handlers = {}) {
   const stopTyping  = useCallback((conversationId) => socketRef.current?.emit("stop_typing", { conversationId }), []);
   const markRead    = useCallback((conversationId) => socketRef.current?.emit("message_read", { conversationId, all: true }), []);
 
-  return { connected, connecting, socketError, joinConversation, leaveConversation, sendMessage, startTyping, stopTyping, markRead };
+  return { connected, connecting, gaveUp, joinConversation, leaveConversation, sendMessage, startTyping, stopTyping, markRead };
 }
 
 // ── Small shared pieces ─────────────────────────────────────────────
@@ -151,18 +161,24 @@ const TypingIndicator = ({ label = "typing" }) => (
   </div>
 );
 
-const ConnectionBanner = ({ connecting, connected, socketError }) => {
+// Non-blocking inline banner, not a modal: live chat being unavailable is a
+// soft degradation (messages still send and are saved via REST — see
+// handleSend's fallback below), not a broken/blocking state, so a modal
+// would overstate it. Settles into one calm message once reconnect
+// attempts are exhausted, rather than flashing "Reconnecting…" forever on
+// a deployment that structurally has nowhere for the socket to reach.
+const ConnectionBanner = ({ connecting, connected }) => {
   if (connected) return null;
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 8, padding: "8px 14px",
-      background: connecting ? `${C.amber}15` : `${C.rose}15`,
-      borderBottom: `1px solid ${connecting ? C.amber : C.rose}30`,
-      color: connecting ? C.amber : C.rose, fontSize: 12, fontWeight: 600,
+      background: connecting ? `${C.amber}15` : `${C.txt2}15`,
+      borderBottom: `1px solid ${connecting ? C.amber : C.txt2}30`,
+      color: connecting ? C.amber : C.txt2, fontSize: 12, fontWeight: 600,
     }}>
       {connecting
-        ? <><Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> Reconnecting…</>
-        : <><WifiOff size={13} /> Offline — messages will still send, but won't arrive instantly{socketError ? ` (${socketError})` : ""}</>}
+        ? <><Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> Connecting…</>
+        : <><WifiOff size={13} /> Live updates aren't available right now — messages still send, refresh to see new replies.</>}
     </div>
   );
 };
@@ -299,7 +315,7 @@ const MessageInput = ({ onSend, onTypingChange, disabled, placeholder = "Type yo
 // ── Chat window (shared by both student + admin views) ─────────────
 const ChatWindow = ({
   headerIcon, title, subtitle, messages, myModel, loading, error, onRetry,
-  connected, connecting, socketError, typingLabel, onSend, onTypingChange,
+  connected, connecting, typingLabel, onSend, onTypingChange,
   disabled, emptyHint, mobileBackButton,
 }) => (
   <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, background: C.surface, borderRadius: 18, border: `1px solid ${C.border}`, overflow: "hidden" }}>
@@ -314,7 +330,7 @@ const ChatWindow = ({
       </div>
       <div title={connected ? "Connected" : connecting ? "Reconnecting" : "Offline"} style={{ width: 8, height: 8, borderRadius: "50%", background: connected ? C.emerald : connecting ? C.amber : C.rose, flexShrink: 0 }} />
     </div>
-    <ConnectionBanner connected={connected} connecting={connecting} socketError={socketError} />
+    <ConnectionBanner connected={connected} connecting={connecting} />
     <MessageList messages={messages} myModel={myModel} typingLabel={typingLabel} loading={loading} error={error} onRetry={onRetry} emptyHint={emptyHint} />
     <MessageInput onSend={onSend} onTypingChange={onTypingChange} disabled={disabled} />
   </div>
@@ -496,7 +512,6 @@ export const StudentChatPage = ({ api, token }) => {
         onRetry={load}
         connected={socket.connected}
         connecting={socket.connecting}
-        socketError={socket.socketError}
         typingLabel={typingLabel}
         onSend={handleSend}
         onTypingChange={(t) => (t ? socket.startTyping : socket.stopTyping)(conversation?._id)}
@@ -646,7 +661,6 @@ export const AdminChatPage = ({ api, token }) => {
             onRetry={() => openConversation(selected)}
             connected={socket.connected}
             connecting={socket.connecting}
-            socketError={socket.socketError}
             typingLabel={typingLabel}
             onSend={handleSend}
             onTypingChange={(t) => (t ? socket.startTyping : socket.stopTyping)(selected?._id)}

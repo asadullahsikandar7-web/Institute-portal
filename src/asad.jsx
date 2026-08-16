@@ -111,6 +111,7 @@ function makeApi(token) {
     // Students
     getStudents:   ()         => req("GET",    "/api/students"),
     addStudent:    (body)     => req("POST",   "/api/students", body),
+    editStudent:   (id, body) => req("PATCH",  `/api/students/${id}`, body),
     deleteStudent: (id)       => req("DELETE", `/api/students/${id}`),
     uploadPhoto:   (id, file) => {
       const fd = new FormData();
@@ -741,10 +742,14 @@ const PhotoModal = ({student,onClose}) => (
 // ══════════════════════════════════════════════════════
 //  STUDENT DRAWER — real history + real grades
 // ══════════════════════════════════════════════════════
-const StudentDrawer = ({student,api,onClose}) => {
+const StudentDrawer = ({student,api,onClose,onUpdated,toast}) => {
   const [history,setHistory]=useState([]);
   const [grades,setGrades]=useState([]);
   const [loading,setLoading]=useState(true);
+  const [editing,setEditing]=useState(false);
+  const [editName,setEditName]=useState(student.name);
+  const [editPassword,setEditPassword]=useState("");
+  const [saving,setSaving]=useState(false);
 
   useEffect(()=>{
     const sid=student._id||student.id;
@@ -754,6 +759,25 @@ const StudentDrawer = ({student,api,onClose}) => {
     ]).then(([h,g])=>{setHistory(Array.isArray(h)?h:[]);setGrades(Array.isArray(g)?g:[]);})
       .finally(()=>setLoading(false));
   },[student._id]);
+
+  const startEdit=()=>{setEditName(student.name);setEditPassword("");setEditing(true);};
+
+  const saveEdit=async()=>{
+    const trimmed=editName.trim();
+    if(trimmed.length<2) return toast("Name must be at least 2 characters.");
+    if(editPassword&&editPassword.length<6) return toast("Password must be at least 6 characters.");
+    setSaving(true);
+    try{
+      const body={name:trimmed};
+      if(editPassword) body.password=editPassword;
+      const result=await api.editStudent(student._id||student.id,body);
+      onUpdated?.(result.student||result);
+      setEditing(false);
+      setEditPassword("");
+      toast(editPassword?"Name and password updated!":"Name updated!","success");
+    }catch(e){toast(e.message);}
+    finally{setSaving(false);}
+  };
 
   const present=history.filter(d=>d.status==="present").length;
   const leave  =history.filter(d=>d.status==="leave").length;
@@ -775,18 +799,32 @@ const StudentDrawer = ({student,api,onClose}) => {
         style={{width:"100%",maxWidth:500,height:"100%",background:C.bg2,borderLeft:`1px solid ${C.border}`,overflowY:"auto",display:"flex",flexDirection:"column",fontFamily:F}}>
         <div style={{padding:"0 24px 20px 24px",background:`linear-gradient(180deg,${C.indigo}0a 0%,transparent 100%)`,position:"sticky",top:0,zIndex:10,borderBottom:`1px solid ${C.border}`}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
-            <div style={{display:"flex",gap:14,alignItems:"center"}}>
+            <div style={{display:"flex",gap:14,alignItems:"center",flex:1,minWidth:0}}>
               <Avatar name={student.name} size={56} color={C.indigo} img={student.photo||undefined}/>
-              <div>
-                <div style={{fontSize:20,fontWeight:800,color:C.txt}}>{student.name}</div>
-                <div style={{fontSize:12,color:C.txt2,marginBottom:6}}>{student.email}</div>
-                <div style={{display:"flex",gap:6}}>
-                  <Pill label={`Roll #${student.rollNo}`} color={C.indigo} bg="rgba(108,99,255,0.12)"/>
-                  <Pill label="Active" color={C.emerald} bg="rgba(16,185,129,0.1)"/>
+              {editing?(
+                <div style={{flex:1,display:"flex",flexDirection:"column",gap:8}}>
+                  <Input label="Name" placeholder="Student name" value={editName} onChange={e=>setEditName(e.target.value)} autoFocus/>
+                  <Input label="New Password" type="password" placeholder="Leave blank to keep current" value={editPassword} onChange={e=>setEditPassword(e.target.value)}/>
+                  <div style={{display:"flex",gap:8,marginTop:2}}>
+                    <Btn size="xs" disabled={saving} onClick={saveEdit}>{saving?<Loader size={11} style={{animation:"spin 1s linear infinite"}}/>:<CheckCircle size={11}/>}Save</Btn>
+                    <Btn size="xs" variant="ghost" disabled={saving} onClick={()=>setEditing(false)}>Cancel</Btn>
+                  </div>
                 </div>
-              </div>
+              ):(
+                <div>
+                  <div style={{fontSize:20,fontWeight:800,color:C.txt}}>{student.name}</div>
+                  <div style={{fontSize:12,color:C.txt2,marginBottom:6}}>{student.email}</div>
+                  <div style={{display:"flex",gap:6}}>
+                    <Pill label={`Roll #${student.rollNo}`} color={C.indigo} bg="rgba(108,99,255,0.12)"/>
+                    <Pill label="Active" color={C.emerald} bg="rgba(16,185,129,0.1)"/>
+                  </div>
+                </div>
+              )}
             </div>
-            <button onClick={onClose} style={{background:"rgba(255,255,255,0.06)",border:`1px solid ${C.border}`,borderRadius:9,padding:8,cursor:"pointer",color:C.txt2,display:"flex"}}><X size={15}/></button>
+            <div style={{display:"flex",gap:6,flexShrink:0}}>
+              {!editing&&<button onClick={startEdit} title="Edit name/password" style={{background:"rgba(255,255,255,0.06)",border:`1px solid ${C.border}`,borderRadius:9,padding:8,cursor:"pointer",color:C.txt2,display:"flex"}}><Edit3 size={15}/></button>}
+              <button onClick={onClose} style={{background:"rgba(255,255,255,0.06)",border:`1px solid ${C.border}`,borderRadius:9,padding:8,cursor:"pointer",color:C.txt2,display:"flex"}}><X size={15}/></button>
+            </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(70px,1fr))",gap:8,marginBottom:24}}>
             {[{label:"Attendance",value:`${attRate}%`,color:attRate>=75?C.emerald:C.rose},{label:"GPA",value:gpa,color:C.indigo},{label:"Avg Score",value:`${avgPct}%`,color:C.cyan},{label:"Streak",value:`${(()=>{let s=0;for(let i=history.length-1;i>=0;i--){if(history[i]?.status==="present")s++;else break;}return s;})()}d`,color:C.amber}].map(k=>(
@@ -1297,7 +1335,7 @@ const AdminOverview = ({students,attendance,leaves,api,toast,onOpenAI}) => {
 // ══════════════════════════════════════════════════════
 //  ATTENDANCE PAGE
 // ══════════════════════════════════════════════════════
-const AttendancePage = ({students,attendance,setAttendance,api,toast}) => {
+const AttendancePage = ({students,setStudents,attendance,setAttendance,api,toast}) => {
   const [date,setDate]=useState(today());
   const [query,setQuery]=useState("");
   const [filter,setFilter]=useState("all");
@@ -1408,7 +1446,7 @@ const AttendancePage = ({students,attendance,setAttendance,api,toast}) => {
           <span style={{fontSize:11,color:C.dim}}>{stats.present}P · {stats.absent}A · {stats.leave}L · {stats.unmarked} unmarked</span>
         </div>
       </Card>
-      <AnimatePresence>{drawer&&<StudentDrawer student={drawer} api={api} onClose={()=>setDrawer(null)}/>}</AnimatePresence>
+      <AnimatePresence>{drawer&&<StudentDrawer student={drawer} api={api} toast={toast} onClose={()=>setDrawer(null)} onUpdated={updated=>{setStudents(prev=>prev.map(s=>s._id===updated._id?{...s,...updated}:s));setDrawer(prev=>({...prev,...updated}));}}/>}</AnimatePresence>
       <AnimatePresence>{photoModal&&<PhotoModal student={photoModal} onClose={()=>setPhotoModal(null)}/>}</AnimatePresence>
     </div>
   );
@@ -1568,7 +1606,7 @@ const StudentsPage = ({students,setStudents,api,toast}) => {
           ))}
         </AnimatePresence>
       </div>
-      <AnimatePresence>{drawer&&<StudentDrawer student={drawer} api={api} onClose={()=>setDrawer(null)}/>}</AnimatePresence>
+      <AnimatePresence>{drawer&&<StudentDrawer student={drawer} api={api} toast={toast} onClose={()=>setDrawer(null)} onUpdated={updated=>{setStudents(prev=>prev.map(s=>s._id===updated._id?{...s,...updated}:s));setDrawer(prev=>({...prev,...updated}));}}/>}</AnimatePresence>
       <AnimatePresence>{photoModal&&<PhotoModal student={photoModal} onClose={()=>setPhotoModal(null)}/>}</AnimatePresence>
     </div>
   );
@@ -2553,7 +2591,7 @@ const AdminDashboard = ({token,onLogout,theme,setTheme}) => {
     switch(view){
       case "dashboard":    return <AdminOverview students={students} attendance={attendance} leaves={leaves} api={api} toast={toast} onOpenAI={()=>setAiOpen(true)}/>;
       case "chat":          return <Suspense fallback={<ChatPageFallback/>}><AdminChatPage api={api} token={token}/></Suspense>;
-      case "attendance":   return <AttendancePage students={students} attendance={attendance} setAttendance={setAttendance} api={api} toast={toast}/>;
+      case "attendance":   return <AttendancePage students={students} setStudents={setStudents} attendance={attendance} setAttendance={setAttendance} api={api} toast={toast}/>;
       case "students":     return <StudentsPage students={students} setStudents={setStudents} api={api} toast={toast}/>;
       case "classes":      return <ClassesPage api={api} toast={toast}/>;
       case "exams":        return <ExamsPage students={students} api={api} toast={toast}/>;

@@ -116,6 +116,35 @@ router.post("/", auth("admin"), async (req, res) => {
   }
 });
 
+// ── Edit student name/password (Admin only) ──
+// Deliberately narrow: only the two fields actually requested. Roll number
+// and email aren't touched here — rollNo is unique/used for login lookup
+// and email drives welcome/notification mail, so changing either is a
+// bigger decision than this endpoint is meant to make casually.
+router.patch("/:id", auth("admin"), async (req, res) => {
+  try {
+    const { name, password } = req.body;
+    const update = {};
+
+    if (name !== undefined) {
+      const trimmed = String(name).trim();
+      if (trimmed.length < 2) return res.status(400).json({ error: "Name must be at least 2 characters." });
+      update.name = trimmed;
+    }
+    if (password !== undefined) {
+      if (String(password).length < 6) return res.status(400).json({ error: "Password must be at least 6 characters." });
+      update.password = await bcrypt.hash(password, 10);
+    }
+    if (!Object.keys(update).length) return res.status(400).json({ error: "Nothing to update." });
+
+    const student = await Student.findByIdAndUpdate(req.params.id, update, { new: true }).select("-password");
+    if (!student) return res.status(404).json({ error: "Student not found" });
+    res.json({ message: "Student updated", student });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Upload / update student photo (Admin only) ──
 // Accepts either multipart/form-data file upload or JSON base64 image payload.
 router.patch("/:id/photo", auth("admin"), photoUpload.single("photo"), async (req, res) => {
