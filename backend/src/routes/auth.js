@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import Student from "../models/studentModel.js";
 import Admin from "../models/adminModel.js";
+import Teacher from "../models/Teacher.js";
 import { authMiddleware } from "../middleware/auth.js";
 
 // Belt-and-suspenders: server.js also calls dotenv.config(), but ES module
@@ -124,6 +125,56 @@ router.post("/admin-login", async (req, res) => {
     res.status(500).json({
       error: "Server error",
     });
+  }
+});
+
+// ================= TEACHER LOGIN =================
+router.post("/teacher-login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password required" });
+    }
+
+    // Teacher.password has select:false (see Teacher.js) — explicit select needed.
+    const teacher = await Teacher.findOne({ email: email.trim().toLowerCase() }).select("+password");
+
+    if (!teacher) {
+      return res.status(401).json({ error: "Teacher not found" });
+    }
+
+    if (!teacher.isActive) {
+      return res.status(403).json({ error: "This teacher account has been deactivated. Contact admin." });
+    }
+
+    const isMatch = await bcrypt.compare(password, teacher.password);
+
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid password" });
+    }
+
+    const token = jwt.sign(
+      {
+        id: teacher._id,
+        teacherId: teacher._id.toString(),
+        role: "teacher",
+      },
+      SECRET,
+      { expiresIn: "12h" }
+    );
+
+    const safeTeacher = teacher.toObject();
+    delete safeTeacher.password;
+
+    res.json({
+      token,
+      role: "teacher",
+      teacher: safeTeacher,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

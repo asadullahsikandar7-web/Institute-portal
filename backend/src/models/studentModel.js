@@ -48,6 +48,29 @@ const studentSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true
+    },
+    // Additive only — parentName/parentEmail above stay exactly as they
+    // are for every existing reader (AI tools, email templates,
+    // StudentDrawer). parentId points at a first-class Parent record when
+    // one exists; currentEnrollment is a denormalized convenience pointer
+    // to whichever StudentEnrollment doc is currently active for this
+    // student — StudentEnrollment itself remains the historical source of
+    // truth, this is just a read-optimization, never authoritative.
+    parentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Parent",
+      default: null
+    },
+    currentEnrollment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "StudentEnrollment",
+      default: null
+    },
+    // Distinct from rollNo (the login/lookup key) — an institute-issued
+    // registration number, optional so legacy students without one don't break.
+    registrationNo: {
+      type: String,
+      default: ""
     }
   },
   { timestamps: true }

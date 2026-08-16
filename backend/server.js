@@ -76,6 +76,24 @@ import parentMessageRoutes from "./src/routes/parentMessageRoute.js";
 import feedbackRoutes from "./src/routes/feedbackRoute.js";
 import chatRoutes from "./src/routes/chatRoute.js";
 import aiRoutes from "./src/routes/aiRoute.js";
+// Academic hierarchy (Academic Session -> Program -> Section -> Subject ->
+// Teacher/TeacherAssignment) — fully additive, does not touch classRoute.js
+// or timetableRoute.js above, which remain the pre-existing timetable-slot
+// system untouched.
+import academicSessionRoutes from "./src/routes/academicSessionRoute.js";
+import programRoutes from "./src/routes/programRoute.js";
+import sectionRoutes from "./src/routes/sectionRoute.js";
+import subjectRoutes from "./src/routes/subjectRoute.js";
+import teacherRoutes from "./src/routes/teacherRoute.js";
+import teacherAssignmentRoutes from "./src/routes/teacherAssignmentRoute.js";
+import enrollmentRoutes from "./src/routes/enrollmentRoute.js";
+import parentRoutes from "./src/routes/parentRoute.js";
+// Teacher-facing self-service portal (classes/students/attendance/
+// coursework/quizzes/announcements/chat-groups) + its student-side chat
+// counterpart + admin read-only oversight of subject attendance.
+import teacherPortalRoutes from "./src/routes/teacherPortalRoute.js";
+import studentAcademicRoutes from "./src/routes/studentAcademicRoute.js";
+import subjectAttendanceRoutes from "./src/routes/subjectAttendanceRoute.js";
 import { smtpReady, smtpLastError } from "./src/utils/mailer.js";
 import http from "http";
 import { attachChatSocket } from "./src/socket/chatSocket.js";
@@ -242,6 +260,21 @@ app.use("/api/timetable", timetableRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/ai", aiRoutes);
+
+// Academic hierarchy (Academic Session -> Program -> Section -> Subject ->
+// Teacher/TeacherAssignment) — additive, does not touch /api/classes or
+// /api/timetable above, which remain the pre-existing timetable-slot system.
+app.use("/api/academic-sessions", academicSessionRoutes);
+app.use("/api/programs", programRoutes);
+app.use("/api/sections", sectionRoutes);
+app.use("/api/subjects", subjectRoutes);
+app.use("/api/teachers", teacherRoutes);
+app.use("/api/teacher-assignments", teacherAssignmentRoutes);
+app.use("/api/enrollments", enrollmentRoutes);
+app.use("/api/parents", parentRoutes);
+app.use("/api/teacher", teacherPortalRoutes);
+app.use("/api/student", studentAcademicRoutes);
+app.use("/api/subject-attendance", subjectAttendanceRoutes);
 
 // ═══════════════════════════════════════════════════════════════
 //  ERROR HANDLING MIDDLEWARE
