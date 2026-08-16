@@ -32,17 +32,24 @@ router.get("/:studentId", auth(), async (req, res) => {
 // POST create fee
 router.post("/", adminOnly, async (req, res) => {
   try {
-    const { title, amount, category, due, studentId } = req.body;
+    const { title, amount, category, due, studentId, applyToAll } = req.body;
     if (!title || !amount || !due) return res.status(400).json({ error: "title, amount, due required" });
+    if (Number(amount) <= 0) return res.status(400).json({ error: "amount must be greater than 0" });
 
-    // If no studentId — create for ALL students
-    if (!studentId) {
+    // Bulk-create for every student is now an explicit opt-in (applyToAll)
+    // rather than whatever happens when a caller simply omits studentId —
+    // the admin Fees UI used to always omit it, silently billing the whole
+    // student body on every "Add Fee" click with no way to target one
+    // student. See src/asad.jsx's FeesPage for the paired frontend fix.
+    if (applyToAll) {
       const students = await Student.find({});
       const fees = await Fee.insertMany(
         students.map(s => ({ studentId: s._id, title, amount, category, dueDate: new Date(due) }))
       );
-      return res.status(201).json({ fee: fees[0], count: fees.length });
+      return res.status(201).json({ fees, count: fees.length });
     }
+
+    if (!studentId) return res.status(400).json({ error: "studentId is required (or set applyToAll to bill every student)" });
 
     const fee = await new Fee({ studentId, title, amount, category, dueDate: new Date(due) }).save();
     res.status(201).json({ fee });
