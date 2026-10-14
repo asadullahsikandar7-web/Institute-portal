@@ -9,7 +9,7 @@
 ### BEFORE (Line 6-8):
 ```json
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
 ```
 

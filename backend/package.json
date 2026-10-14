@@ -11,7 +11,7 @@
     "test:smoke": "node scripts/smokeTest.mjs"
   },
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "dependencies": {
     "@google/genai": "^2.17.1",

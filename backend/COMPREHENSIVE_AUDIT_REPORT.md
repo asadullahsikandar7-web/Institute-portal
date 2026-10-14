@@ -30,7 +30,7 @@
 **Issue:**
 ```json
 "engines": {
-  "node": "20.x"    ← WRONG: Vercel uses 24.x
+  "node": "24.x"    ← WRONG: Vercel uses 24.x
 }
 ```
 
