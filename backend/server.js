@@ -1,6 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 //  PRODUCTION-READY SERVER.JS
 // ═══════════════════════════════════════════════════════════════
+// Must stay the first import: installs institute isolation on every model
+// before any model module is loaded (see src/tenancy/plugin.js).
+import "./src/tenancy/register.js";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -94,14 +97,82 @@ import parentRoutes from "./src/routes/parentRoute.js";
 import teacherPortalRoutes from "./src/routes/teacherPortalRoute.js";
 import studentAcademicRoutes from "./src/routes/studentAcademicRoute.js";
 import subjectAttendanceRoutes from "./src/routes/subjectAttendanceRoute.js";
+import assignmentRoutes from "./src/routes/assignmentRoute.js";
+import quizRoutes from "./src/routes/quizRoute.js";
+import scheduleRoutes from "./src/routes/scheduleRoute.js";
+import roomRoutes from "./src/routes/roomRoute.js";
+// ERP layer — admissions, finance, results/GPA, LMS, HR & payroll, library,
+// campus services, engagement, student lifecycle, parent portal. All
+// additive: every route above keeps its existing path and behaviour.
+import systemRoutes from "./src/routes/systemRoute.js";
+import admissionRoutes from "./src/routes/admissionRoute.js";
+import financeRoutes from "./src/routes/financeRoute.js";
+import resultRoutes from "./src/routes/resultRoute.js";
+import lmsRoutes from "./src/routes/lmsRoute.js";
+import hrRoutes from "./src/routes/hrRoute.js";
+import libraryRoutes from "./src/routes/libraryRoute.js";
+import campusRoutes from "./src/routes/campusRoute.js";
+import engageRoutes from "./src/routes/engageRoute.js";
+import lifecycleRoutes from "./src/routes/lifecycleRoute.js";
+import parentPortalRoutes from "./src/routes/parentPortalRoute.js";
+import successRoutes from "./src/routes/successRoute.js";
+import examSuiteRoutes from "./src/routes/examSuiteRoute.js";
+import smartRoutes from "./src/routes/smartRoute.js";
+import automationRoutes from "./src/routes/automationRoute.js";
+import opsRoutes from "./src/routes/opsRoute.js";
+import { startScheduler } from "./src/services/automations.js";
+import { moduleGuard, auditTrail, rateLimit, securityHeaders } from "./src/services/permissions.js";
+import platformRoutes from "./src/routes/platformRoute.js";
+import { tenantContext, setTenancyReady, invalidateTenantCache, isMultiTenant, defaultTenant } from "./src/tenancy/middleware.js";
+import { runAsTenant, runUnscoped } from "./src/tenancy/context.js";
+import { Tenant, PlatformOwner } from "./src/models/Tenant.js";
 import { smtpReady, smtpLastError } from "./src/utils/mailer.js";
 import http from "http";
+import https from "https";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Same dev cert Vite uses (see vite.config.js and
+// scripts/generate-dev-cert.sh) — camera/microphone access needs a secure
+// context, which a LAN IP over plain HTTP never qualifies as. Falls back to
+// plain HTTP automatically if the cert hasn't been generated.
+const devCertDir = path.join(__dirname, "..", "certs");
+const devKeyPath = path.join(devCertDir, "dev-key.pem");
+const devCertPath = path.join(devCertDir, "dev-cert.pem");
+const devHttpsCreds = !process.env.ACADEXA_HTTP && fs.existsSync(devKeyPath) && fs.existsSync(devCertPath)
+  ? { key: fs.readFileSync(devKeyPath), cert: fs.readFileSync(devCertPath) }
+  : null;
 import { attachChatSocket } from "./src/socket/chatSocket.js";
+import { attachCallSocket } from "./src/socket/callSocket.js";
+import { isLocalDevHost } from "./src/utils/originCheck.js";
+import os from "os";
+
+// Best-effort LAN IPv4 lookup, purely for the startup log below (so
+// "which URL do I open on my phone" doesn't require digging through
+// System Preferences) — never affects what the server actually binds to.
+function lanIPv4() {
+  const nets = os.networkInterfaces();
+  for (const ifaceList of Object.values(nets)) {
+    for (const iface of ifaceList || []) {
+      if (iface.family === "IPv4" && !iface.internal) return iface.address;
+    }
+  }
+  return null;
+}
 // ═══════════════════════════════════════════════════════════════
 //  EXPRESS APP SETUP
 // ═══════════════════════════════════════════════════════════════
 
 const app = express();
+
+// Behind Vercel/any reverse proxy the socket address is the proxy's — trust
+// one hop so req.ip (used by the login throttle and the audit trail) is
+// the real client address.
+app.set("trust proxy", 1);
+app.disable("x-powered-by");
+app.use(securityHeaders);
 
 // Middleware
 app.use(express.json({ limit: "10mb" }));
@@ -128,10 +199,11 @@ app.use(cors({
     // Allow exact matches from the allowedOrigins set
     if (allowedOrigins.has(origin)) return callback(null, true);
 
-    // Allow localhosts with any port (covers some dev setups)
+    // Allow localhost and same-LAN IPs with any port (covers local dev,
+    // including testing from another device on the same Wi-Fi)
     try {
       const url = new URL(origin);
-      if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return callback(null, true);
+      if (isLocalDevHost(url.hostname)) return callback(null, true);
     } catch (e) {
       // If origin is not a valid URL, deny it below
     }
@@ -141,7 +213,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Institute"],
   exposedHeaders: ["Authorization"]
 }));
 
@@ -187,16 +259,49 @@ const connectDB = async () => {
 };
 
 // Establish connection on cold start (will be reused on warm invocations)
-connectDB().then(async () => {
+// Institute bootstrap, awaited by the tenancy middleware before it serves
+// any API request:
+//  • brand-new empty database → create the first institute, so the system
+//    is multi-institute from day one;
+//  • existing data and no institutes yet → stay in single-institute mode
+//    (nothing changes) until scripts/migrateToMultiTenant.mjs is run.
+async function bootstrapTenancy() {
+  const Admin = (await import("./src/models/adminModel.js")).default;
+  const Student = (await import("./src/models/studentModel.js")).default;
+  if (!(await Tenant.exists({}))) {
+    const hasData = await runUnscoped(async () => (await Admin.exists({})) || (await Student.exists({})));
+    if (!hasData) {
+      await Tenant.create({ code: process.env.DEFAULT_INSTITUTE_CODE || "MAIN", name: "My Institute" });
+      console.log("🏫 Created the first institute (code " + (process.env.DEFAULT_INSTITUTE_CODE || "MAIN") + ")");
+    } else {
+      console.log("🏫 Single-institute mode — run backend/scripts/migrateToMultiTenant.mjs to enable multiple institutes");
+    }
+  }
+  invalidateTenantCache();
+  // Platform owner from the environment, if configured and none exists yet.
+  const { PLATFORM_OWNER_EMAIL: email, PLATFORM_OWNER_PASSWORD: password } = process.env;
+  if (email && password && !(await PlatformOwner.exists({}))) {
+    const bcrypt = (await import("bcryptjs")).default;
+    await PlatformOwner.create({ email, password: await bcrypt.hash(password, 10) });
+    console.log("👑 Platform owner account created for " + email);
+  }
+}
+
+const tenancyReady = connectDB().then(async () => {
   console.log('Initial DB connection succeeded');
-  // Run auto-seed if collections are empty
+  try { await bootstrapTenancy(); } catch (e) { console.error('Institute bootstrap error:', e && e.message); }
+  // Run auto-seed if collections are empty — for the default institute only.
   try {
     const seeder = await import('./src/utils/autoSeed.js');
-    await seeder.default();
+    const def = (await isMultiTenant()) ? await defaultTenant() : null;
+    if (def) await runAsTenant(def, async () => await seeder.default());
+    else if (!(await isMultiTenant())) await runUnscoped(async () => await seeder.default());
   } catch (e) {
     console.error('Auto-seed error (non-fatal):', e && e.message);
   }
-}).catch((err) => {
+});
+setTenancyReady(tenancyReady.catch(() => {}));
+tenancyReady.catch((err) => {
   // Log — don't exit the process
   console.error('Initial DB connection failed:', err && err.message);
 });
@@ -244,6 +349,17 @@ app.get("/favicon.png", (req, res) => res.status(204).end());
 //  API ROUTES
 // ═══════════════════════════════════════════════════════════════
 
+// Cross-cutting guards, ahead of every /api route:
+//   loginThrottle — slows password guessing on all four login endpoints
+//   moduleGuard   — admin sub-role → module permissions, parent allow-list
+//   auditTrail    — records every state-changing request
+const loginThrottle = rateLimit({ max: 15, windowMs: 10 * 60 * 1000, message: "Too many login attempts. Please wait a few minutes and try again." });
+app.use(["/api/auth/student-login", "/api/auth/admin-login", "/api/auth/teacher-login", "/api/auth/parent-login", "/api/admin/admin-login", "/api/auth/change-password", "/api/auth/forgot-password", "/api/auth/reset-password"], loginThrottle);
+app.use(tenantContext); // which institute — every DB operation below is limited to it
+app.use(moduleGuard);
+app.use(auditTrail);
+app.use("/api/platform", platformRoutes);
+
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/students", studentRoutes);
@@ -275,6 +391,27 @@ app.use("/api/parents", parentRoutes);
 app.use("/api/teacher", teacherPortalRoutes);
 app.use("/api/student", studentAcademicRoutes);
 app.use("/api/subject-attendance", subjectAttendanceRoutes);
+app.use("/api/assignments", assignmentRoutes);
+app.use("/api/quizzes", quizRoutes);
+app.use("/api/schedule", scheduleRoutes);
+app.use("/api/rooms", roomRoutes);
+
+app.use("/api/system", systemRoutes);
+app.use("/api/admissions", admissionRoutes);
+app.use("/api/finance", financeRoutes);
+app.use("/api/results", resultRoutes);
+app.use("/api/lms", lmsRoutes);
+app.use("/api/hr", hrRoutes);
+app.use("/api/library", libraryRoutes);
+app.use("/api/campus", campusRoutes);
+app.use("/api/engage", engageRoutes);
+app.use("/api/lifecycle", lifecycleRoutes);
+app.use("/api/parent-portal", parentPortalRoutes);
+app.use("/api/success", successRoutes);
+app.use("/api/examsuite", examSuiteRoutes);
+app.use("/api/smart", smartRoutes);
+app.use("/api/automations", automationRoutes);
+app.use("/api/ops", opsRoutes);
 
 // ═══════════════════════════════════════════════════════════════
 //  ERROR HANDLING MIDDLEWARE
@@ -314,15 +451,29 @@ if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
   // makes chat's real-time layer work locally, and in production if this
   // same server.js is deployed to an always-on host (Render/Railway/Fly/
   // a VPS) instead of — or alongside — the Vercel-hosted REST API.
-  const httpServer = http.createServer(app);
+  const httpServer = devHttpsCreds
+    ? https.createServer(devHttpsCreds, app)
+    : http.createServer(app);
   const io = attachChatSocket(httpServer, { allowedOrigins });
   app.set("io", io);
+  attachCallSocket(httpServer, { allowedOrigins });
+  // Hourly run of the automation rules an admin has switched on (all are
+  // off by default). Serverless hosting uses /api/automations/cron instead.
+  startScheduler();
 
-  const server = httpServer.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+  // Explicit 0.0.0.0 (not just the implicit default) so the intent is
+  // unambiguous: reachable from other devices on the same LAN, not just
+  // this machine — needed for local multi-device testing.
+  const server = httpServer.listen(PORT, "0.0.0.0", () => {
+    const scheme = devHttpsCreds ? "https" : "http";
+    console.log(`🚀 Server running on port ${PORT} (${scheme})`);
+    const lan = lanIPv4();
+    if (lan) console.log(`🌐 LAN: ${scheme}://${lan}:${PORT}  (open ${scheme}://${lan}:5173 on another device)`);
+    if (!devHttpsCreds) console.log(`   ⚠️  No dev cert found — camera/mic won't work from a LAN IP. Run ./scripts/generate-dev-cert.sh`);
     console.log(`📍 Environment: ${process.env.NODE_ENV || "development"}`);
     console.log(`🗄️ Database: ${mongoose.connection.readyState === 1 ? "✅ Connected" : "❌ Connecting"}`);
     console.log(`💬 Socket.IO chat attached`);
+    console.log(`📹 Socket.IO class-call signaling attached`);
   });
 
   // Local error handlers

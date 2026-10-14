@@ -25,6 +25,12 @@ import ClassModel from "../models/classModel.js";
 import Exam from "../models/ExamModel.js";
 import Student from "../models/studentModel.js";
 import AiAction from "../models/AiAction.js";
+import TeacherAssignment from "../models/TeacherAssignment.js";
+import StudentEnrollment from "../models/StudentEnrollment.js";
+import SubjectAttendance from "../models/SubjectAttendance.js";
+import { loadOwnAssignment, findTeacherAssignmentForStudent } from "./teacherAuth.js";
+import { computeTeacherAnalytics } from "./teacherAnalytics.js";
+import { ERP_TOOLS } from "./aiToolsErp.js";
 
 const isValidId = (id) => typeof id === "string" && mongoose.Types.ObjectId.isValid(id);
 const todayStr = () => new Date().toISOString().split("T")[0];
@@ -48,7 +54,8 @@ async function gatherFee(studentId) {
   const fees = await Fee.find({ studentId }).sort({ dueDate: 1 });
   if (!fees.length) return { found: false };
   const outstanding = fees.filter((f) => f.status !== "paid");
-  const totalOutstanding = outstanding.reduce((s, f) => s + f.amount, 0);
+  // balance = amount - discount + fine - part payments (see FeeModel.js)
+  const totalOutstanding = outstanding.reduce((s, f) => s + f.balance, 0);
   const next = [...outstanding].sort((a, b) => a.dueDate - b.dueDate)[0];
   return {
     found: true,
@@ -292,18 +299,22 @@ async function getGradeStatistics(args, user) {
 }
 
 async function getFeeStatistics(args, user) {
-  const fees = await Fee.find().select("amount status");
+  // Uses the ledger (net of discounts/fines, part payments counted) — a
+  // plain sum of `amount` by status would report a part-paid fee as
+  // entirely unpaid and ignore scholarships.
+  const fees = await Fee.find().select("amount discount fine paidAmount status dueDate");
   if (!fees.length) return { found: false };
-  const paid = fees.filter((f) => f.status === "paid");
-  const unpaid = fees.filter((f) => f.status === "unpaid");
-  const overdue = fees.filter((f) => f.status === "overdue");
+  const now = new Date();
+  const overdue = fees.filter((f) => f.balance > 0 && f.dueDate < now);
+  const billed = fees.reduce((s, f) => s + f.netAmount, 0);
+  const outstanding = fees.reduce((s, f) => s + f.balance, 0);
   return {
     found: true,
     totalRecords: fees.length,
-    totalCollected: paid.reduce((s, f) => s + f.amount, 0),
-    totalOutstanding: [...unpaid, ...overdue].reduce((s, f) => s + f.amount, 0),
+    totalCollected: Math.round(billed - outstanding),
+    totalOutstanding: Math.round(outstanding),
     overdueCount: overdue.length,
-    overdueAmount: overdue.reduce((s, f) => s + f.amount, 0),
+    overdueAmount: Math.round(overdue.reduce((s, f) => s + f.balance, 0)),
   };
 }
 
@@ -369,6 +380,146 @@ async function generateProgressReport(args, user) {
 
 async function analyzeStudentPerformance(args, user) {
   return getStudentProgress(args, user);
+}
+
+// ── TEACHER TOOLS ───────────────────────────────────────────────────
+// Every tool below resolves data ONLY through TeacherAssignment rows owned
+// by user.id (a teacher's own JWT id) — a classId/studentId arriving from
+// the model is a lookup key to check ownership of, never trusted directly.
+// See services/teacherAuth.js, the same authority teacherPortalRoute.js uses.
+
+async function getMyTeachingClasses(args, user) {
+  const assignments = await TeacherAssignment.find({ teacher: user.id, status: "active" })
+    .populate([{ path: "program", select: "name" }, { path: "section", select: "name" }, { path: "subject", select: "name" }]);
+  if (!assignments.length) return { found: false };
+  const sectionIds = assignments.map(a => a.section._id);
+  const counts = await StudentEnrollment.aggregate([
+    { $match: { section: { $in: sectionIds }, status: "active" } },
+    { $group: { _id: "$section", count: { $sum: 1 } } },
+  ]);
+  const countBySection = Object.fromEntries(counts.map(c => [String(c._id), c.count]));
+  return {
+    found: true,
+    classes: assignments.map(a => ({
+      classId: a._id, subject: a.subject?.name, program: a.program?.name, section: a.section?.name,
+      studentCount: countBySection[String(a.section._id)] || 0,
+    })),
+  };
+}
+
+async function getMyClassRoster(args, user) {
+  const { classId } = args || {};
+  const ta = await loadOwnAssignment(user.id, classId);
+  if (!ta) return { error: "You don't have an active class with that classId. Use getMyTeachingClasses to see your own classes." };
+  const enrollments = await StudentEnrollment.find({ section: ta.section._id, status: "active" }).populate("student", "name rollNo");
+  const roster = enrollments.filter(e => e.student).map(e => ({ studentId: e.student._id, name: e.student.name, rollNo: e.student.rollNo }));
+  return { found: roster.length > 0, class: { subject: ta.subject.name, program: ta.program.name, section: ta.section.name }, roster };
+}
+
+async function getMyClassAttendance(args, user) {
+  const { classId, date } = args || {};
+  const ta = await loadOwnAssignment(user.id, classId);
+  if (!ta) return { error: "You don't have an active class with that classId. Use getMyTeachingClasses to see your own classes." };
+  const targetDate = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : todayStr();
+  const [enrollments, records] = await Promise.all([
+    StudentEnrollment.find({ section: ta.section._id, status: "active" }).populate("student", "name rollNo"),
+    SubjectAttendance.find({ teacherAssignment: ta._id, date: targetDate }),
+  ]);
+  const statusByStudent = new Map(records.map(r => [r.student.toString(), r.status]));
+  const students = enrollments.filter(e => e.student).map(e => ({
+    name: e.student.name, rollNo: e.student.rollNo,
+    status: statusByStudent.get(e.student._id.toString()) || "unmarked",
+  }));
+  const present = students.filter(s => s.status === "present").length;
+  const marked = students.filter(s => s.status !== "unmarked").length;
+  return {
+    date: targetDate,
+    class: { subject: ta.subject.name, program: ta.program.name, section: ta.section.name },
+    students,
+    presentCount: present,
+    markedCount: marked,
+    attendanceRatePct: marked ? Math.round((present / marked) * 100) : null,
+  };
+}
+
+async function getMyClassGrades(args, user) {
+  const { classId } = args || {};
+  const ta = await loadOwnAssignment(user.id, classId);
+  if (!ta) return { error: "You don't have an active class with that classId. Use getMyTeachingClasses to see your own classes." };
+  const enrollments = await StudentEnrollment.find({ section: ta.section._id, status: "active" }).populate("student", "name rollNo");
+  const rosterIds = enrollments.filter(e => e.student).map(e => e.student._id);
+  const grades = await Grade.find({ studentId: { $in: rosterIds }, subject: ta.subject.name }).sort({ date: -1 });
+  if (!grades.length) return { found: false, class: { subject: ta.subject.name, program: ta.program.name, section: ta.section.name } };
+  const nameById = Object.fromEntries(enrollments.filter(e => e.student).map(e => [String(e.student._id), e.student.name]));
+  const withPct = grades.map(g => ({ studentName: nameById[String(g.studentId)] || "Unknown", examName: g.examName, marks: g.marks, maxMarks: g.maxMarks, pct: Math.round((g.marks / g.maxMarks) * 100) }));
+  const avgPct = Math.round(withPct.reduce((s, g) => s + g.pct, 0) / withPct.length);
+  return {
+    found: true,
+    class: { subject: ta.subject.name, program: ta.program.name, section: ta.section.name },
+    records: withPct,
+    averagePct: avgPct,
+    strongest: [...withPct].sort((a, b) => b.pct - a.pct)[0],
+    weakest: [...withPct].sort((a, b) => a.pct - b.pct)[0],
+  };
+}
+
+async function getMyTeachingAnalytics(args, user) {
+  return computeTeacherAnalytics(user.id);
+}
+
+async function getMyStudentProgress(args, user) {
+  const { studentId } = args || {};
+  if (!isValidId(studentId)) return { error: "A valid studentId is required." };
+  const ta = await findTeacherAssignmentForStudent(user.id, studentId);
+  if (!ta) return { error: "That student isn't in any of your own classes." };
+  const student = await Student.findById(studentId).select("name rollNo");
+  const [attRecords, grades] = await Promise.all([
+    SubjectAttendance.find({ teacherAssignment: ta._id, student: studentId }),
+    Grade.find({ studentId, subject: ta.subject.name }).sort({ date: -1 }),
+  ]);
+  const present = attRecords.filter(r => r.status === "present").length;
+  return {
+    student: { name: student?.name, rollNo: student?.rollNo },
+    class: { subject: ta.subject.name, program: ta.program.name, section: ta.section.name },
+    attendance: attRecords.length ? { totalDaysRecorded: attRecords.length, present, attendanceRatePct: Math.round((present / attRecords.length) * 100) } : { found: false },
+    grades: grades.length ? { records: grades.map(g => ({ examName: g.examName, marks: g.marks, maxMarks: g.maxMarks, pct: Math.round((g.marks / g.maxMarks) * 100) })) } : { found: false },
+    note: "Scoped to this teacher's own subject only — not the student's full academic record across other classes/teachers.",
+  };
+}
+
+async function analyzeMyClassPerformance(args, user) {
+  const { classId } = args || {};
+  if (!classId) {
+    // No specific class named — hand back the whole teaching picture.
+    return computeTeacherAnalytics(user.id);
+  }
+  const [attendance, grades] = await Promise.all([getMyClassAttendance({ classId }, user), getMyClassGrades({ classId }, user)]);
+  return { attendance, grades };
+}
+
+async function recordGrade(args, user) {
+  const { classId, studentId, examName, marks, maxMarks } = args || {};
+  if (!classId || !isValidId(studentId) || !examName?.trim() || marks === undefined || marks === null) {
+    return { error: "classId, studentId, examName, and marks are all required." };
+  }
+  const ta = await loadOwnAssignment(user.id, classId);
+  if (!ta) return { error: "You don't have an active class with that classId." };
+  const enrolled = await StudentEnrollment.findOne({ student: studentId, section: ta.section._id, status: "active" });
+  if (!enrolled) return { error: "That student isn't enrolled in this class." };
+  const student = await Student.findById(studentId).select("name rollNo");
+  if (!student) return { error: "Student not found." };
+  const numMarks = Number(marks);
+  const numMax = maxMarks ? Number(maxMarks) : 100;
+  if (!Number.isFinite(numMarks) || !Number.isFinite(numMax) || numMax <= 0) {
+    return { error: "marks and maxMarks must be numbers." };
+  }
+
+  return preparePendingAction({
+    user,
+    type: "record_grade",
+    params: { studentId, subject: ta.subject.name, examName: examName.trim(), marks: numMarks, maxMarks: numMax },
+    preview: { studentName: student.name, rollNo: student.rollNo, subject: ta.subject.name, examName: examName.trim(), marks: numMarks, maxMarks: numMax },
+  });
 }
 
 // ── registry ────────────────────────────────────────────────────────
@@ -471,6 +622,45 @@ export const TOOLS = [
   { name: "sendParentEmailsBulk", roles: ["admin"], category: "write", handler: sendParentEmailsBulk,
     description: "Prepare sending personalized emails to multiple parents at once (e.g. today's absentees). Each item needs studentId, subject, message. Does NOT send — returns a preview requiring explicit confirmation.",
     parameters: S({ properties: { items: { type: "array", items: S({ properties: { studentId: { type: "string" }, subject: { type: "string" }, message: { type: "string" } }, required: ["studentId", "subject", "message"] }) } }, required: ["items"] }) },
+  // teacher — read
+  { name: "getMyTeachingClasses", roles: ["teacher"], category: "read", handler: getMyTeachingClasses,
+    description: "List the authenticated teacher's own active classes (subject, program, section, student count). Use this first to get valid classId values before calling other class-scoped tools.",
+    parameters: S({}) },
+  { name: "getMyClassRoster", roles: ["teacher"], category: "read", handler: getMyClassRoster,
+    description: "Get the student roster for one of the authenticated teacher's own classes.",
+    parameters: S({ properties: { classId: { type: "string", description: "From getMyTeachingClasses" } }, required: ["classId"] }) },
+  { name: "getMyClassAttendance", roles: ["teacher"], category: "read", handler: getMyClassAttendance,
+    description: "Get attendance for one of the authenticated teacher's own classes on a given date (defaults to today).",
+    parameters: S({ properties: { classId: { type: "string" }, date: { type: "string", description: "YYYY-MM-DD, defaults to today" } }, required: ["classId"] }) },
+  { name: "getMyClassGrades", roles: ["teacher"], category: "read", handler: getMyClassGrades,
+    description: "Get grades recorded for one of the authenticated teacher's own classes, with class average, strongest and weakest student.",
+    parameters: S({ properties: { classId: { type: "string" } }, required: ["classId"] }) },
+  { name: "getMyTeachingAnalytics", roles: ["teacher"], category: "read", handler: getMyTeachingAnalytics,
+    description: "Get the authenticated teacher's own overall teaching performance: average attendance and grades across all their classes, per-class breakdown, and per-subject breakdown. This is the same data shown on the teacher's Analytics page.",
+    parameters: S({}) },
+  { name: "getMyStudentProgress", roles: ["teacher"], category: "read", handler: getMyStudentProgress,
+    description: "Get one specific student's attendance and grades, scoped ONLY to this teacher's own subject/class — not the student's full record across other teachers. The student must be in one of this teacher's own classes.",
+    parameters: S({ properties: { studentId: { type: "string" } }, required: ["studentId"] }) },
+  // teacher — draft
+  { name: "analyzeMyClassPerformance", roles: ["teacher"], category: "draft", handler: analyzeMyClassPerformance,
+    description: "Gather real attendance and grade data for one of the teacher's own classes (or, if classId is omitted, their overall teaching picture) for a narrative performance analysis.",
+    parameters: S({ properties: { classId: { type: "string", description: "Omit for an overall analysis across all classes" } } }) },
+  // teacher — write (requires confirmation)
+  { name: "recordGrade", roles: ["teacher"], category: "write", handler: recordGrade,
+    description: "Prepare recording a grade for a student in one of the teacher's own classes. This does NOT save it — it returns a preview requiring explicit user confirmation before it is actually recorded.",
+    parameters: S({
+      properties: {
+        classId: { type: "string" },
+        studentId: { type: "string" },
+        examName: { type: "string", description: "e.g. Midterm, Final, Quiz 1" },
+        marks: { type: "number" },
+        maxMarks: { type: "number", description: "Defaults to 100" },
+      },
+      required: ["classId", "studentId", "examName", "marks"],
+    }) },
+
+  // ERP + smart layer (risk, finance ledger, admissions, exams, transcript)
+  ...ERP_TOOLS,
 ];
 
 export function getToolsForRole(role) {

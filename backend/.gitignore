@@ -6,3 +6,7 @@ dist
 build
 uploads
 .DS_Store
+scripts/cleanupSmokeTest.backup.json
+
+# Real student data for imports — personal data, never commit
+imports/

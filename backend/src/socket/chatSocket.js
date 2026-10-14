@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import Message from "../models/Message.js";
 import { getConversationForUser } from "../utils/chatAccess.js";
+import { isLocalDevHost } from "../utils/originCheck.js";
+import { adminRoom, scopeSocket } from "../tenancy/sockets.js";
 
 // See the matching comment in ../routes/auth.js — this must land on the
 // exact same secret used to sign REST tokens (../routes/auth.js), so it
@@ -23,7 +25,7 @@ export function attachChatSocket(httpServer, { allowedOrigins }) {
         if (allowedOrigins.has(origin)) return callback(null, true);
         try {
           const url = new URL(origin);
-          if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return callback(null, true);
+          if (isLocalDevHost(url.hostname)) return callback(null, true);
         } catch {
           // fall through to reject below
         }
@@ -54,6 +56,7 @@ export function attachChatSocket(httpServer, { allowedOrigins }) {
   });
 
   io.on("connection", (socket) => {
+    scopeSocket(socket); // every handler below runs inside this socket's institute
     const { user } = socket;
 
     // Admins collectively see every conversation (see chatAccess.js), so
@@ -61,7 +64,7 @@ export function attachChatSocket(httpServer, { allowedOrigins }) {
     // (new message previews/unread counts) even for chats they haven't
     // opened. Students only ever have one conversation, joined explicitly.
     if (user.role === "admin") {
-      socket.join("admins");
+      socket.join(adminRoom(user));
     }
 
     socket.on("join_conversation", async (conversationId, ack) => {
@@ -110,7 +113,7 @@ export function attachChatSocket(httpServer, { allowedOrigins }) {
 
         io.to(`conversation:${conversation._id}`).emit("receive_message", doc);
         if (senderModel === "Student") {
-          io.to("admins").emit("conversation_updated", {
+          io.to(adminRoom(user)).emit("conversation_updated", {
             conversationId: conversation._id,
             lastMessage: conversation.lastMessage,
             lastMessageAt: conversation.lastMessageAt,

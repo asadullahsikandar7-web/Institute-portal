@@ -14,6 +14,7 @@
 import Leave from "../models/leavemodel.js";
 import ParentMessage from "../models/ParentMessagemodel.js";
 import Student from "../models/studentModel.js";
+import Grade from "../models/GradeModel.js";
 import { sendMail } from "../utils/mailer.js";
 import { parentMessageTemplate } from "../utils/emailTemplates.js";
 
@@ -82,10 +83,22 @@ async function executeSendParentEmailsBulk(params) {
   };
 }
 
+async function executeRecordGrade(params) {
+  const grade = await Grade.create({
+    studentId: params.studentId,
+    subject: params.subject,
+    examName: params.examName,
+    marks: params.marks,
+    maxMarks: params.maxMarks,
+  });
+  return { message: `Grade recorded: ${params.examName} — ${params.marks}/${params.maxMarks}.`, grade };
+}
+
 const EXECUTORS = {
   create_leave_request: executeCreateLeaveRequest,
   send_parent_email: executeSendParentEmail,
   send_parent_emails_bulk: executeSendParentEmailsBulk,
+  record_grade: executeRecordGrade,
 };
 
 export async function executeConfirmedAction(action) {

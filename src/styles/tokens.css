@@ -1,0 +1,39 @@
+/* ACADEXA design tokens — ported verbatim from the approved prototype so the
+   visual identity matches exactly. Light is the default palette; dark is an
+   explicit override activated via [data-theme="dark"] on <html>. */
+:root{
+  --bg:#F5F4EF; --surface:#FFFFFF; --surface-alt:#EFEDE4; --border:#E0DDD1;
+  --ink:#16233D; --ink-soft:#4B5875; --muted:#8A93A8;
+  --accent:#AD7C24; --accent-ink:#5B4110; --accent-soft:#F1E4C2;
+  --success:#2E8B57; --success-soft:#E3F3EA;
+  --danger:#C1443C; --danger-soft:#FBE7E5;
+  --info:#2F6FB2; --info-soft:#E6EEF8;
+  --warn:#A97A1F; --warn-soft:#F5E9D2;
+  --shadow: 0 1px 2px rgba(22,35,61,.06), 0 8px 24px -12px rgba(22,35,61,.12);
+  --radius: 14px;
+
+  /* Secondary chart/avatar hues — not part of the prototype's core token set
+     (it only ever needed accent/success/danger/info), but the real app's
+     analytics charts and per-subject color-coding need more variety. Kept
+     in the same warm ink+brass family rather than generic SaaS colors. */
+  --chart-1:#AD7C24; --chart-2:#2F6FB2; --chart-3:#2E8B57; --chart-4:#C1443C;
+  --chart-5:#6B5CA5; --chart-6:#B2562F; --chart-7:#3E8FA0; --chart-8:#8A5A8C;
+}
+/* NOTE: this app's theme is explicitly controlled by ThemeContext (persisted
+   to localStorage, defaulting to dark to match the current real app), which
+   always stamps [data-theme] on <html> — so there is no "system" state left
+   ambiguous here the way a standalone artifact needs to handle, and we don't
+   need a prefers-color-scheme fallback block. [data-theme="dark"] below is
+   the single source of truth for the dark palette. */
+[data-theme="dark"]{
+  --bg:#0E1626; --surface:#152036; --surface-alt:#1A2540; --border:#2B3757;
+  --ink:#EEF1F8; --ink-soft:#B7C0D9; --muted:#7C88A9;
+  --accent:#D9AE52; --accent-ink:#F3DFA0; --accent-soft:#2C2413;
+  --success:#4CB783; --success-soft:#15301F;
+  --danger:#E17067; --danger-soft:#3A1917;
+  --info:#6FA8DC; --info-soft:#16283A;
+  --warn:#D9AE52; --warn-soft:#2C2413;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 30px -14px rgba(0,0,0,.55);
+  --chart-1:#D9AE52; --chart-2:#6FA8DC; --chart-3:#4CB783; --chart-4:#E17067;
+  --chart-5:#9A8CD1; --chart-6:#D98A5E; --chart-7:#6FBFCF; --chart-8:#C08CC2;
+}

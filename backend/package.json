@@ -6,7 +6,9 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "seed:demo": "node scripts/seedDemo.js",
-    "seed:demo:reset": "node scripts/seedDemo.js --reset"
+    "seed:demo:reset": "node scripts/seedDemo.js --reset",
+    "seed:bsai-timetable": "node scripts/seedRealBsaiTimetable.mjs",
+    "test:smoke": "node scripts/smokeTest.mjs"
   },
   "engines": {
     "node": "20.x"

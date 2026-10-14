@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "server": "node asad.js"
+    "server": "node asad.js",
+    "demo": "node scripts/demo.mjs"
   },
   "workspaces": [
     "backend"
@@ -19,6 +20,7 @@
     "framer-motion": "^12.34.2",
     "lucide-react": "^0.263.1",
     "nodemailer": "^6.9.7",
+    "qrcode": "1.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.12.0",

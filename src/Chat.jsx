@@ -1,7 +1,10 @@
 // ═══════════════════════════════════════════════════════════════════
 //  CHAT — real-time student/admin messaging
 //  Reuses the app's existing theme, API client (via props), and design
-//  primitives (imported from asad.jsx) instead of duplicating them.
+//  primitives instead of duplicating them. These come from the legacy
+//  compatibility bridge (see src/styles/legacyTokens.js) rather than
+//  asad.jsx directly — this file is scheduled for a direct reskin in a
+//  later phase of the rebuild, untouched until then.
 // ═══════════════════════════════════════════════════════════════════
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { io } from "socket.io-client";
@@ -10,7 +13,8 @@ import {
   Send, Search, Check, CheckCheck, WifiOff, Loader2, MessageSquare,
   Shield, User, ArrowLeft, RefreshCw, Inbox,
 } from "lucide-react";
-import { themes, C, F, Card, Btn, Input, Avatar, useToast } from "./asad.jsx";
+import { themes, C, F } from "./styles/legacyTokens.js";
+import { Card, Btn, Input, Avatar, useToast } from "./components/legacy/index.jsx";
 
 // ── Socket URL resolution ──────────────────────────────────────────
 // Mirrors asad.jsx's BASE-URL resolution so behavior stays consistent,
@@ -22,8 +26,9 @@ function resolveSocketUrl() {
   const envUrl = import.meta.env?.VITE_SOCKET_URL;
   if (envUrl) return envUrl;
   if (typeof window === "undefined") return "http://localhost:5001";
-  const host = window.location.hostname;
-  if (host === "localhost" || host === "127.0.0.1") return "http://localhost:5001";
+  // Dev server — same host the page was loaded from (localhost, 127.0.0.1,
+  // or a LAN IP when testing from another device), backend's own port.
+  if (import.meta.env.DEV) return `${window.location.protocol}//${window.location.hostname}:5001`;
   return window.location.origin;
 }
 

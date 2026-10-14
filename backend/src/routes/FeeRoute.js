@@ -2,6 +2,7 @@ import express from "express";
 import Fee from "../models/FeeModel.js";
 import Student from "../models/studentModel.js";
 import { auth, adminOnly } from "../middleware/auth.js";
+import { recordPayment } from "../services/payments.js";
 
 const router = express.Router();
 
@@ -64,13 +65,20 @@ router.patch("/:id", adminOnly, async (req, res) => {
   try {
     const fee = await Fee.findById(req.params.id);
     if (!fee) return res.status(404).json({ error: "Fee not found" });
+    if (fee.status === "paid") return res.json({ fee });
 
-    const updated = await Fee.findByIdAndUpdate(
-      req.params.id,
-      { status: "paid", paidOn: new Date() },
-      { new: true }
-    );
-    res.json({ fee: updated });
+    // "Mark paid" settles whatever is still owed as one cash payment,
+    // through the same path as every other payment (services/payments.js)
+    // so it gets a receipt. A fee with nothing left to collect (e.g. fully
+    // covered by a scholarship) is simply closed.
+    if (fee.balance > 0) {
+      await recordPayment(fee, { amount: fee.balance, method: "cash", receivedBy: req.user.email || "Admin" });
+    } else {
+      fee.status = "paid";
+      fee.paidOn = new Date();
+      await fee.save();
+    }
+    res.json({ fee });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 export default router;

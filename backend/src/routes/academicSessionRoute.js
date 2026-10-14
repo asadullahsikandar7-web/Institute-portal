@@ -33,7 +33,9 @@ router.post("/", auth("admin"), async (req, res) => {
       name: name.trim(),
       startDate: new Date(startDate),
       endDate: new Date(endDate),
-      status: status || "active",
+      // Only one session is current: a new one starts active only when there
+      // is none yet; otherwise it waits for "Activate".
+      status: status || ((await AcademicSession.exists({ status: "active" })) ? "inactive" : "active"),
       createdBy: req.user.id,
     });
     res.status(201).json(session);
@@ -53,6 +55,27 @@ router.patch("/:id", auth("admin"), async (req, res) => {
 
     const session = await AcademicSession.findByIdAndUpdate(req.params.id, update, { new: true });
     if (!session) return res.status(404).json({ error: "Academic session not found" });
+    res.json(session);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Activates one session and deactivates every other currently-active one,
+// so exactly one session is ever "active" at a time (previously nothing
+// enforced this — multiple sessions could be simultaneously active).
+router.patch("/:id/activate", auth("admin"), async (req, res) => {
+  try {
+    const session = await AcademicSession.findById(req.params.id);
+    if (!session) return res.status(404).json({ error: "Academic session not found" });
+
+    await AcademicSession.updateMany(
+      { _id: { $ne: session._id }, status: "active" },
+      { status: "inactive" }
+    );
+    session.status = "active";
+    await session.save();
+
     res.json(session);
   } catch (err) {
     res.status(500).json({ error: err.message });

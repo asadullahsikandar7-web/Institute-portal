@@ -6,7 +6,9 @@ import mongoose from "mongoose";
 const aiUsageSchema = new mongoose.Schema(
   {
     userId: { type: String, required: true, index: true },
-    createdAt: { type: Date, default: Date.now, index: true },
+    // No `index: true` here: the TTL index below covers createdAt, and a
+    // second plain index on the same key stopped the TTL from being created.
+    createdAt: { type: Date, default: Date.now },
   },
   { timestamps: false }
 );

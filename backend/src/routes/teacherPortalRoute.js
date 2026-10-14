@@ -1,4 +1,5 @@
 import express from "express";
+import { reenterTenant } from "../tenancy/middleware.js";
 import { auth } from "../middleware/auth.js";
 import {
   loadOwnAssignment,
@@ -16,6 +17,8 @@ import AcademicAnnouncement from "../models/AcademicAnnouncement.js";
 import Notification from "../models/notificationModel.js";
 import ChatGroup from "../models/ChatGroup.js";
 import GroupMessage from "../models/GroupMessage.js";
+import { computeTeacherAnalytics } from "../services/teacherAnalytics.js";
+import { photoUpload, resolveUploadedPhoto } from "../utils/cloudinaryPhotoUpload.js";
 
 // The whole teacher-facing self-service surface lives in this one file
 // (rather than one-file-per-resource like the admin academic routes) because
@@ -42,6 +45,42 @@ router.get("/me", async (req, res) => {
     const teacher = await Teacher.findById(req.user.id);
     if (!teacher) return res.status(404).json({ error: "Teacher not found" });
     res.json(teacher);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Self-service edit — always req.user.id, never a client-supplied id, so a
+// teacher can only ever edit their own record. Scoped to name only for now
+// (no email/password here) since that's the only field this was asked for.
+router.patch("/me", async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (name === undefined) return res.status(400).json({ error: "Nothing to update." });
+    const trimmed = String(name).trim();
+    if (trimmed.length < 2) return res.status(400).json({ error: "Name must be at least 2 characters." });
+
+    const teacher = await Teacher.findByIdAndUpdate(req.user.id, { name: trimmed }, { new: true }).select("-password");
+    res.json({ message: "Profile updated", teacher });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.patch("/me/photo", photoUpload.single("photo"), reenterTenant, async (req, res) => {
+  try {
+    const photo = await resolveUploadedPhoto(req);
+    const teacher = await Teacher.findByIdAndUpdate(req.user.id, { photo }, { new: true }).select("-password");
+    res.json({ message: "Photo updated", teacher });
+  } catch (err) {
+    res.status(err.message?.includes("too large") ? 413 : 400).json({ error: err.message });
+  }
+});
+
+router.delete("/me/photo", async (req, res) => {
+  try {
+    const teacher = await Teacher.findByIdAndUpdate(req.user.id, { photo: null }, { new: true }).select("-password");
+    res.json({ message: "Photo removed", teacher });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -76,6 +115,19 @@ router.get("/classes/:assignmentId/students", requireOwnAssignment(), async (req
       .map(e => ({ enrollmentId: e._id, ...e.student.toObject() }))
       .sort((a, b) => a.name.localeCompare(b.name));
     res.json(students);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ═══════════════════════════════════ ANALYTICS ═════════════════════════════════
+// Scoped entirely to this teacher's own active classes — never schoolwide.
+// The admin's /api/analytics stays the "upper management" aggregate view;
+// this is the teacher's own performance/class/subject breakdown, only ever
+// built from TeacherAssignment rows owned by req.user.id.
+router.get("/analytics", async (req, res) => {
+  try {
+    res.json(await computeTeacherAnalytics(req.user.id));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

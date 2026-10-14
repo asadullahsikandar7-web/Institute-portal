@@ -11,12 +11,13 @@ const router = express.Router();
 // authorized to teach that subject/section on that day.
 router.get("/", auth("admin"), async (req, res) => {
   try {
-    const { academicSession, program, section, subject, date } = req.query;
+    const { academicSession, program, section, subject, student, date } = req.query;
     const filter = {};
     if (academicSession) filter.academicSession = academicSession;
     if (program) filter.program = program;
     if (section) filter.section = section;
     if (subject) filter.subject = subject;
+    if (student) filter.student = student;
     if (date) filter.date = date;
 
     const records = await SubjectAttendance.find(filter)

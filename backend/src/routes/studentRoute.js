@@ -1,4 +1,5 @@
 import express from "express";
+import { reenterTenant } from "../tenancy/middleware.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import Student from "../models/studentModel.js";
@@ -164,7 +165,7 @@ router.patch("/:id", auth("admin"), async (req, res) => {
 
 // ── Upload / update student photo (Admin only) ──
 // Accepts either multipart/form-data file upload or JSON base64 image payload.
-router.patch("/:id/photo", auth("admin"), photoUpload.single("photo"), async (req, res) => {
+router.patch("/:id/photo", auth("admin"), photoUpload.single("photo"), reenterTenant, async (req, res) => {
   try {
     let photo = null;
 

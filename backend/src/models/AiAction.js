@@ -13,11 +13,11 @@ import mongoose from "mongoose";
 const aiActionSchema = new mongoose.Schema(
   {
     userId: { type: String, required: true, index: true },
-    userRole: { type: String, required: true, enum: ["student", "admin"] },
+    userRole: { type: String, required: true, enum: ["student", "admin", "teacher"] },
     type: {
       type: String,
       required: true,
-      enum: ["create_leave_request", "send_parent_email", "send_parent_emails_bulk"],
+      enum: ["create_leave_request", "send_parent_email", "send_parent_emails_bulk", "record_grade"],
     },
     params: { type: mongoose.Schema.Types.Mixed, required: true },
     preview: { type: mongoose.Schema.Types.Mixed, required: true },

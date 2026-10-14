@@ -1,5 +1,6 @@
 import express from "express";
 import Parent from "../models/Parent.js";
+import bcrypt from "bcryptjs";
 import { auth } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -62,6 +63,32 @@ router.patch("/:id", auth("admin"), async (req, res) => {
     const parent = await Parent.findByIdAndUpdate(req.params.id, update, { new: true });
     if (!parent) return res.status(404).json({ error: "Parent not found" });
     res.json(parent);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Enable/disable parent-portal login and (re)set its password. Portal login
+// is by email, so one is required before access can be switched on.
+router.patch("/:id/portal", auth("admin"), async (req, res) => {
+  try {
+    const { enabled, password } = req.body;
+    const parent = await Parent.findById(req.params.id).select("+password");
+    if (!parent) return res.status(404).json({ error: "Parent not found" });
+
+    if (password !== undefined) {
+      if (String(password).length < 8) return res.status(400).json({ error: "Password must be at least 8 characters." });
+      parent.password = await bcrypt.hash(String(password), 10);
+    }
+    if (enabled !== undefined) {
+      if (enabled && !parent.email) return res.status(400).json({ error: "Add an email address for this parent first — it is their portal login." });
+      if (enabled && !parent.password) return res.status(400).json({ error: "Set a password before enabling portal access." });
+      parent.portalEnabled = !!enabled;
+    }
+    await parent.save();
+    const out = parent.toObject();
+    delete out.password;
+    res.json(out);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

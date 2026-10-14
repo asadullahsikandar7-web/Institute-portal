@@ -1,6 +1,7 @@
 import express from "express";
 import { auth } from "../middleware/auth.js";
 import { isStudentGroupMember } from "../services/teacherAuth.js";
+import Student from "../models/studentModel.js";
 import StudentEnrollment from "../models/StudentEnrollment.js";
 import TeacherAssignment from "../models/TeacherAssignment.js";
 import SubjectAttendance from "../models/SubjectAttendance.js";
@@ -21,6 +22,20 @@ import GroupMessage from "../models/GroupMessage.js";
 
 const router = express.Router();
 router.use(auth("student"));
+
+// ═══════════════════════════════════ PROFILE ═══════════════════════════════════
+// Mirrors GET /api/teacher/me — lets the frontend restore a persisted
+// {token,role} session on page load without re-storing the full student
+// object client-side.
+router.get("/me", async (req, res) => {
+  try {
+    const student = await Student.findById(req.user.id);
+    if (!student) return res.status(404).json({ error: "Student not found" });
+    res.json(student);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 async function findActiveEnrollment(studentId) {
   return StudentEnrollment.findOne({ student: studentId, status: "active" });
@@ -117,7 +132,14 @@ router.get("/quizzes", async (req, res) => {
     const items = await Quiz.find({ teacherAssignment: { $in: assignments.map(a => a._id) }, status: "active" })
       .populate({ path: "teacherAssignment", populate: SUBJECT_POPULATE })
       .sort({ scheduledAt: 1 });
-    res.json(items);
+    // The question bank holds each question's correctIndex, so it is never
+    // sent from here — only whether one exists (`online`). Students get
+    // the questions through /api/lms/student/quizzes/:id/start, which
+    // strips the answers.
+    res.json(items.map(q => {
+      const { questions, ...rest } = q.toObject();
+      return { ...rest, online: questions.length > 0 };
+    }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

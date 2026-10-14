@@ -18,6 +18,20 @@ const AdminSchema = new mongoose.Schema({
     default: false,
     description: "Super admins can create/delete/manage other admins"
   },
+  // Staff sub-role — scopes which modules a non-super admin account may
+  // write to (see services/permissions.js). "admin" is full access, which
+  // keeps every pre-existing admin account behaving exactly as before.
+  adminRole: {
+    type: String,
+    enum: ["admin", "registrar", "accountant", "librarian", "hr", "warden", "frontdesk"],
+    default: "admin"
+  },
+  name: { type: String, default: "" },
+  // Two-factor sign-in (authenticator app). The secret is never returned
+  // by default; totpLastWindow stops a code being replayed.
+  totpSecret: { type: String, default: null, select: false },
+  totpEnabled: { type: Boolean, default: false },
+  totpLastWindow: { type: Number, default: null },
   createdAt: {
     type: Date,
     default: Date.now

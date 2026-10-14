@@ -6,14 +6,14 @@ import mongoose from "mongoose";
 const NotificationSchema = new mongoose.Schema({
   // Target
   recipientId: { type: mongoose.Schema.Types.ObjectId, ref: "Student" }, // null = all students
-  recipientType: { type: String, enum: ["student", "parent", "admin"], default: "student" },
+  recipientType: { type: String, enum: ["student", "parent", "admin", "teacher"], default: "student" },
   
   // Content
   title: { type: String, required: true },
   message: { type: String, required: true },
   type: { 
     type: String, 
-    enum: ["attendance", "grade", "fee", "notice", "assignment", "exam", "leave", "announcement", "alert"],
+    enum: ["attendance", "grade", "fee", "notice", "assignment", "exam", "leave", "announcement", "alert", "ticket", "library", "admission"],
     default: "notice" 
   },
   

@@ -101,6 +101,27 @@ export function requireOwnAssignment(paramName = "assignmentId") {
   };
 }
 
+// Confirms a student is currently assigned to a specific TeacherAssignment
+// (i.e. that class is one of "their subjects") — resolved the same way
+// studentAcademicRoute.js resolves "my subjects": the assignment must be
+// active AND match the student's own active enrollment's exact
+// academicSession+program+section. Used anywhere a student is joining
+// something scoped to one class by :teacherAssignmentId rather than one
+// already covered by requireOwnAssignment's :assignmentId param check
+// (that helper is teacher-only) — currently the class-call socket.
+export async function isStudentAssignedTo(studentId, teacherAssignmentId) {
+  const enrollment = await StudentEnrollment.findOne({ student: studentId, status: "active" });
+  if (!enrollment) return false;
+  const assignment = await TeacherAssignment.findOne({
+    _id: teacherAssignmentId,
+    academicSession: enrollment.academicSession,
+    program: enrollment.program,
+    section: enrollment.section,
+    status: "active",
+  }).populate(ASSIGNMENT_POPULATE);
+  return assignment || null;
+}
+
 // Confirms a student is currently (actively) enrolled in the given section —
 // required before a teacher can mark attendance, post grades, or message a
 // student: an active TeacherAssignment for the section is not by itself
@@ -113,6 +134,22 @@ export async function isStudentInSection(studentId, sectionId) {
     status: "active",
   });
   return !!enrollment;
+}
+
+// Finds the caller's own active TeacherAssignment that actually covers a
+// given student — i.e. the student is enrolled in that assignment's section
+// (and, when subjectName is given, the assignment's subject matches by
+// name). Used anywhere a teacher wants to touch one student's data (grades,
+// progress lookups) that isn't already scoped to a specific :assignmentId —
+// GradeRoute.js and aiTools.js both rely on this as the sole authority for
+// "does this teacher actually teach this student".
+export async function findTeacherAssignmentForStudent(teacherId, studentId, subjectName) {
+  const assignments = await TeacherAssignment.find({ teacher: teacherId, status: "active" }).populate("subject", "name");
+  for (const ta of assignments) {
+    if (subjectName && ta.subject?.name !== subjectName) continue;
+    if (await isStudentInSection(studentId, ta.section)) return ta;
+  }
+  return null;
 }
 
 // Bulk variant of isStudentInSection — for routes taking a list of student

@@ -2,8 +2,9 @@
 //  ACADEXA AI — frontend. Talks only to /api/ai/... (via the api object
 //  passed down from the page, same makeApi() client every other page
 //  uses — no separate AI API client). Reuses shared UI primitives from
-//  asad.jsx exactly like Chat.jsx does, and for the same reason avoids a
-//  static circular import (see the lazy-load comment in asad.jsx).
+//  the legacy compatibility bridge exactly like Chat.jsx does (see
+//  src/styles/legacyTokens.js) — this file is scheduled for a direct
+//  reskin in a later phase of the rebuild, untouched until then.
 // ═══════════════════════════════════════════════════════════════════
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,7 +12,8 @@ import {
   Sparkles, Send, Mic, MicOff, Volume2, X, Loader2, Copy, Check,
   AlertTriangle, CreditCard, GraduationCap, Activity, CalendarDays, MessageSquare,
 } from "lucide-react";
-import { C, F, Card, Btn, useToast } from "./asad.jsx";
+import { C, F } from "./styles/legacyTokens.js";
+import { Card, Btn, useToast } from "./components/legacy/index.jsx";
 
 // ── Voice: browser-native Web Speech API ────────────────────────────
 // First-version voice per the brief ("browser-native speech APIs are

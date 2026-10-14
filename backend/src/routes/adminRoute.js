@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import Admin from "../models/adminModel.js";
+import { checkAdminSecondFactor } from "../services/security.js";
+import { tenantClaims, instituteInfo } from "../tenancy/middleware.js";
 
 // See the matching comment in ./auth.js — guarantees this module sees the
 // real .env JWT_SECRET regardless of import order.
@@ -32,12 +34,19 @@ router.post("/admin-login", async (req, res) => {
       return res.status(401).json({ error: "Invalid password" });
     }
 
+    // Same second-factor check as /api/auth/admin-login — this route must
+    // not be a way around it.
+    const secondFactor = await checkAdminSecondFactor(Admin, admin, req.body.otp);
+    if (secondFactor) return res.status(secondFactor.status).json(secondFactor.body);
+
     const token = jwt.sign(
       { 
         id: admin._id,
         email: admin.email,
         role: "admin",
-        isSuperAdmin: admin.isSuperAdmin 
+        isSuperAdmin: admin.isSuperAdmin,
+        adminRole: admin.adminRole || "admin",
+        ...tenantClaims(),
       },
       SECRET,
       { expiresIn: "12h" }
@@ -47,7 +56,9 @@ router.post("/admin-login", async (req, res) => {
       token, 
       role: "admin",
       isSuperAdmin: admin.isSuperAdmin,
-      email: admin.email
+      email: admin.email,
+      adminRole: admin.adminRole || "admin",
+      institute: instituteInfo(),
     });
   } catch (err) {
     console.error(err);
@@ -116,10 +127,13 @@ router.get("/admins", superAdminAuth, async (req, res) => {
 // ════════════════════════════════════════════════════════════
 router.post("/admins", superAdminAuth, async (req, res) => {
   try {
-    const { email, password, isSuperAdmin } = req.body;
+    const { email, password, isSuperAdmin, adminRole, name } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password required" });
+    }
+    if (String(password).length < 8) {
+      return res.status(400).json({ error: "Password must be at least 8 characters" });
     }
 
     // Check if admin already exists
@@ -131,7 +145,9 @@ router.post("/admins", superAdminAuth, async (req, res) => {
     const newAdmin = new Admin({
       email,
       password,
-      isSuperAdmin: isSuperAdmin || false
+      isSuperAdmin: isSuperAdmin || false,
+      adminRole: adminRole || "admin",
+      name: name || ""
     });
 
     await newAdmin.save();
@@ -154,7 +170,7 @@ router.post("/admins", superAdminAuth, async (req, res) => {
 // ════════════════════════════════════════════════════════════
 router.put("/admins/:id", superAdminAuth, async (req, res) => {
   try {
-    const { email, isSuperAdmin } = req.body;
+    const { email, isSuperAdmin, adminRole, name } = req.body;
 
     const admin = await Admin.findById(req.params.id);
     if (!admin) {
@@ -162,6 +178,8 @@ router.put("/admins/:id", superAdminAuth, async (req, res) => {
     }
 
     if (email) admin.email = email;
+    if (adminRole) admin.adminRole = adminRole;
+    if (name !== undefined) admin.name = name;
     if (typeof isSuperAdmin === "boolean") admin.isSuperAdmin = isSuperAdmin;
 
     await admin.save();

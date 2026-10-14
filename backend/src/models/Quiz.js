@@ -14,6 +14,18 @@ const quizSchema = new mongoose.Schema(
     durationMinutes: { type: Number, default: null },
     totalMarks: { type: Number, default: null },
     status: { type: String, enum: ["active", "closed"], default: "active" },
+    // Online question bank (additive). A quiz with no questions is still
+    // the original "scheduled on paper" record; with questions it becomes
+    // attemptable in the student portal and is auto-graded on submit
+    // (see models/Lms.js QuizAttempt and routes/lmsRoute.js). correctIndex
+    // is never sent to students — the student-facing route strips it.
+    questions: [{
+      text: { type: String, required: true },
+      options: { type: [String], validate: v => v.length >= 2 && v.length <= 6 },
+      correctIndex: { type: Number, required: true, min: 0 },
+      marks: { type: Number, default: 1, min: 0 },
+    }],
+    closesAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

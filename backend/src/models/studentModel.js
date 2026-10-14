@@ -71,6 +71,22 @@ const studentSchema = new mongoose.Schema(
     registrationNo: {
       type: String,
       default: ""
+    },
+    // Extended profile (additive, all optional) — captured by the
+    // admissions pipeline and editable from the Student 360 view.
+    dob: { type: Date, default: null },
+    gender: { type: String, enum: ["male", "female", "other", ""], default: "" },
+    bloodGroup: { type: String, default: "" },
+    nationalId: { type: String, default: "" },
+    address: { type: String, default: "" },
+    city: { type: String, default: "" },
+    emergencyContact: { type: String, default: "" },
+    admissionDate: { type: Date, default: null },
+    previousInstitute: { type: String, default: "" },
+    lifecycleStatus: {
+      type: String,
+      enum: ["active", "graduated", "suspended", "withdrawn", "expelled"],
+      default: "active"
     }
   },
   { timestamps: true }

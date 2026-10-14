@@ -11,6 +11,11 @@ const parentSchema = new mongoose.Schema(
     email: { type: String, lowercase: true, trim: true, default: "" },
     whatsappNumber: { type: String, default: "" },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
+    // Parent-portal login (additive). Null until an admin enables portal
+    // access for this parent; same handling as Student/Teacher passwords —
+    // hashed in the route, select:false, explicit .select("+password") at login.
+    password: { type: String, select: false, default: null },
+    portalEnabled: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

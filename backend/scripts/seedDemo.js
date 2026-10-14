@@ -19,6 +19,7 @@
 //   npm run seed:demo         seed the demo dataset (safe to re-run — it
 //                              resets any previous demo data first)
 //   npm run seed:demo:reset   remove the demo dataset only, seed nothing
+import "../src/tenancy/register.js"; // institute isolation — must be the first import
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
@@ -47,6 +48,10 @@ import GroupMessage from "../src/models/GroupMessage.js";
 import Attendance from "../src/models/attendanceModel.js";
 import Leave from "../src/models/leavemodel.js";
 import Notification from "../src/models/notificationModel.js";
+import { seedErp, resetErp, DEMO_PARENT_PASSWORD, DEMO_STAFF_PASSWORD, seedSecondInstitute, DEMO_OWNER_PASSWORD } from "./seedDemoErp.js";
+import { Tenant } from "../src/models/Tenant.js";
+import { runUnscoped } from "../src/tenancy/context.js";
+import { resolveInstitute, inInstitute, instituteArg } from "./lib/institute.js";
 
 const DEMO_DOMAIN = "demo.acadexa.test";
 const DEMO_SESSION_NAME = "2026-27 (Demo)";
@@ -92,6 +97,9 @@ async function resetDemoData() {
   const demoGroupIds = demoGroups.map(g => g._id);
 
   const results = {};
+  // ERP + smart-layer demo data first — it references the students,
+  // teachers and assignments deleted below.
+  results.erp             = await resetErp({ studentIds: demoStudentIds, teacherIds: demoTeacherIds, parentIds: demoParentIds, sessionIds: demoSessionIds, assignmentIds: demoAssignmentIds });
   results.groupMessages   = (await GroupMessage.deleteMany({ group: { $in: demoGroupIds } })).deletedCount;
   results.chatGroups      = (await ChatGroup.deleteMany({ _id: { $in: demoGroupIds } })).deletedCount;
   results.announcements   = (await AcademicAnnouncement.deleteMany({ teacherAssignment: { $in: demoAssignmentIds } })).deletedCount;
@@ -394,12 +402,21 @@ async function seedDemoData() {
   }
   log(`Academic groups: ${groupCount} created (${msgCount} seed messages)`);
 
+  // ── ERP + smart layer (finance, HR, library, exams, risk stories…) ──────
+  const erp = await seedErp({ demoAdmin, session, programs, sections, subjects, teachers, assignments, studentsBySection, DEMO_DOMAIN });
+
   console.log("\n✅ Demo seed complete.\n");
-  console.log("── Demo login credentials ──────────────────────────────");
-  console.log(`  Admin    ${demoAdmin.email}  /  ${DEMO_ADMIN_PASSWORD}`);
-  console.log(`  Teacher  ${teachers["ahmed.khan"].email}  /  ${DEMO_TEACHER_PASSWORD}`);
-  console.log(`  Student  roll ${studentsBySection["DEMO-BSAI-A"][0].rollNo}  /  ${DEMO_STUDENT_PASSWORD}`);
-  console.log("─────────────────────────────────────────────────────────\n");
+  console.log("── Demo login credentials ──────────────────────────────────────────────");
+  console.log(`  Admin (full)    ${demoAdmin.email}  /  ${DEMO_ADMIN_PASSWORD}`);
+  console.log(`  Accountant      ${erp.accountant}  /  ${DEMO_STAFF_PASSWORD}   (finance + payroll only)`);
+  console.log(`  Librarian       ${erp.librarian}  /  ${DEMO_STAFF_PASSWORD}   (library only)`);
+  console.log(`  Teacher         ${teachers["ahmed.khan"].email}  /  ${DEMO_TEACHER_PASSWORD}`);
+  console.log(`  Student         roll ${studentsBySection["DEMO-BSAI-A"][0].rollNo}  /  ${DEMO_STUDENT_PASSWORD}   (top of the class)`);
+  console.log(`  Student at risk roll ${erp.struggling.rollNo}  /  ${DEMO_STUDENT_PASSWORD}   (low attendance, fees overdue)`);
+  console.log(`  Parent          ${erp.strugglingParentEmail}  /  ${DEMO_PARENT_PASSWORD}   (parent of the at-risk student)`);
+  console.log(`  Parent          ${erp.parentEmail}  /  ${DEMO_PARENT_PASSWORD}`);
+  console.log("  (institute code DEMO — the default, so no code is needed on the login page)");
+  console.log("─────────────────────────────────────────────────────────────────────────\n");
 }
 
 (async () => {
@@ -407,8 +424,20 @@ async function seedDemoData() {
   await mongoose.connect(process.env.MONGO_URI);
   console.log(`Connected to ${mongoose.connection.host}/${mongoose.connection.name}`);
   try {
-    await resetDemoData();
-    if (!RESET_ONLY) await seedDemoData();
+    // A brand-new database becomes a multi-institute demo: the main demo
+    // university (code DEMO) plus a second institute to show isolation.
+    // An existing single-institute database (no institutes yet) is seeded
+    // exactly as before, unscoped.
+    const fresh = !(await Tenant.exists({})) && !(await runUnscoped(async () => (await Admin.exists({})) || (await Student.exists({}))));
+    const institute = fresh || instituteArg()
+      ? await resolveInstitute({ code: instituteArg() || "DEMO", create: { name: "ACADEXA Demo University", type: "university" } })
+      : await resolveInstitute();
+    if (institute) console.log(`Institute: ${institute.name} (${institute.code})`);
+    await inInstitute(institute, async () => {
+      await resetDemoData();
+      if (!RESET_ONLY) await seedDemoData();
+    });
+    if (!RESET_ONLY && institute && institute.code === "DEMO") await seedSecondInstitute();
   } catch (e) {
     console.error("❌ Seed failed:", e);
     process.exitCode = 1;
@@ -416,3 +445,6 @@ async function seedDemoData() {
     await mongoose.disconnect();
   }
 })();
+
+
+//i want to build something special so i never affoesd a ,essafe refordimg to thr poedennujnj jthrtr jjj jkrnr jke u5ihu5

@@ -1,6 +1,7 @@
 import express from "express";
 import Leave from "../models/leavemodel.js";
 import { auth } from "../middleware/auth.js";
+import { notifyStudents } from "../services/notify.js";
 
 const router = express.Router();
 
@@ -48,6 +49,9 @@ router.patch("/:id", auth("admin"), async (req, res) => {
       { new: true }
     ).populate("studentId", "-password");
     if (!leave) return res.status(404).json({ error: "Leave not found" });
+    if (["approved", "rejected"].includes(status) && leave.studentId) {
+      await notifyStudents([leave.studentId._id], { title: `Leave ${status}`, message: `Your ${leave.type} leave request has been ${status}.`, type: "leave", actionUrl: "/student/leaves" });
+    }
     res.json(leave);
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -10,6 +10,10 @@ const programSchema = new mongoose.Schema(
     code: { type: String, required: true, unique: true, trim: true },
     description: { type: String, default: "" },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
+    // Credit hours a student must earn to graduate — drives the degree
+    // progress bar on transcripts. Optional (schools don't use credits).
+    requiredCredits: { type: Number, default: null, min: 0 },
+    durationTerms: { type: Number, default: null, min: 1 },
     academicSession: { type: mongoose.Schema.Types.ObjectId, ref: "AcademicSession", default: null },
   },
   { timestamps: true }

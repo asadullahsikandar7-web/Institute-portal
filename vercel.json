@@ -25,5 +25,11 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/automations/cron",
+      "schedule": "0 4 * * *"
+    }
   ]
 }

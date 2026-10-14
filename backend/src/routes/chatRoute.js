@@ -1,4 +1,5 @@
 import express from "express";
+import { adminRoom } from "../tenancy/sockets.js";
 import { auth } from "../middleware/auth.js";
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
@@ -161,7 +162,7 @@ router.post("/messages", async (req, res) => {
     if (io) {
       io.to(`conversation:${conversation._id}`).emit("receive_message", doc);
       if (senderModel === "Student") {
-        io.to("admins").emit("conversation_updated", {
+        io.to(adminRoom(req.user)).emit("conversation_updated", {
           conversationId: conversation._id,
           lastMessage: conversation.lastMessage,
           lastMessageAt: conversation.lastMessageAt,
